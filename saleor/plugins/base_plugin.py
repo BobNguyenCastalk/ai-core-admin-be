@@ -1094,33 +1094,6 @@ class BasePlugin:
     # Webhook-related functionality will be moved from the plugin to core modules.
     order_bulk_created: Callable[[list["Order"], Any], Any]
 
-    # Trigger when page is created.
-    #
-    # Overwrite this method if you need to trigger specific logic when a page is
-    # created.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    page_created: Callable[["Page", Any], Any]
-
-    # Trigger when page is deleted.
-    #
-    # Overwrite this method if you need to trigger specific logic when a page is
-    # deleted.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    page_deleted: Callable[["Page", Any], Any]
-
-    # Trigger when page is updated.
-    #
-    # Overwrite this method if you need to trigger specific logic when a page is
-    # updated.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    page_updated: Callable[["Page", Any], Any]
-
     # Trigger when page type is created.
     #
     # Overwrite this method if you need to trigger specific logic when a page type is

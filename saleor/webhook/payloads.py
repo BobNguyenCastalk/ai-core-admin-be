@@ -1145,9 +1145,6 @@ def generate_sample_payload(event_name: str) -> Optional[dict]:
         WebhookEventAsyncType.CHECKOUT_CREATED,
     ]
     pages_events = [
-        WebhookEventAsyncType.PAGE_CREATED,
-        WebhookEventAsyncType.PAGE_DELETED,
-        WebhookEventAsyncType.PAGE_UPDATED,
     ]
     user_events = [
         WebhookEventAsyncType.CUSTOMER_CREATED,

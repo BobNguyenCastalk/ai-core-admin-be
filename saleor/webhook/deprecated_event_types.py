@@ -41,10 +41,6 @@ class WebhookEventType:
 
     NOTIFY_USER = "notify_user"
 
-    PAGE_CREATED = "page_created"
-    PAGE_UPDATED = "page_updated"
-    PAGE_DELETED = "page_deleted"
-
     PAYMENT_LIST_GATEWAYS = "payment_list_gateways"
     PAYMENT_AUTHORIZE = "payment_authorize"
     PAYMENT_CAPTURE = "payment_capture"
@@ -92,9 +88,6 @@ class WebhookEventType:
         FULFILLMENT_CREATED: "Fulfillment created",
         FULFILLMENT_CANCELED: "Fulfillment cancelled",
         NOTIFY_USER: "Notify user",
-        PAGE_CREATED: "Page Created",
-        PAGE_UPDATED: "Page Updated",
-        PAGE_DELETED: "Page Deleted",
         PAYMENT_AUTHORIZE: "Authorize payment",
         PAYMENT_CAPTURE: "Capture payment",
         PAYMENT_CONFIRM: "Confirm payment",
@@ -141,9 +134,6 @@ class WebhookEventType:
         (FULFILLMENT_CREATED, DISPLAY_LABELS[FULFILLMENT_CREATED]),
         (FULFILLMENT_CANCELED, DISPLAY_LABELS[FULFILLMENT_CANCELED]),
         (NOTIFY_USER, DISPLAY_LABELS[NOTIFY_USER]),
-        (PAGE_CREATED, DISPLAY_LABELS[PAGE_CREATED]),
-        (PAGE_UPDATED, DISPLAY_LABELS[PAGE_UPDATED]),
-        (PAGE_DELETED, DISPLAY_LABELS[PAGE_DELETED]),
         (PAYMENT_AUTHORIZE, DISPLAY_LABELS[PAYMENT_AUTHORIZE]),
         (PAYMENT_CAPTURE, DISPLAY_LABELS[PAYMENT_CAPTURE]),
         (PAYMENT_CONFIRM, DISPLAY_LABELS[PAYMENT_CONFIRM]),

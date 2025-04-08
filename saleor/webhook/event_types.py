@@ -150,9 +150,6 @@ class WebhookEventAsyncType:
 
     NOTIFY_USER = "notify_user"  # deprecated
 
-    PAGE_CREATED = "page_created"
-    PAGE_UPDATED = "page_updated"
-    PAGE_DELETED = "page_deleted"
 
     PAGE_TYPE_CREATED = "page_type_created"
     PAGE_TYPE_UPDATED = "page_type_updated"
@@ -618,18 +615,6 @@ class WebhookEventAsyncType:
         NOTIFY_USER: {
             "name": "Notify user",
             "permission": AccountPermissions.MANAGE_USERS,
-        },
-        PAGE_CREATED: {
-            "name": "Page created",
-            "permission": PagePermissions.MANAGE_PAGES,
-        },
-        PAGE_UPDATED: {
-            "name": "Page updated",
-            "permission": PagePermissions.MANAGE_PAGES,
-        },
-        PAGE_DELETED: {
-            "name": "Page deleted",
-            "permission": PagePermissions.MANAGE_PAGES,
         },
         PAGE_TYPE_CREATED: {
             "name": "Page type created",

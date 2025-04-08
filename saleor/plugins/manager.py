@@ -1411,30 +1411,6 @@ class PluginsManager(PaymentInterface):
 
     # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
     # Webhook-related functionality will be moved from plugin to core modules.
-    def page_created(self, page: "Page"):
-        default_value = None
-        return self.__run_method_on_plugins(
-            "page_created", default_value, page, channel_slug=None
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def page_updated(self, page: "Page"):
-        default_value = None
-        return self.__run_method_on_plugins(
-            "page_updated", default_value, page, channel_slug=None
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def page_deleted(self, page: "Page"):
-        default_value = None
-        return self.__run_method_on_plugins(
-            "page_deleted", default_value, page, channel_slug=None
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
     def page_type_created(self, page_type: "PageType"):
         default_value = None
         return self.__run_method_on_plugins(

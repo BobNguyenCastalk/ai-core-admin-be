@@ -32,7 +32,7 @@ class PageDelete(ModelDeleteMutation):
         with traced_atomic_transaction():
             cls.delete_assigned_attribute_values(page)
             response = super().perform_mutation(_root, info, **data)
-            cls.call_event(manager.page_deleted, page)
+            # cls.call_event(manager.page_deleted, page)
         return response
 
     @staticmethod

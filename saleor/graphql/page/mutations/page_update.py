@@ -37,4 +37,4 @@ class PageUpdate(PageCreate):
     def save(cls, info: ResolveInfo, instance, cleaned_input):
         super(PageCreate, cls).save(info, instance, cleaned_input)
         manager = get_plugin_manager_promise(info.context).get()
-        cls.call_event(manager.page_updated, instance)
+        # cls.call_event(manager.page_updated, instance)

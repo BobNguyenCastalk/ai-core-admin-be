@@ -1996,51 +1996,6 @@ class WebhookPlugin(BasePlugin):
                 logger.info(f"Webhook {event_type} triggered for {event} notify event.")
             self.trigger_webhooks_async(data, event_type, webhooks)
 
-    def page_created(self, page: "Page", previous_value: Any) -> Any:
-        if not self.active:
-            return previous_value
-        event_type = WebhookEventAsyncType.PAGE_CREATED
-        if webhooks := get_webhooks_for_event(event_type):
-            page_data_generator = partial(generate_page_payload, page, self.requestor)
-            self.trigger_webhooks_async(
-                None,
-                event_type,
-                webhooks,
-                page,
-                self.requestor,
-                legacy_data_generator=page_data_generator,
-            )
-
-    def page_updated(self, page: "Page", previous_value: Any) -> Any:
-        if not self.active:
-            return previous_value
-        event_type = WebhookEventAsyncType.PAGE_UPDATED
-        if webhooks := get_webhooks_for_event(event_type):
-            page_data_generator = partial(generate_page_payload, page, self.requestor)
-            self.trigger_webhooks_async(
-                None,
-                event_type,
-                webhooks,
-                page,
-                self.requestor,
-                legacy_data_generator=page_data_generator,
-            )
-
-    def page_deleted(self, page: "Page", previous_value: Any) -> Any:
-        if not self.active:
-            return previous_value
-        event_type = WebhookEventAsyncType.PAGE_DELETED
-        if webhooks := get_webhooks_for_event(event_type):
-            page_data_generator = partial(generate_page_payload, page, self.requestor)
-            self.trigger_webhooks_async(
-                None,
-                event_type,
-                webhooks,
-                page,
-                self.requestor,
-                legacy_data_generator=page_data_generator,
-            )
-
     def _trigger_page_type_event(self, event_type, page_type, webhooks=None):
         if webhooks := self._get_webhooks_for_event(event_type, webhooks):
             payload = self._serialize_payload(

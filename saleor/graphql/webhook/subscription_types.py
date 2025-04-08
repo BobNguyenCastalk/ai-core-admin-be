@@ -1591,30 +1591,6 @@ class PageBase(AbstractType):
         return page
 
 
-class PageCreated(SubscriptionObjectType, PageBase):
-    class Meta:
-        root_type = "Page"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new page is created." + ADDED_IN_32
-
-
-class PageUpdated(SubscriptionObjectType, PageBase):
-    class Meta:
-        root_type = "Page"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when page is updated." + ADDED_IN_32
-
-
-class PageDeleted(SubscriptionObjectType, PageBase):
-    class Meta:
-        root_type = "Page"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when page is deleted." + ADDED_IN_32
-
-
 class PageTypeBase(AbstractType):
     page_type = graphene.Field(
         "saleor.graphql.page.types.PageType",
@@ -3082,9 +3058,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.CHECKOUT_UPDATED: CheckoutUpdated,
     WebhookEventAsyncType.CHECKOUT_FULLY_PAID: CheckoutFullyPaid,
     WebhookEventAsyncType.CHECKOUT_METADATA_UPDATED: CheckoutMetadataUpdated,
-    WebhookEventAsyncType.PAGE_CREATED: PageCreated,
-    WebhookEventAsyncType.PAGE_UPDATED: PageUpdated,
-    WebhookEventAsyncType.PAGE_DELETED: PageDeleted,
     WebhookEventAsyncType.PAGE_TYPE_CREATED: PageTypeCreated,
     WebhookEventAsyncType.PAGE_TYPE_UPDATED: PageTypeUpdated,
     WebhookEventAsyncType.PAGE_TYPE_DELETED: PageTypeDeleted,
