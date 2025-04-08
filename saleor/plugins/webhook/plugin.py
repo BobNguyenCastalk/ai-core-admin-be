@@ -2010,29 +2010,6 @@ class WebhookPlugin(BasePlugin):
                 payload, event_type, webhooks, page_type, self.requestor
             )
 
-    def page_type_created(self, page_type: "PageType", previous_value: Any) -> Any:
-        if not self.active:
-            return previous_value
-        self._trigger_page_type_event(
-            WebhookEventAsyncType.PAGE_TYPE_CREATED, page_type
-        )
-
-    def page_type_updated(self, page_type: "PageType", previous_value: Any) -> Any:
-        if not self.active:
-            return previous_value
-        self._trigger_page_type_event(
-            WebhookEventAsyncType.PAGE_TYPE_UPDATED, page_type
-        )
-
-    def page_type_deleted(
-        self, page_type: "PageType", previous_value: Any, webhooks=None
-    ) -> Any:
-        if not self.active:
-            return previous_value
-        self._trigger_page_type_event(
-            WebhookEventAsyncType.PAGE_TYPE_DELETED, page_type, webhooks=webhooks
-        )
-
     def _trigger_permission_group_event(self, event_type, group):
         if webhooks := get_webhooks_for_event(event_type):
             payload = self._serialize_payload(

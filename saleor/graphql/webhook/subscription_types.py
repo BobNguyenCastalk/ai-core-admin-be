@@ -1602,31 +1602,6 @@ class PageTypeBase(AbstractType):
         _, page_type = root
         return page_type
 
-
-class PageTypeCreated(SubscriptionObjectType, PageTypeBase):
-    class Meta:
-        root_type = "PageType"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new page type is created." + ADDED_IN_35
-
-
-class PageTypeUpdated(SubscriptionObjectType, PageTypeBase):
-    class Meta:
-        root_type = "PageType"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when page type is updated." + ADDED_IN_35
-
-
-class PageTypeDeleted(SubscriptionObjectType, PageTypeBase):
-    class Meta:
-        root_type = "PageType"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when page type is deleted." + ADDED_IN_35
-
-
 class PermissionGroupBase(AbstractType):
     permission_group = graphene.Field(
         "saleor.graphql.account.types.Group",
@@ -3058,9 +3033,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.CHECKOUT_UPDATED: CheckoutUpdated,
     WebhookEventAsyncType.CHECKOUT_FULLY_PAID: CheckoutFullyPaid,
     WebhookEventAsyncType.CHECKOUT_METADATA_UPDATED: CheckoutMetadataUpdated,
-    WebhookEventAsyncType.PAGE_TYPE_CREATED: PageTypeCreated,
-    WebhookEventAsyncType.PAGE_TYPE_UPDATED: PageTypeUpdated,
-    WebhookEventAsyncType.PAGE_TYPE_DELETED: PageTypeDeleted,
     WebhookEventAsyncType.PERMISSION_GROUP_CREATED: PermissionGroupCreated,
     WebhookEventAsyncType.PERMISSION_GROUP_UPDATED: PermissionGroupUpdated,
     WebhookEventAsyncType.PERMISSION_GROUP_DELETED: PermissionGroupDeleted,

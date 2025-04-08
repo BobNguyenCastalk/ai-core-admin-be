@@ -164,9 +164,6 @@ WEBHOOK_EVENT_DESCRIPTION = {
     WebhookEventAsyncType.FULFILLMENT_METADATA_UPDATED: (
         "A fulfillment metadata is updated." + ADDED_IN_38
     ),
-    WebhookEventAsyncType.PAGE_TYPE_CREATED: "A new page type is created.",
-    WebhookEventAsyncType.PAGE_TYPE_UPDATED: "A page type is updated.",
-    WebhookEventAsyncType.PAGE_TYPE_DELETED: "A page type is deleted.",
     WebhookEventAsyncType.PERMISSION_GROUP_CREATED: (
         "A new permission group is created."
     ),

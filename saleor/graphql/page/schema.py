@@ -12,10 +12,7 @@ from .mutations import (
     PageAttributeAssign,
     PageAttributeUnassign,
     PageReorderAttributeValues,
-    PageTypeCreate,
-    PageTypeDelete,
     PageTypeReorderAttributes,
-    PageTypeUpdate,
 )
 from .resolvers import (
     resolve_page,
@@ -91,9 +88,6 @@ class PageMutations(graphene.ObjectType):
     page_translate = PageTranslate.Field()
 
     # page type mutations
-    page_type_create = PageTypeCreate.Field()
-    page_type_update = PageTypeUpdate.Field()
-    page_type_delete = PageTypeDelete.Field()
     page_type_bulk_delete = PageTypeBulkDelete.Field()
 
     # attributes mutations
