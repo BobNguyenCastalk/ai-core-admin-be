@@ -11,14 +11,11 @@ from .filters import PageFilterInput, PageTypeFilterInput
 from .mutations import (
     PageAttributeAssign,
     PageAttributeUnassign,
-    PageCreate,
-    PageDelete,
     PageReorderAttributeValues,
     PageTypeCreate,
     PageTypeDelete,
     PageTypeReorderAttributes,
     PageTypeUpdate,
-    PageUpdate,
 )
 from .resolvers import (
     resolve_page,
@@ -89,11 +86,8 @@ class PageQueries(graphene.ObjectType):
 
 class PageMutations(graphene.ObjectType):
     # page mutations
-    page_create = PageCreate.Field()
-    page_delete = PageDelete.Field()
     page_bulk_delete = PageBulkDelete.Field()
     page_bulk_publish = PageBulkPublish.Field()
-    page_update = PageUpdate.Field()
     page_translate = PageTranslate.Field()
 
     # page type mutations
