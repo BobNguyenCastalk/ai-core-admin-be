@@ -3,11 +3,9 @@ from typing import Optional
 import graphene
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import OuterRef, Subquery
 
 from ....discount import models
 from ....discount.error_codes import DiscountErrorCode
-from ....discount.models import VoucherCode
 from ....permission.enums import DiscountPermissions
 from ....product.utils.product import (
     get_channel_to_products_map_from_rules,
@@ -25,7 +23,7 @@ from ...core.utils import (
     raise_validation_error,
 )
 from ...plugins.dataloaders import get_plugin_manager_promise
-from ..types import Sale, Voucher
+from ..types import Sale
 from ..utils import convert_migrated_sale_predicate_to_catalogue_info
 
 
@@ -140,39 +138,3 @@ class SaleBulkDelete(ModelBulkDeleteMutation):
             .select_for_update(of=("self",))
             .filter(promotion_id__in=[promotion.pk for promotion in promotions])
         )
-
-
-class VoucherBulkDelete(ModelBulkDeleteMutation):
-    class Arguments:
-        ids = NonNullList(
-            graphene.ID, required=True, description="List of voucher IDs to delete."
-        )
-
-    class Meta:
-        description = "Deletes vouchers."
-        model = models.Voucher
-        object_type = Voucher
-        permissions = (DiscountPermissions.MANAGE_DISCOUNTS,)
-        error_type_class = DiscountError
-        error_type_field = "discount_errors"
-        webhook_events_info = [
-            WebhookEventInfo(
-                type=WebhookEventAsyncType.VOUCHER_DELETED,
-                description="A voucher was deleted.",
-            )
-        ]
-
-    @classmethod
-    def bulk_action(cls, info: ResolveInfo, queryset, /):
-        manager = get_plugin_manager_promise(info.context).get()
-        vouchers = queryset.annotate(
-            last_code=Subquery(
-                VoucherCode.objects.filter(voucher=OuterRef("pk")).values("code")[:1]
-            )
-        )
-        codes = [voucher.last_code for voucher in vouchers]
-        webhooks = get_webhooks_for_event(WebhookEventAsyncType.VOUCHER_DELETED)
-        queryset.delete()
-
-        for voucher, code in zip(vouchers, codes):
-            cls.call_event(manager.voucher_deleted, voucher, code, webhooks=webhooks)

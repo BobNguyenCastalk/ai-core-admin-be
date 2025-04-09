@@ -21,12 +21,6 @@ from ..translations.mutations import (
 )
 from .filters import PromotionWhereInput, SaleFilter, VoucherFilter
 from .mutations import (
-    SaleAddCatalogues,
-    SaleChannelListingUpdate,
-    SaleCreate,
-    SaleDelete,
-    SaleRemoveCatalogues,
-    SaleUpdate,
     VoucherAddCatalogues,
     VoucherChannelListingUpdate,
     VoucherCodeBulkDelete,
@@ -35,7 +29,6 @@ from .mutations import (
     VoucherRemoveCatalogues,
     VoucherUpdate,
 )
-from .mutations.bulk_mutations import SaleBulkDelete, VoucherBulkDelete
 from .resolvers import (
     resolve_promotion,
     resolve_promotions,
@@ -204,18 +197,10 @@ class DiscountMutations(graphene.ObjectType):
     promotion_translate = PromotionTranslate.Field()
     promotion_rule_translate = PromotionRuleTranslate.Field()
 
-    sale_create = SaleCreate.Field()
-    sale_delete = SaleDelete.Field()
-    sale_bulk_delete = SaleBulkDelete.Field()
-    sale_update = SaleUpdate.Field()
-    sale_catalogues_add = SaleAddCatalogues.Field()
-    sale_catalogues_remove = SaleRemoveCatalogues.Field()
     sale_translate = SaleTranslate.Field()
-    sale_channel_listing_update = SaleChannelListingUpdate.Field()
 
     voucher_create = VoucherCreate.Field()
     voucher_delete = VoucherDelete.Field()
-    voucher_bulk_delete = VoucherBulkDelete.Field()
     voucher_update = VoucherUpdate.Field()
     voucher_catalogues_add = VoucherAddCatalogues.Field()
     voucher_catalogues_remove = VoucherRemoveCatalogues.Field()
