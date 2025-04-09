@@ -1,10 +1,3 @@
-from .promotion.promotion_bulk_delete import PromotionBulkDelete
-from .promotion.promotion_create import PromotionCreate
-from .promotion.promotion_delete import PromotionDelete
-from .promotion.promotion_rule_create import PromotionRuleCreate
-from .promotion.promotion_rule_delete import PromotionRuleDelete
-from .promotion.promotion_rule_update import PromotionRuleUpdate
-from .promotion.promotion_update import PromotionUpdate
 from .sale.sale_add_catalogues import SaleAddCatalogues
 from .sale.sale_channel_listing_update import SaleChannelListingUpdate
 from .sale.sale_create import SaleCreate
@@ -33,11 +26,4 @@ __all__ = [
     "VoucherRemoveCatalogues",
     "VoucherUpdate",
     "VoucherCodeBulkDelete",
-    "PromotionCreate",
-    "PromotionUpdate",
-    "PromotionDelete",
-    "PromotionRuleCreate",
-    "PromotionRuleUpdate",
-    "PromotionRuleDelete",
-    "PromotionBulkDelete",
 ]
