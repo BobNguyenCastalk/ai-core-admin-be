@@ -12,22 +12,7 @@ from ..core.doc_category import DOC_CATEGORY_GIFT_CARDS
 from ..core.fields import FilterConnectionField, PermissionsField
 from ..core.types import NonNullList
 from ..core.utils import from_global_id_or_error
-from .bulk_mutations import (
-    GiftCardBulkActivate,
-    GiftCardBulkCreate,
-    GiftCardBulkDeactivate,
-    GiftCardBulkDelete,
-)
 from .filters import GiftCardFilterInput, GiftCardTagFilterInput
-from .mutations import (
-    GiftCardActivate,
-    GiftCardAddNote,
-    GiftCardCreate,
-    GiftCardDeactivate,
-    GiftCardDelete,
-    GiftCardResend,
-    GiftCardUpdate,
-)
 from .resolvers import resolve_gift_card, resolve_gift_card_tags, resolve_gift_cards
 from .sorters import GiftCardSortingInput
 from .types import GiftCard, GiftCardCountableConnection, GiftCardTagCountableConnection
@@ -132,15 +117,4 @@ class GiftCardQueries(graphene.ObjectType):
 
 
 class GiftCardMutations(graphene.ObjectType):
-    gift_card_activate = GiftCardActivate.Field()
-    gift_card_create = GiftCardCreate.Field()
-    gift_card_delete = GiftCardDelete.Field()
-    gift_card_deactivate = GiftCardDeactivate.Field()
-    gift_card_update = GiftCardUpdate.Field()
-    gift_card_resend = GiftCardResend.Field()
-    gift_card_add_note = GiftCardAddNote.Field()
-
-    gift_card_bulk_create = GiftCardBulkCreate.Field()
-    gift_card_bulk_delete = GiftCardBulkDelete.Field()
-    gift_card_bulk_activate = GiftCardBulkActivate.Field()
-    gift_card_bulk_deactivate = GiftCardBulkDeactivate.Field()
+    pass

@@ -88,19 +88,6 @@ WEBHOOK_EVENT_DESCRIPTION = {
     WebhookEventAsyncType.CUSTOMER_METADATA_UPDATED: (
         "A customer account metadata is updated." + ADDED_IN_38
     ),
-    WebhookEventAsyncType.GIFT_CARD_CREATED: "A new gift card created.",
-    WebhookEventAsyncType.GIFT_CARD_UPDATED: "A gift card is updated.",
-    WebhookEventAsyncType.GIFT_CARD_DELETED: "A gift card is deleted.",
-    WebhookEventAsyncType.GIFT_CARD_SENT: (
-        "A gift card has been sent." + ADDED_IN_313 + PREVIEW_FEATURE
-    ),
-    WebhookEventAsyncType.GIFT_CARD_STATUS_CHANGED: "A gift card status is changed.",
-    WebhookEventAsyncType.GIFT_CARD_METADATA_UPDATED: (
-        "A gift card metadata is updated." + ADDED_IN_38
-    ),
-    WebhookEventAsyncType.GIFT_CARD_EXPORT_COMPLETED: (
-        "A gift card export is completed." + ADDED_IN_316
-    ),
     WebhookEventAsyncType.INVOICE_REQUESTED: "An invoice for order requested.",
     WebhookEventAsyncType.INVOICE_DELETED: "An invoice is deleted.",
     WebhookEventAsyncType.INVOICE_SENT: "Invoice has been sent.",
