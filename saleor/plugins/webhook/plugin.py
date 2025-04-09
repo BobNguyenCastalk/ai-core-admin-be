@@ -67,13 +67,11 @@ from ...webhook.payloads import (
     generate_excluded_shipping_methods_for_checkout_payload,
     generate_excluded_shipping_methods_for_order_payload,
     generate_fulfillment_payload,
-    generate_invoice_payload,
     generate_list_gateways_payload,
     generate_meta,
     generate_metadata_updated_payload,
     generate_order_payload,
     generate_order_payload_for_tax_calculation,
-    generate_page_payload,
     generate_payment_payload,
     generate_product_deleted_payload,
     generate_product_media_payload,
@@ -1136,63 +1134,6 @@ class WebhookPlugin(BasePlugin):
         self._trigger_promotion_rule_event(
             WebhookEventAsyncType.PROMOTION_RULE_DELETED, promotion_rule
         )
-
-    def invoice_request(
-        self,
-        order: "Order",
-        invoice: "Invoice",
-        number: Optional[str],
-        previous_value: Any,
-    ) -> Any:
-        if not self.active:
-            return previous_value
-        event_type = WebhookEventAsyncType.INVOICE_REQUESTED
-        if webhooks := get_webhooks_for_event(event_type):
-            invoice_data_generator = partial(
-                generate_invoice_payload, invoice, self.requestor
-            )
-            self.trigger_webhooks_async(
-                None,
-                event_type,
-                webhooks,
-                invoice,
-                self.requestor,
-                legacy_data_generator=invoice_data_generator,
-            )
-
-    def invoice_delete(self, invoice: "Invoice", previous_value: Any):
-        if not self.active:
-            return previous_value
-        event_type = WebhookEventAsyncType.INVOICE_DELETED
-        if webhooks := get_webhooks_for_event(event_type):
-            invoice_data_generator = partial(
-                generate_invoice_payload, invoice, self.requestor
-            )
-            self.trigger_webhooks_async(
-                None,
-                event_type,
-                webhooks,
-                invoice,
-                self.requestor,
-                legacy_data_generator=invoice_data_generator,
-            )
-
-    def invoice_sent(self, invoice: "Invoice", email: str, previous_value: Any) -> Any:
-        if not self.active:
-            return previous_value
-        event_type = WebhookEventAsyncType.INVOICE_SENT
-        if webhooks := get_webhooks_for_event(event_type):
-            invoice_data_generator = partial(
-                generate_invoice_payload, invoice, self.requestor
-            )
-            self.trigger_webhooks_async(
-                None,
-                event_type,
-                webhooks,
-                invoice,
-                self.requestor,
-                legacy_data_generator=invoice_data_generator,
-            )
 
     def order_cancelled(
         self, order: "Order", previous_value: Any, webhooks=None
@@ -3276,7 +3217,6 @@ class WebhookPlugin(BasePlugin):
 
     def is_event_active(self, event: str, channel=Optional[str]):
         map_event = {
-            "invoice_request": WebhookEventAsyncType.INVOICE_REQUESTED,
             "stored_payment_method_request_delete": (
                 WebhookEventSyncType.STORED_PAYMENT_METHOD_DELETE_REQUESTED
             ),
