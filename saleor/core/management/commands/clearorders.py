@@ -10,7 +10,7 @@ from django.core.management.base import BaseCommand
 from ....account.models import Address, CustomerEvent, CustomerNote, User
 from ....checkout.models import Checkout, CheckoutLine, CheckoutMetadata
 from ....discount.models import OrderDiscount, OrderLineDiscount
-from ....giftcard.models import GiftCard, GiftCardEvent, GiftCardTag
+from ....giftcard.models import GiftCard, GiftCardEvent
 from ....invoice.models import Invoice, InvoiceEvent
 from ....order.models import (
     Fulfillment,
