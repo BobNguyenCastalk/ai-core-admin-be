@@ -50,13 +50,6 @@ def filter_gift_cards_by_used_by_user(qs, user_pks):
     return qs.filter(Exists(users.filter(pk=OuterRef("used_by_id"))))
 
 
-def filter_tags_list(qs, _, value):
-    if not value:
-        return qs
-    tags = models.GiftCardTag.objects.using(qs.db).filter(name__in=value)
-    return qs.filter(Exists(tags.filter(pk=OuterRef("tags__id"))))
-
-
 def filter_gift_card_used(qs, _, value):
     if value is None:
         return qs
@@ -91,7 +84,6 @@ def filter_created_by_email(qs, _, value):
 
 
 class GiftCardFilter(MetadataFilterBase):
-    tags = ListObjectTypeFilter(input_class=graphene.String, method=filter_tags_list)
     products = GlobalIDMultipleChoiceFilter(method=filter_products)
     used_by = GlobalIDMultipleChoiceFilter(method=filter_used_by)
     used = django_filters.BooleanFilter(method=filter_gift_card_used)

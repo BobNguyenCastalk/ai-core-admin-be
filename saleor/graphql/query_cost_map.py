@@ -80,7 +80,6 @@ COST_MAP = {
         "giftCard": {"complexity": 1},
         "giftCardCurrencies": {"complexity": 1},
         "giftCards": {"complexity": 1, "multipliers": ["first", "last"]},
-        "giftCardTags": {"complexity": 1, "multipliers": ["first", "last"]},
         "homepageEvents": {"complexity": 1, "multipliers": ["first", "last"]},
         "me": {"complexity": 1},
         "menu": {"complexity": 1},

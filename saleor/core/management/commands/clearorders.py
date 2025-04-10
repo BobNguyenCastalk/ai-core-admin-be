@@ -115,9 +115,6 @@ class Command(BaseCommand):
         gift_card_events = GiftCardEvent.objects.all()
         gift_card_events._raw_delete(gift_card_events.db)  # type: ignore[attr-defined] # raw access # noqa: E501
 
-        gift_card_tags = GiftCardTag.objects.all()
-        gift_card_tags.delete()
-
         gift_cards = GiftCard.objects.all()
         gift_cards._raw_delete(gift_cards.db)  # type: ignore[attr-defined] # raw access # noqa: E501
         self.stdout.write("Removed gift cards")

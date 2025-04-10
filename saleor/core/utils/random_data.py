@@ -54,7 +54,7 @@ from ...discount.models import (
     VoucherCode,
 )
 from ...giftcard import events as gift_card_events
-from ...giftcard.models import GiftCard, GiftCardTag
+from ...giftcard.models import GiftCard
 from ...graphql.discount.enums import RewardTypeEnum
 from ...menu.models import Menu, MenuItem
 from ...order import OrderStatus
@@ -1522,7 +1522,6 @@ def create_gift_cards(how_many=5):
     if not product:
         return
     product_pk = product.pk
-    tag, _ = GiftCardTag.objects.get_or_create(name="issued-gift-cards")
     for i in range(how_many):
         staff_user = User.objects.filter(is_staff=True).order_by("?").first()
         gift_card, created = GiftCard.objects.get_or_create(
@@ -1533,7 +1532,6 @@ def create_gift_cards(how_many=5):
                 "current_balance": Money(50, DEFAULT_CURRENCY),
             },
         )
-        gift_card.tags.add(tag)
         gift_card_events.gift_card_issued_event(gift_card, staff_user, None)
         if created:
             yield "Gift card #%d" % gift_card.id

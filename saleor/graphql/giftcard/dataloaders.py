@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from ...checkout.models import Checkout
-from ...giftcard.models import GiftCard, GiftCardEvent, GiftCardTag
+from ...giftcard.models import GiftCard, GiftCardEvent
 from ...order.models import Order
 from ..core.dataloaders import DataLoader
 
@@ -30,30 +30,6 @@ class GiftCardEventsByGiftCardIdLoader(DataLoader):
         for event in events.iterator():
             events_map[event.gift_card_id].append(event)
         return [events_map.get(gift_card_id, []) for gift_card_id in keys]
-
-
-class GiftCardTagsByGiftCardIdLoader(DataLoader):
-    context_key = "giftcardtags_by_giftcard"
-
-    def batch_load(self, keys):
-        # there is no typing information available for through models
-        # so we resolve to getattr, which is safer than ignoring everything
-        gift_card_gift_card_tags = GiftCard.tags.through.objects.using(
-            self.database_connection_name
-        ).filter(giftcard_id__in=keys)
-        tags_ids = [
-            getattr(gift_card_tag, "giftcardtag_id")
-            for gift_card_tag in gift_card_gift_card_tags
-        ]
-        tags = GiftCardTag.objects.using(self.database_connection_name).in_bulk(
-            tags_ids
-        )
-        tags_map = defaultdict(list)
-        for gift_card_tag in gift_card_gift_card_tags:
-            tags_map[getattr(gift_card_tag, "giftcard_id")].append(
-                tags[getattr(gift_card_tag, "giftcardtag_id")]
-            )
-        return [tags_map.get(gift_card_id, []) for gift_card_id in keys]
 
 
 class GiftCardsByOrderIdLoader(DataLoader):

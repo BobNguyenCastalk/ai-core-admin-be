@@ -16,21 +16,6 @@ from ..permission.enums import GiftcardPermissions
 from . import GiftCardEvents
 
 
-class GiftCardTag(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-
-    class Meta:
-        ordering = ("name",)
-        indexes = [
-            GinIndex(
-                name="gift_card_tag_search_gin",
-                # `opclasses` and `fields` should be the same length
-                fields=["name"],
-                opclasses=["gin_trgm_ops"],
-            ),
-        ]
-
-
 class GiftCardQueryset(models.QuerySet):
     def active(self, date):
         return self.filter(
@@ -73,7 +58,6 @@ class GiftCard(ModelWithMetadata):
 
     expiry_date = models.DateField(null=True, blank=True)
 
-    tags = models.ManyToManyField(GiftCardTag, "gift_cards")
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     last_used_on = models.DateTimeField(null=True, blank=True)
     product = models.ForeignKey(

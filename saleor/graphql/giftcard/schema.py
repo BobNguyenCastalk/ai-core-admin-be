@@ -13,9 +13,9 @@ from ..core.fields import FilterConnectionField, PermissionsField
 from ..core.types import NonNullList
 from ..core.utils import from_global_id_or_error
 from .filters import GiftCardFilterInput, GiftCardTagFilterInput
-from .resolvers import resolve_gift_card, resolve_gift_card_tags, resolve_gift_cards
+from .resolvers import resolve_gift_card, resolve_gift_cards
 from .sorters import GiftCardSortingInput
-from .types import GiftCard, GiftCardCountableConnection, GiftCardTagCountableConnection
+from .types import GiftCard, GiftCardCountableConnection
 
 
 class GiftCardQueries(graphene.ObjectType):
@@ -52,17 +52,6 @@ class GiftCardQueries(graphene.ObjectType):
         NonNullList(graphene.String),
         description="List of gift card currencies." + ADDED_IN_31,
         required=True,
-        permissions=[
-            GiftcardPermissions.MANAGE_GIFT_CARD,
-        ],
-        doc_category=DOC_CATEGORY_GIFT_CARDS,
-    )
-    gift_card_tags = FilterConnectionField(
-        GiftCardTagCountableConnection,
-        filter=GiftCardTagFilterInput(
-            description="Filtering options for gift card tags."
-        ),
-        description="List of gift card tags." + ADDED_IN_31,
         permissions=[
             GiftcardPermissions.MANAGE_GIFT_CARD,
         ],
@@ -106,14 +95,6 @@ class GiftCardQueries(graphene.ObjectType):
                 get_database_connection_name(info.context)
             ).values_list("currency", flat=True)
         )
-
-    @staticmethod
-    def resolve_gift_card_tags(_root, info: ResolveInfo, **data):
-        qs = resolve_gift_card_tags(info)
-        qs = filter_connection_queryset(
-            qs, data, allow_replica=info.context.allow_replica
-        )
-        return create_connection_slice(qs, info, data, GiftCardTagCountableConnection)
 
 
 class GiftCardMutations(graphene.ObjectType):

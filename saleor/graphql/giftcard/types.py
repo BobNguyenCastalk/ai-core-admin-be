@@ -32,7 +32,6 @@ from ..product.dataloaders.products import ProductByIdLoader
 from ..utils import get_user_or_app_from_context
 from .dataloaders import (
     GiftCardEventsByGiftCardIdLoader,
-    GiftCardTagsByGiftCardIdLoader,
 )
 from .enums import GiftCardEventsEnum
 from .filters import (
@@ -215,20 +214,6 @@ class GiftCardEvent(ModelObjectType[models.GiftCardEvent]):
         )
 
 
-class GiftCardTag(ModelObjectType[models.GiftCardTag]):
-    id = graphene.GlobalID(
-        required=True, description="ID of the tag associated with a gift card."
-    )
-    name = graphene.String(
-        required=True, description="Name of the tag associated with a gift card."
-    )
-
-    class Meta:
-        description = "The gift card tag." + ADDED_IN_31
-        model = models.GiftCardTag
-        interfaces = [graphene.relay.Node]
-
-
 class GiftCard(ModelObjectType[models.GiftCard]):
     id = graphene.GlobalID(required=True, description="ID of the gift card.")
     display_code = graphene.String(
@@ -300,14 +285,6 @@ class GiftCard(ModelObjectType[models.GiftCard]):
             description="Filtering options for gift card events."
         ),
         description=("List of events associated with the gift card." + ADDED_IN_31),
-        required=True,
-        permissions=[
-            GiftcardPermissions.MANAGE_GIFT_CARD,
-        ],
-    )
-    tags = PermissionsField(
-        NonNullList(GiftCardTag),
-        description="The gift card tag." + ADDED_IN_31,
         required=True,
         permissions=[
             GiftcardPermissions.MANAGE_GIFT_CARD,
@@ -496,10 +473,6 @@ class GiftCard(ModelObjectType[models.GiftCard]):
         )
 
     @staticmethod
-    def resolve_tags(root: models.GiftCard, info):
-        return GiftCardTagsByGiftCardIdLoader(info.context).load(root.id)
-
-    @staticmethod
     @traced_resolver
     def resolve_bought_in_channel(root: models.GiftCard, info):
         def with_bought_event(events):
@@ -569,9 +542,3 @@ class GiftCardCountableConnection(CountableConnection):
     class Meta:
         doc_category = DOC_CATEGORY_GIFT_CARDS
         node = GiftCard
-
-
-class GiftCardTagCountableConnection(CountableConnection):
-    class Meta:
-        doc_category = DOC_CATEGORY_GIFT_CARDS
-        node = GiftCardTag

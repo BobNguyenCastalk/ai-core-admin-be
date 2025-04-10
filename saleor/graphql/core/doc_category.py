@@ -50,7 +50,6 @@ DOC_CATEGORY_MAP = {
     "invoice.Invoice": DOC_CATEGORY_ORDERS,
     "invoice.InvoiceEvent": DOC_CATEGORY_ORDERS,
     "giftcard.GiftCard": DOC_CATEGORY_GIFT_CARDS,
-    "giftcard.GiftCardTag": DOC_CATEGORY_GIFT_CARDS,
     "giftcard.GiftCardEvent": DOC_CATEGORY_GIFT_CARDS,
     "menu.Menu": DOC_CATEGORY_MENU,
     "menu.MenuItem": DOC_CATEGORY_MENU,
