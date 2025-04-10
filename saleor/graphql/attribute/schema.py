@@ -15,17 +15,6 @@ from ..translations.mutations import (
 )
 from .bulk_mutations import AttributeBulkDelete, AttributeValueBulkDelete
 from .filters import AttributeFilterInput, AttributeWhereInput, filter_attribute_search
-from .mutations import (
-    AttributeBulkCreate,
-    AttributeBulkUpdate,
-    AttributeCreate,
-    AttributeDelete,
-    AttributeReorderValues,
-    AttributeUpdate,
-    AttributeValueCreate,
-    AttributeValueDelete,
-    AttributeValueUpdate,
-)
 from .resolvers import resolve_attributes
 from .sorters import AttributeSortingInput
 from .types import Attribute, AttributeCountableConnection
@@ -78,20 +67,11 @@ class AttributeQueries(graphene.ObjectType):
 
 class AttributeMutations(graphene.ObjectType):
     # attribute mutations
-    attribute_create = AttributeCreate.Field()
-    attribute_delete = AttributeDelete.Field()
-    attribute_update = AttributeUpdate.Field()
-    attribute_bulk_create = AttributeBulkCreate.Field()
-    attribute_bulk_update = AttributeBulkUpdate.Field()
     attribute_translate = AttributeTranslate.Field()
     attribute_bulk_translate = AttributeBulkTranslate.Field()
     attribute_bulk_delete = AttributeBulkDelete.Field()
     attribute_value_bulk_delete = AttributeValueBulkDelete.Field()
 
     # attribute value mutations
-    attribute_value_create = AttributeValueCreate.Field()
-    attribute_value_delete = AttributeValueDelete.Field()
-    attribute_value_update = AttributeValueUpdate.Field()
     attribute_value_bulk_translate = AttributeValueBulkTranslate.Field()
     attribute_value_translate = AttributeValueTranslate.Field()
-    attribute_reorder_values = AttributeReorderValues.Field()
