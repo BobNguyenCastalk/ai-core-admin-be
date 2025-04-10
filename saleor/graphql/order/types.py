@@ -421,9 +421,6 @@ class OrderEvent(ModelObjectType[models.OrderEvent]):
     quantity = graphene.Int(description="Number of items.")
     composed_id = graphene.String(description="Composed ID of the Fulfillment.")
     order_number = graphene.String(description="User-friendly number of an order.")
-    invoice_number = graphene.String(
-        description="Number of an invoice related to the order."
-    )
     oversold_items = NonNullList(
         graphene.String, description="List of oversold lines names."
     )

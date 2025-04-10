@@ -185,64 +185,6 @@ def event_payment_confirmed_notification(
         user_id=user_id,
     )
 
-
-def invoice_requested_event(
-    *,
-    order: Order,
-    user: Optional[User],
-    app: Optional[App],
-) -> OrderEvent:
-    return OrderEvent.objects.create(
-        order=order, app=app, type=OrderEvents.INVOICE_REQUESTED, user=user
-    )
-
-
-def invoice_generated_event(
-    *,
-    order: Order,
-    user: Optional[User],
-    app: Optional[App],
-    invoice_number: str,
-) -> OrderEvent:
-    return OrderEvent.objects.create(
-        order=order,
-        type=OrderEvents.INVOICE_GENERATED,
-        user=user,
-        app=app,
-        parameters={"invoice_number": invoice_number},
-    )
-
-
-def invoice_updated_event(
-    *,
-    order: Order,
-    user: Optional[Optional[User]],
-    app: Optional[App],
-    invoice_number: str,
-    url: str,
-    status: str,
-) -> OrderEvent:
-    return OrderEvent.objects.create(
-        order=order,
-        type=OrderEvents.INVOICE_UPDATED,
-        user=user,
-        app=app,
-        parameters={"invoice_number": invoice_number, "url": url, "status": status},
-    )
-
-
-def event_invoice_sent_notification(
-    *, order_id: "UUID", user_id: Optional[int], app_id: Optional[int], email: str
-) -> OrderEvent:
-    return OrderEvent.objects.create(
-        order_id=order_id,
-        type=OrderEvents.INVOICE_SENT,
-        user_id=user_id,
-        app_id=app_id,
-        parameters={"email": email},
-    )
-
-
 def email_resent_event(
     *, order: Order, user: Optional[User], email_type: OrderEventsEmails
 ) -> OrderEvent:
