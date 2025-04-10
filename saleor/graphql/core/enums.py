@@ -18,7 +18,6 @@ from ...core.units import (
 from ...csv import error_codes as csv_error_codes
 from ...discount import error_codes as discount_error_codes
 from ...giftcard import error_codes as giftcard_error_codes
-from ...invoice import error_codes as invoice_error_codes
 from ...menu import error_codes as menu_error_codes
 from ...order import error_codes as order_error_codes
 from ...page import error_codes as page_error_codes
@@ -233,9 +232,6 @@ OrderErrorCode.doc_category = DOC_CATEGORY_ORDERS
 OrderBulkCreateErrorCode = graphene.Enum.from_enum(
     order_error_codes.OrderBulkCreateErrorCode
 )
-
-InvoiceErrorCode = graphene.Enum.from_enum(invoice_error_codes.InvoiceErrorCode)
-InvoiceErrorCode.doc_category = DOC_CATEGORY_ORDERS
 
 PageErrorCode = graphene.Enum.from_enum(page_error_codes.PageErrorCode)
 PageErrorCode.doc_category = DOC_CATEGORY_PAGES

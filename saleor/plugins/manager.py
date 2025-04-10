@@ -67,10 +67,8 @@ if TYPE_CHECKING:
     from ..csv.models import ExportFile
     from ..discount.models import Promotion, PromotionRule, Voucher, VoucherCode
     from ..giftcard.models import GiftCard
-    from ..invoice.models import Invoice
     from ..menu.models import Menu, MenuItem
     from ..order.models import Fulfillment, Order, OrderLine
-    from ..page.models import Page, PageType
     from ..payment.models import TransactionItem
     from ..product.models import (
         Category,
@@ -1146,44 +1144,6 @@ class PluginsManager(PaymentInterface):
         default_value = None
         return self.__run_method_on_plugins(
             "promotion_rule_deleted", default_value, promotion_rule, channel_slug=None
-        )
-
-    def invoice_request(
-        self, order: "Order", invoice: "Invoice", number: Optional[str]
-    ):
-        default_value = None
-        return self.__run_method_on_plugins(
-            "invoice_request",
-            default_value,
-            order,
-            invoice,
-            number,
-            channel_slug=order.channel.slug,
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def invoice_delete(self, invoice: "Invoice"):
-        default_value = None
-        channel_slug = invoice.order.channel.slug if invoice.order else None
-        return self.__run_method_on_plugins(
-            "invoice_delete",
-            default_value,
-            invoice,
-            channel_slug=channel_slug,
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def invoice_sent(self, invoice: "Invoice", email: str):
-        default_value = None
-        channel_slug = invoice.order.channel.slug if invoice.order else None
-        return self.__run_method_on_plugins(
-            "invoice_sent",
-            default_value,
-            invoice,
-            email,
-            channel_slug=channel_slug,
         )
 
     # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.

@@ -27,7 +27,6 @@ from ....core.weight import zero_weight
 from ....discount.models import OrderDiscount, VoucherCode
 from ....discount.utils.manual_discount import apply_discount_to_value
 from ....giftcard.models import GiftCard
-from ....invoice.models import Invoice
 from ....order import (
     FulfillmentStatus,
     OrderEvents,
@@ -123,7 +122,6 @@ class OrderBulkCreateData:
     notes: list[OrderEvent] = dataclass_field(default_factory=list)
     fulfillments: list[OrderBulkFulfillment] = dataclass_field(default_factory=list)
     transactions: list[OrderBulkTransaction] = dataclass_field(default_factory=list)
-    invoices: list[Invoice] = dataclass_field(default_factory=list)
     discounts: list[OrderDiscount] = dataclass_field(default_factory=list)
     gift_cards: list[GiftCard] = dataclass_field(default_factory=list)
     user: Optional[User] = None
@@ -187,10 +185,6 @@ class OrderBulkCreateData:
             for transaction_data in self.transactions
             for event in transaction_data.events
         ]
-
-    @property
-    def all_invoices(self) -> list[Invoice]:
-        return [invoice for invoice in self.invoices]
 
     @property
     def all_discounts(self) -> list[OrderDiscount]:
@@ -359,21 +353,6 @@ class OrderBulkCreateUserInput(BaseInputObjectType):
     email = graphene.String(description="Customer email associated with the order.")
     external_reference = graphene.String(
         description="Customer external ID associated with the order."
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_ORDERS
-
-
-class OrderBulkCreateInvoiceInput(BaseInputObjectType):
-    created_at = DateTime(
-        required=True, description="The date, when the invoice was created."
-    )
-    number = graphene.String(description="Invoice number.")
-    url = graphene.String(description="URL of the invoice to download.")
-    metadata = NonNullList(MetadataInput, description="Metadata of the invoice.")
-    private_metadata = NonNullList(
-        MetadataInput, description="Private metadata of the invoice."
     )
 
     class Meta:
@@ -591,9 +570,6 @@ class OrderBulkCreateInput(BaseInputObjectType):
     )
     transactions = NonNullList(
         TransactionCreateInput, description="Transactions related to the order."
-    )
-    invoices = NonNullList(
-        OrderBulkCreateInvoiceInput, description="Invoices related to the order."
     )
 
     class Meta:
@@ -1487,62 +1463,6 @@ class OrderBulkCreate(BaseMutation, I18nMixin):
         )
 
     @classmethod
-    def create_single_invoice(
-        cls,
-        invoice_input: dict[str, Any],
-        order_data: OrderBulkCreateData,
-        index: int,
-    ) -> Invoice:
-        created_at = invoice_input["created_at"]
-        if not cls.is_datetime_valid(created_at):
-            order_data.errors.append(
-                OrderBulkError(
-                    message="Invoice input contains future date.",
-                    path=f"invoices.{index}.created_at",
-                    code=OrderBulkCreateErrorCode.FUTURE_DATE,
-                )
-            )
-            created_at = None
-
-        if url := invoice_input.get("url"):
-            try:
-                URLValidator()(url)
-            except ValidationError:
-                order_data.errors.append(
-                    OrderBulkError(
-                        message="Invalid URL format.",
-                        path=f"invoices.{index}.url",
-                        code=OrderBulkCreateErrorCode.INVALID,
-                    )
-                )
-                url = None
-
-        invoice = Invoice(
-            order=order_data.order,
-            number=invoice_input.get("number"),
-            status=JobStatus.SUCCESS,
-            external_url=url,
-            created_at=created_at,
-        )
-
-        if metadata := invoice_input.get("metadata"):
-            cls.process_metadata(
-                metadata=metadata,
-                errors=order_data.errors,
-                path=f"invoices.{index}.metadata",
-                field=invoice.metadata,
-            )
-        if private_metadata := invoice_input.get("private_metadata"):
-            cls.process_metadata(
-                metadata=private_metadata,
-                errors=order_data.errors,
-                path=f"invoices.{index}.private_metadata",
-                field=invoice.private_metadata,
-            )
-
-        return invoice
-
-    @classmethod
     def create_single_transaction(
         cls,
         transaction_input: dict[str, Any],
@@ -1869,20 +1789,6 @@ class OrderBulkCreate(BaseMutation, I18nMixin):
                 note_index += 1
 
     @classmethod
-    def create_invoices(
-        cls,
-        order_input: dict[str, Any],
-        order_data: OrderBulkCreateData,
-    ):
-        if invoices_input := order_input.get("invoices"):
-            invoice_index = 0
-            for invoice_input in invoices_input:
-                order_data.invoices.append(
-                    cls.create_single_invoice(invoice_input, order_data, invoice_index)
-                )
-                invoice_index += 1
-
-    @classmethod
     def create_transactions(
         cls,
         order_input: dict[str, Any],
@@ -2014,7 +1920,6 @@ class OrderBulkCreate(BaseMutation, I18nMixin):
 
         cls.create_notes(order_input, order_data, object_storage)
         cls.create_transactions(order_input, order_data)
-        cls.create_invoices(order_input, order_data)
         cls.create_discounts(order_input, order_data, order_amounts)
         cls.validate_order_status(order_input["status"], order_data)
 
@@ -2296,12 +2201,6 @@ class OrderBulkCreate(BaseMutation, I18nMixin):
             [],
         )
         TransactionEvent.objects.bulk_create(transaction_events)
-
-        invoices: list[Invoice] = sum(
-            [order_data.all_invoices for order_data in orders_data if order_data.order],
-            [],
-        )
-        Invoice.objects.bulk_create(invoices)
 
         discounts: list[OrderDiscount] = sum(
             [

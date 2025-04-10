@@ -2,7 +2,6 @@ from ...account import events as account_events
 from ...celeryconf import app
 from ...giftcard import events as gift_card_events
 from ...graphql.core.utils import from_global_id_or_none
-from ...invoice import events as invoice_events
 from ...order import events as order_events
 from ..email_common import EmailConfig, send_email
 
@@ -137,32 +136,6 @@ def send_gift_card_email_task(recipient_email, payload, config, subject, templat
         gift_card_events.gift_card_resent_event(**email_data)
     else:
         gift_card_events.gift_card_sent_event(**email_data)
-
-
-@app.task(compression="zlib")
-def send_invoice_email_task(recipient_email, payload, config, subject, template):
-    """Send an invoice to user of related order with URL to download it."""
-    email_config = EmailConfig(**config)
-
-    send_email(
-        config=email_config,
-        recipient_list=[recipient_email],
-        context=payload,
-        subject=subject,
-        template_str=template,
-    )
-    invoice_events.notification_invoice_sent_event(
-        user_id=from_global_id_or_none(payload["requester_user_id"]),
-        app_id=from_global_id_or_none(payload["requester_app_id"]),
-        invoice_id=from_global_id_or_none(payload["invoice"]["id"]),
-        customer_email=payload["recipient_email"],
-    )
-    order_events.event_invoice_sent_notification(
-        order_id=from_global_id_or_none(payload["invoice"]["order_id"]),
-        user_id=from_global_id_or_none(payload["requester_user_id"]),
-        app_id=from_global_id_or_none(payload["requester_app_id"]),
-        email=payload["recipient_email"],
-    )
 
 
 @app.task(compression="zlib")

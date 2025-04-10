@@ -8,7 +8,6 @@ from .tasks import (
     send_fulfillment_confirmation_email_task,
     send_fulfillment_update_email_task,
     send_gift_card_email_task,
-    send_invoice_email_task,
     send_order_canceled_email_task,
     send_order_confirmation_email_task,
     send_order_confirmed_email_task,
@@ -192,28 +191,6 @@ def send_account_set_customer_password(
     send_set_user_password_email_task.delay(
         recipient_email, payload, config, subject, template
     )
-
-
-def send_invoice(
-    payload_func: Callable[[], dict], config: dict, plugin: "UserEmailPlugin"
-):
-    template = get_email_template_or_default(
-        plugin,
-        constants.INVOICE_READY_TEMPLATE_FIELD,
-        constants.INVOICE_READY_DEFAULT_TEMPLATE,
-        constants.DEFAULT_EMAIL_TEMPLATES_PATH,
-    )
-    if not template:
-        # Empty template means that we don't want to trigger a given event.
-        return
-    payload = payload_func()
-    recipient_email = payload["recipient_email"]
-    subject = get_email_subject(
-        plugin.configuration,
-        constants.INVOICE_READY_SUBJECT_FIELD,
-        constants.INVOICE_READY_DEFAULT_SUBJECT,
-    )
-    send_invoice_email_task.delay(recipient_email, payload, config, subject, template)
 
 
 def send_order_confirmation(

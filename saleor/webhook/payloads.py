@@ -59,7 +59,6 @@ from .serializers import (
 
 if TYPE_CHECKING:
     from ..discount.models import Promotion
-    from ..invoice.models import Invoice
     from ..payment.interface import (
         PaymentData,
         PaymentGatewayData,
@@ -486,48 +485,6 @@ def generate_sale_toggle_payload(
         fields=[],
         extra_dict_data=extra_dict_data,
     )
-
-
-@allow_writer()
-@traced_payload_generator
-def generate_invoice_payload(
-    invoice: "Invoice", requestor: Optional["RequestorOrLazyObject"] = None
-):
-    serializer = PayloadSerializer()
-    invoice_fields = ("id", "number", "external_url", "created")
-    if invoice.order is not None:
-        quantize_price_fields(invoice.order, ORDER_PRICE_FIELDS, invoice.order.currency)
-    return serializer.serialize(
-        [invoice],
-        fields=invoice_fields,
-        extra_dict_data={
-            "meta": generate_meta(requestor_data=generate_requestor(requestor)),
-            "order": lambda i: json.loads(_generate_order_payload_for_invoice(i.order))[
-                0
-            ],
-        },
-    )
-
-
-@traced_payload_generator
-def _generate_order_payload_for_invoice(order: "Order"):
-    # This is a temporary method that allows attaching an order token
-    # that is no longer part of the order model.
-    # The method should be removed after removing the deprecated order token field.
-    # After that, we should move generating order data to the `additional_fields`
-    # in the `generate_invoice_payload` method.
-    serializer = PayloadSerializer()
-    payload = serializer.serialize(
-        [order],
-        fields=ORDER_FIELDS,
-        extra_dict_data={
-            "token": order.id,
-            "user_email": order.get_customer_email(),
-            "created": order.created_at,
-        },
-    )
-    return payload
-
 
 @allow_writer()
 @traced_payload_generator

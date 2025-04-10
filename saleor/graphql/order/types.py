@@ -107,8 +107,6 @@ from ..discount.enums import DiscountValueTypeEnum
 from ..discount.types import Voucher
 from ..giftcard.dataloaders import GiftCardsByOrderIdLoader
 from ..giftcard.types import GiftCard
-from ..invoice.dataloaders import InvoicesByOrderIdLoader
-from ..invoice.types import Invoice
 from ..meta.resolvers import check_private_metadata_privilege, resolve_metadata
 from ..meta.types import MetadataItem, ObjectWithMetadata
 from ..payment.dataloaders import (
@@ -551,10 +549,6 @@ class OrderEvent(ModelObjectType[models.OrderEvent]):
             .load(root.order_id)
             .then(_resolve_order_number)
         )
-
-    @staticmethod
-    def resolve_invoice_number(root: models.OrderEvent, _info):
-        return root.parameters.get("invoice_number")
 
     @staticmethod
     @traced_resolver
@@ -1301,15 +1295,6 @@ class Order(ModelObjectType[models.Order]):
         Warehouse,
         description=(
             "Collection points that can be used for this order." + ADDED_IN_31
-        ),
-        required=True,
-    )
-    invoices = NonNullList(
-        Invoice,
-        description=(
-            "List of order invoices. Can be fetched for orders created in Saleor 3.2 "
-            "and later, for other orders requires one of the following permissions: "
-            f"{OrderPermissions.MANAGE_ORDERS.name}, {AuthorizationFilters.OWNER.name}."
         ),
         required=True,
     )
@@ -2240,15 +2225,6 @@ class Order(ModelObjectType[models.Order]):
             )
 
         return cls.resolve_lines(root, info).then(get_available_collection_points)
-
-    @staticmethod
-    def resolve_invoices(root: models.Order, info):
-        requester = get_user_or_app_from_context(info.context)
-        if root.use_old_id is True:
-            check_is_owner_or_has_one_of_perms(
-                requester, root.user, OrderPermissions.MANAGE_ORDERS
-            )
-        return InvoicesByOrderIdLoader(info.context).load(root.id)
 
     @staticmethod
     def resolve_is_shipping_required(root: models.Order, info):

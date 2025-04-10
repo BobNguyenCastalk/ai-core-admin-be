@@ -11,7 +11,6 @@ from ....account.models import Address, CustomerEvent, CustomerNote, User
 from ....checkout.models import Checkout, CheckoutLine, CheckoutMetadata
 from ....discount.models import OrderDiscount, OrderLineDiscount
 from ....giftcard.models import GiftCard, GiftCardEvent
-from ....invoice.models import Invoice, InvoiceEvent
 from ....order.models import (
     Fulfillment,
     FulfillmentLine,
@@ -45,7 +44,6 @@ class Command(BaseCommand):
         self.delete_allocations()
         self.delete_reservations()
         self.delete_checkouts()
-        self.delete_invoices()
         self.delete_gift_cards()
         self.delete_orders()
         self.delete_unassigned_addresses()
@@ -102,14 +100,6 @@ class Command(BaseCommand):
         payments = Payment.objects.all()
         payments._raw_delete(payments.db)  # type: ignore[attr-defined] # raw access # noqa: E501
         self.stdout.write("Removed payments and transactions")
-
-    def delete_invoices(self):
-        invoice_events = InvoiceEvent.objects.all()
-        invoice_events._raw_delete(invoice_events.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-
-        invoice = Invoice.objects.all()
-        invoice._raw_delete(invoice.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-        self.stdout.write("Removed invoices")
 
     def delete_gift_cards(self):
         gift_card_events = GiftCardEvent.objects.all()

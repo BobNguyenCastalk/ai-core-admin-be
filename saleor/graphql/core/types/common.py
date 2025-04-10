@@ -52,7 +52,6 @@ from ..enums import (
     GiftCardErrorCode,
     GiftCardSettingsErrorCode,
     IconThumbnailFormatEnum,
-    InvoiceErrorCode,
     JobStatusEnum,
     LanguageCodeEnum,
     MenuErrorCode,
@@ -382,13 +381,6 @@ class OrderError(Error):
 
 class OrderBulkCreateError(BulkError):
     code = OrderBulkCreateErrorCode(description="The error code.", required=False)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_ORDERS
-
-
-class InvoiceError(Error):
-    code = InvoiceErrorCode(description="The error code.", required=True)
 
     class Meta:
         doc_category = DOC_CATEGORY_ORDERS

@@ -51,10 +51,8 @@ if TYPE_CHECKING:
     from ..csv.models import ExportFile
     from ..discount.models import Promotion, PromotionRule, Voucher, VoucherCode
     from ..giftcard.models import GiftCard
-    from ..invoice.models import Invoice
     from ..menu.models import Menu, MenuItem
     from ..order.models import Fulfillment, Order, OrderLine
-    from ..page.models import Page, PageType
     from ..payment.interface import PaymentGatewayData, TransactionSessionData
     from ..payment.models import TransactionItem
     from ..product.models import (
@@ -858,28 +856,6 @@ class BasePlugin:
     initialize_payment: Callable[
         [dict, Optional[InitializedPaymentResponse]], InitializedPaymentResponse
     ]
-
-    # Trigger before invoice is deleted.
-    #
-    # Perform any extra logic before the invoice gets deleted.
-    # Note there is no need to run invoice.delete() as it will happen in mutation.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    invoice_delete: Callable[["Invoice", Any], Any]
-
-    # Trigger when invoice creation starts.
-    # May return Invoice object.
-    # Overwrite to create invoice with proper data, call invoice.update_invoice.
-    invoice_request: Callable[
-        ["Order", "Invoice", Union[str, None], Any], Optional["Invoice"]
-    ]
-
-    # Trigger after invoice is sent.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    invoice_sent: Callable[["Invoice", str, Any], Any]
 
     list_payment_sources: Callable[[str, Any], list["CustomerSource"]]
 
