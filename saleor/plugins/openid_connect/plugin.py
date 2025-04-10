@@ -4,10 +4,10 @@ from typing import Optional
 from authlib.common.errors import AuthlibBaseError
 from django.core import signing
 from django.core.exceptions import ValidationError
-from django.core.handlers.wsgi import WSGIRequest
 from jwt import DecodeError, ExpiredSignatureError, InvalidTokenError
 from requests import HTTPError, PreparedRequest
 
+from ...graphql.core import SaleorContext
 from ...account.models import User
 from ...account.utils import get_user_groups_permissions
 from ...core.auth import get_token_from_request
@@ -242,7 +242,7 @@ class OpenIDConnectPlugin(BasePlugin):
         return user_permissions
 
     def external_obtain_access_tokens(
-        self, data: dict, request: WSGIRequest, previous_value
+        self, data: dict, request: SaleorContext, previous_value
     ) -> ExternalAccessTokens:
         if not self.active:
             return previous_value
@@ -341,7 +341,7 @@ class OpenIDConnectPlugin(BasePlugin):
         return email_domain in staff_user_domains
 
     def external_authentication_url(
-        self, data: dict, request: WSGIRequest, previous_value
+        self, data: dict, request: SaleorContext, previous_value
     ) -> dict:
         if not self.active:
             return previous_value
@@ -371,7 +371,7 @@ class OpenIDConnectPlugin(BasePlugin):
         return {"authorizationUrl": uri}
 
     def external_refresh(
-        self, data: dict, request: WSGIRequest, previous_value
+        self, data: dict, request: SaleorContext, previous_value
     ) -> ExternalAccessTokens:
         if not self.active:
             return previous_value
@@ -444,7 +444,7 @@ class OpenIDConnectPlugin(BasePlugin):
         )
         return user_permissions
 
-    def external_logout(self, data: dict, request: WSGIRequest, previous_value):
+    def external_logout(self, data: dict, request: SaleorContext, previous_value):
         if not self.active:
             return previous_value
 
@@ -460,7 +460,7 @@ class OpenIDConnectPlugin(BasePlugin):
         return {"logoutUrl": req.url}
 
     def external_verify(
-        self, data: dict, request: WSGIRequest, previous_value
+        self, data: dict, request: SaleorContext, previous_value
     ) -> tuple[Optional[User], dict]:
         if not self.active:
             return previous_value
@@ -491,7 +491,7 @@ class OpenIDConnectPlugin(BasePlugin):
             )
         return user, payload
 
-    def authenticate_user(self, request: WSGIRequest, previous_value) -> Optional[User]:
+    def authenticate_user(self, request: SaleorContext, previous_value) -> Optional[User]:
         if not self.active:
             return previous_value
         token = get_token_from_request(request)
