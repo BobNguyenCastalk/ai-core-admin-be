@@ -20,7 +20,7 @@ from ..account.utils import retrieve_user_by_email, store_user_address
 from ..channel import MarkAsPaidStrategy
 from ..checkout import CheckoutAuthorizeStatus, calculations
 from ..checkout.error_codes import CheckoutErrorCode
-from ..core.exceptions import GiftCardNotApplicable, InsufficientStock
+from ..core.exceptions import InsufficientStock
 from ..core.postgres import FlatConcatSearchVector
 from ..core.taxes import TaxDataError, TaxError, zero_taxed_money
 from ..core.tracing import traced_atomic_transaction
@@ -68,7 +68,6 @@ from .base_calculations import (
 )
 from .calculations import fetch_checkout_data
 from .checkout_cleaner import (
-    _validate_gift_cards,
     clean_billing_address,
     clean_checkout_payment,
     clean_checkout_shipping,
@@ -587,9 +586,6 @@ def _prepare_order_data(
         }
     )
 
-    # validate checkout gift cards
-    _validate_gift_cards(checkout)
-
     order_data.update(_process_voucher_data_for_order(checkout_info))
 
     order_data["total_price_left"] = (
@@ -826,7 +822,6 @@ def _prepare_checkout_with_transactions(
                 )
             }
         )
-    _validate_gift_cards(checkout_info.checkout)
     _prepare_checkout(
         manager=manager,
         checkout_info=checkout_info,
@@ -889,8 +884,6 @@ def _get_order_data(
             "Voucher not applicable",
             code=CheckoutErrorCode.VOUCHER_NOT_APPLICABLE.value,
         )
-    except GiftCardNotApplicable as e:
-        raise ValidationError(e.message, code=e.code)
     except TaxError as tax_error:
         raise ValidationError(
             f"Unable to calculate taxes - {str(tax_error)}",
@@ -1044,15 +1037,6 @@ def complete_checkout_post_payment_part(
             )
             error = prepare_insufficient_stock_checkout_validation_error(e)
             raise error
-        except GiftCardNotApplicable as e:
-            _complete_checkout_fail_handler(
-                checkout_info,
-                manager,
-                voucher_code=checkout_info.voucher_code,
-                voucher=checkout_info.voucher,
-                payment=payment,
-            )
-            raise ValidationError(code=e.code, message=e.message)
 
         # if the order total value is 0 it is paid from the definition
         if order.total.net.amount == 0:
@@ -1490,14 +1474,6 @@ def create_order_from_checkout(
                 voucher=voucher,
             )
             raise
-        except GiftCardNotApplicable:
-            _complete_checkout_fail_handler(
-                checkout_info,
-                manager,
-                voucher_code=code,
-                voucher=voucher,
-            )
-            raise
 
 
 def assign_checkout_user(
@@ -1633,8 +1609,6 @@ def complete_checkout_with_transaction(
     except InsufficientStock as e:
         error = prepare_insufficient_stock_checkout_validation_error(e)
         raise error
-    except GiftCardNotApplicable as e:
-        raise ValidationError({"gift_cards": e})
 
 
 def complete_checkout_with_payment(

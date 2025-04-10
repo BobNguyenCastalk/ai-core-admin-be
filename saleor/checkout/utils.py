@@ -20,7 +20,6 @@ from ..core.exceptions import NonExistingCheckoutLines, ProductNotPublished
 from ..core.taxes import zero_taxed_money
 from ..core.utils.promo_code import (
     InvalidPromoCode,
-    promo_code_is_gift_card,
     promo_code_is_voucher,
 )
 from ..core.utils.translations import get_translation
@@ -780,14 +779,6 @@ def add_promo_code_to_checkout(
             lines,
             promo_code,
         )
-    elif promo_code_is_gift_card(promo_code):
-        user_email = cast(str, checkout_info.get_customer_email())
-        add_gift_card_code_to_checkout(
-            checkout_info.checkout,
-            user_email,
-            promo_code,
-            checkout_info.channel.currency_code,
-        )
     else:
         raise InvalidPromoCode()
 
@@ -877,10 +868,6 @@ def remove_promo_code_from_checkout_or_error(
 
     if promo_code_is_voucher(promo_code):
         remove_voucher_code_from_checkout_or_error(checkout_info, promo_code)
-    elif promo_code_is_gift_card(promo_code):
-        remove_gift_card_code_from_checkout_or_error(checkout_info.checkout, promo_code)
-    # clear the voucher code in case the code does not exists anymore but it's still
-    # assigned to the checkout
     elif promo_code == checkout_info.checkout.voucher_code:
         remove_voucher_code_from_checkout_or_error(checkout_info, promo_code)
     else:

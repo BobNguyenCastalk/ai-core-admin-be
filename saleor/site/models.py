@@ -13,7 +13,6 @@ from ..core.models import ModelWithMetadata
 from ..core.units import WeightUnits
 from ..core.utils.translations import Translation
 from ..permission.enums import SitePermissions
-from . import GiftCardSettingsExpiryType
 from .error_codes import SiteErrorCode
 from .patch_sites import patch_contrib_sites
 
@@ -83,17 +82,6 @@ class SiteSettings(ModelWithMetadata):
         default=DEFAULT_LIMIT_QUANTITY_PER_CHECKOUT,
         validators=[MinValueValidator(1)],
     )
-
-    # gift card settings
-    gift_card_expiry_type = models.CharField(
-        max_length=32,
-        choices=GiftCardSettingsExpiryType.CHOICES,
-        default=GiftCardSettingsExpiryType.NEVER_EXPIRE,
-    )
-    gift_card_expiry_period_type = models.CharField(
-        max_length=32, choices=TimePeriodType.CHOICES, null=True, blank=True
-    )
-    gift_card_expiry_period = models.PositiveIntegerField(null=True, blank=True)
 
     # deprecated
     charge_taxes_on_shipping = models.BooleanField(default=True)

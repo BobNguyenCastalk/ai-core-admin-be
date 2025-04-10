@@ -3,7 +3,6 @@ import graphene
 from ....csv import models as csv_models
 from ....csv.events import export_started_event
 from ....csv.tasks import export_gift_cards_task
-from ....permission.enums import GiftcardPermissions
 from ....webhook.event_types import WebhookEventAsyncType
 from ...app.dataloaders import get_app_promise
 from ...core import ResolveInfo
@@ -44,7 +43,6 @@ class ExportGiftCards(BaseExportMutation):
     class Meta:
         description = "Export gift cards to csv file." + ADDED_IN_31
         doc_category = DOC_CATEGORY_GIFT_CARDS
-        permissions = (GiftcardPermissions.MANAGE_GIFT_CARD,)
         error_type_class = ExportError
         webhook_events_info = [
             WebhookEventInfo(

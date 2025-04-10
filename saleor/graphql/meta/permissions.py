@@ -17,7 +17,6 @@ from ...permission.enums import (
     ChannelPermissions,
     CheckoutPermissions,
     DiscountPermissions,
-    GiftcardPermissions,
     MenuPermissions,
     OrderPermissions,
     PagePermissions,
@@ -287,12 +286,6 @@ def private_payment_permissions(
     raise PermissionDenied(permissions=[PaymentPermissions.HANDLE_PAYMENTS])
 
 
-def gift_card_permissions(
-    _info: ResolveInfo, _object_pk: Any
-) -> list[BasePermissionEnum]:
-    return [GiftcardPermissions.MANAGE_GIFT_CARD]
-
-
 def tax_permissions(_info: ResolveInfo, _object_pk: int) -> list[BasePermissionEnum]:
     return [
         CheckoutPermissions.HANDLE_TAXES,
@@ -317,7 +310,6 @@ PUBLIC_META_PERMISSION_MAP: dict[
     "Collection": product_permissions,
     "DigitalContent": product_permissions,
     "Fulfillment": order_permissions,
-    "GiftCard": gift_card_permissions,
     "Invoice": invoice_permissions,
     "Menu": menu_permissions,
     "MenuItem": menu_permissions,
@@ -357,7 +349,6 @@ PRIVATE_META_PERMISSION_MAP: dict[
     "Collection": product_permissions,
     "DigitalContent": product_permissions,
     "Fulfillment": order_permissions,
-    "GiftCard": gift_card_permissions,
     "Invoice": invoice_permissions,
     "Menu": menu_permissions,
     "MenuItem": menu_permissions,

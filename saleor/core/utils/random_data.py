@@ -53,8 +53,6 @@ from ...discount.models import (
     VoucherChannelListing,
     VoucherCode,
 )
-from ...giftcard import events as gift_card_events
-from ...giftcard.models import GiftCard
 from ...graphql.discount.enums import RewardTypeEnum
 from ...menu.models import Menu, MenuItem
 from ...order import OrderStatus
@@ -67,7 +65,6 @@ from ...payment.utils import create_payment
 from ...permission.enums import (
     AccountPermissions,
     CheckoutPermissions,
-    GiftcardPermissions,
     OrderPermissions,
     get_permissions,
 )
@@ -933,7 +930,7 @@ def create_permission_groups(staff_password):
     staff_users = create_staff_users(staff_password)
     customer_support_codenames = [
         perm.codename
-        for enum in [CheckoutPermissions, OrderPermissions, GiftcardPermissions]
+        for enum in [CheckoutPermissions, OrderPermissions]
         for perm in enum
     ]
     customer_support_codenames.append(AccountPermissions.MANAGE_USERS.codename)
@@ -1515,48 +1512,6 @@ def create_vouchers():
         yield "Voucher #%d" % voucher.id
     else:
         yield "Value voucher already exists"
-
-
-def create_gift_cards(how_many=5):
-    product = Product.objects.filter(name="Gift card 100").first()
-    if not product:
-        return
-    product_pk = product.pk
-    for i in range(how_many):
-        staff_user = User.objects.filter(is_staff=True).order_by("?").first()
-        gift_card, created = GiftCard.objects.get_or_create(
-            code=f"Gift_card_{i+1}",
-            defaults={
-                "created_by": staff_user,
-                "initial_balance": Money(50, DEFAULT_CURRENCY),
-                "current_balance": Money(50, DEFAULT_CURRENCY),
-            },
-        )
-        gift_card_events.gift_card_issued_event(gift_card, staff_user, None)
-        if created:
-            yield "Gift card #%d" % gift_card.id
-        else:
-            yield "Gift card already exists"
-
-        user = User.objects.filter(is_superuser=False).order_by("?").first()
-        gift_card, created = GiftCard.objects.get_or_create(
-            code=f"Gift_card_1{i+1}",
-            defaults={
-                "created_by": user,
-                "product_id": product_pk,
-                "initial_balance": Money(20, DEFAULT_CURRENCY),
-                "current_balance": Money(20, DEFAULT_CURRENCY),
-            },
-        )
-        order = Order.objects.order_by("?").first()
-        if not order:
-            raise Exception("No orders found")
-        gift_card_events.gift_cards_bought_event([gift_card], order, user, None)
-        if created:
-            yield "Gift card #%d" % gift_card.id
-        else:
-            yield "Gift card already exists"
-
 
 def add_address_to_admin(email):
     address = create_address()

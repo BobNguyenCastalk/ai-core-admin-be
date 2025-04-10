@@ -6,7 +6,7 @@ from django.db.models import QuerySet
 from .....account import events as account_events
 from .....account import models
 from .....giftcard.search import mark_gift_cards_search_index_as_dirty
-from .....giftcard.utils import assign_user_gift_cards, get_user_gift_cards
+from .....giftcard.utils import get_user_gift_cards
 from .....order.utils import match_orders_with_new_user
 from .....permission.enums import AccountPermissions
 from .....webhook.event_types import WebhookEventAsyncType
@@ -74,7 +74,6 @@ class CustomerUpdate(CustomerCreate, ModelWithExtRefMutation):
         being_confirmed = not old_instance.is_confirmed and new_instance.is_confirmed
 
         if has_new_email or being_confirmed:
-            assign_user_gift_cards(new_instance)
             match_orders_with_new_user(new_instance)
 
         # Generate the events accordingly

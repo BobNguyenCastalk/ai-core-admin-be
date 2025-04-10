@@ -3,18 +3,10 @@ import secrets
 from django.core.exceptions import ValidationError
 
 from ...discount.models import VoucherCode
-from ...giftcard.error_codes import GiftCardErrorCode
-from ...giftcard.models import GiftCard
 
 
 class InvalidPromoCode(ValidationError):
     def __init__(self, message=None, **kwargs):
-        if message is None:
-            message = {
-                "promo_code": ValidationError(
-                    "Promo code is invalid", code=GiftCardErrorCode.INVALID.value
-                )
-            }
         super().__init__(message, **kwargs)
 
 
@@ -33,12 +25,8 @@ def generate_random_code():
 
 
 def is_available_promo_code(code):
-    return not (promo_code_is_gift_card(code) or promo_code_is_voucher(code))
+    return not promo_code_is_voucher(code)
 
 
 def promo_code_is_voucher(code):
     return VoucherCode.objects.filter(code=code).exists()
-
-
-def promo_code_is_gift_card(code):
-    return GiftCard.objects.filter(code=code).exists()

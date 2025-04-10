@@ -7,7 +7,7 @@ from .....account import models
 from .....account.error_codes import AccountErrorCode
 from .....core.tracing import traced_atomic_transaction
 from .....giftcard.search import mark_gift_cards_search_index_as_dirty
-from .....giftcard.utils import assign_user_gift_cards, get_user_gift_cards
+from .....giftcard.utils import get_user_gift_cards
 from .....order.utils import match_orders_with_new_user
 from .....permission.enums import AccountPermissions
 from .....webhook.event_types import WebhookEventAsyncType
@@ -187,7 +187,6 @@ class StaffUpdate(StaffCreate):
         has_new_name = original_instance.get_full_name() != user.get_full_name()
 
         if has_new_email:
-            assign_user_gift_cards(user)
             match_orders_with_new_user(user)
 
         if has_new_email or has_new_name:

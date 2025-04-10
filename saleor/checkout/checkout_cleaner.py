@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Optional, Union
 import graphene
 from django.core.exceptions import ValidationError
 
-from ..core.exceptions import GiftCardNotApplicable
 from ..core.taxes import TaxError
 from ..giftcard.models import GiftCard
 from ..payment import gateway
@@ -108,18 +107,6 @@ def validate_checkout_email(checkout: models.Checkout):
         )
 
 
-def _validate_gift_cards(checkout: Checkout):
-    """Check if all gift cards assigned to checkout are available."""
-    today = date.today()
-    all_gift_cards = GiftCard.objects.filter(checkouts=checkout.token).count()
-    active_gift_cards = (
-        GiftCard.objects.active(date=today).filter(checkouts=checkout.token).count()
-    )
-    if not all_gift_cards == active_gift_cards:
-        msg = "Gift card has expired. Order placement cancelled."
-        raise GiftCardNotApplicable(msg)
-
-
 def validate_checkout(
     checkout_info: "CheckoutInfo",
     lines: Iterable["CheckoutLineInfo"],
@@ -174,7 +161,6 @@ def validate_checkout(
 
     clean_billing_address(checkout_info, OrderCreateFromCheckoutErrorCode)
     clean_checkout_shipping(checkout_info, lines, OrderCreateFromCheckoutErrorCode)
-    _validate_gift_cards(checkout_info.checkout)
 
     # call plugin's hooks to validate if we are able to create an order
     # can raise TaxError

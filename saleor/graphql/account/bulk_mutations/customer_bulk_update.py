@@ -12,7 +12,6 @@ from ....account.search import prepare_user_search_document_value
 from ....checkout import AddressType
 from ....core.tracing import traced_atomic_transaction
 from ....giftcard.search import mark_gift_cards_search_index_as_dirty_by_users
-from ....giftcard.utils import assign_user_gift_cards
 from ....order.utils import match_orders_with_new_user
 from ....permission.enums import AccountPermissions
 from ....webhook.event_types import WebhookEventAsyncType
@@ -586,7 +585,6 @@ class CustomerBulkUpdate(BaseMutation, I18nMixin):
             )
 
             if has_new_email or being_confirmed:
-                assign_user_gift_cards(updated_instance)
                 match_orders_with_new_user(updated_instance)
 
             # Generate the events accordingly

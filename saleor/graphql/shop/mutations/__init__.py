@@ -1,4 +1,3 @@
-from .gift_card_settings_update import GiftCardSettingsUpdate
 from .order_settings_update import OrderSettingsUpdate
 from .shop_address_update import ShopAddressUpdate
 from .shop_domain_update import ShopDomainUpdate
@@ -9,7 +8,6 @@ from .staff_notification_recipient_delete import StaffNotificationRecipientDelet
 from .staff_notification_recipient_update import StaffNotificationRecipientUpdate
 
 __all__ = [
-    "GiftCardSettingsUpdate",
     "OrderSettingsUpdate",
     "ShopAddressUpdate",
     "ShopDomainUpdate",

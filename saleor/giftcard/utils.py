@@ -12,13 +12,11 @@ from django.utils import timezone
 
 from ..checkout.error_codes import CheckoutErrorCode
 from ..checkout.models import Checkout
-from ..core.exceptions import GiftCardNotApplicable
 from ..core.tracing import traced_atomic_transaction
 from ..core.utils.events import call_event
 from ..core.utils.promo_code import InvalidPromoCode, generate_promo_code
 from ..order.actions import OrderFulfillmentLineInfo, create_fulfillments
 from ..order.models import OrderLine
-from ..site import GiftCardSettingsExpiryType
 from . import GiftCardEvents, GiftCardLineData, events
 from .models import GiftCard, GiftCardEvent
 from .notifications import send_gift_card_notification
@@ -139,9 +137,7 @@ def fulfill_gift_card_lines(
         else:
             stock = line.variant.stocks.for_channel_and_country(channel_slug).first()
             if not stock:
-                raise GiftCardNotApplicable(
-                    message="Lack of gift card stock for checkout channel.",
-                )
+                pass
             warehouse_pk = stock.warehouse_id
             lines_for_warehouses[warehouse_pk].append(
                 {"order_line": line, "quantity": line.quantity}
@@ -220,10 +216,6 @@ def calculate_expiry_date(settings):
     """Calculate expiry date based on gift card settings."""
     today = timezone.now().date()
     expiry_date = None
-    if settings.gift_card_expiry_type == GiftCardSettingsExpiryType.EXPIRY_PERIOD:
-        expiry_period_type = settings.gift_card_expiry_period_type
-        time_delta = {f"{expiry_period_type}s": settings.gift_card_expiry_period}
-        expiry_date = today + relativedelta(**time_delta)
     return expiry_date
 
 

@@ -7,11 +7,8 @@ from ..permission.enums import (
     ChannelPermissions,
     CheckoutPermissions,
     DiscountPermissions,
-    GiftcardPermissions,
     MenuPermissions,
     OrderPermissions,
-    PagePermissions,
-    PageTypePermissions,
     PaymentPermissions,
     ProductPermissions,
     ShippingPermissions,
@@ -304,34 +301,6 @@ class WebhookEventAsyncType:
         CHANNEL_METADATA_UPDATED: {
             "name": "Channel metadata updated",
             "permission": ChannelPermissions.MANAGE_CHANNELS,
-        },
-        GIFT_CARD_CREATED: {
-            "name": "Gift card created",
-            "permission": GiftcardPermissions.MANAGE_GIFT_CARD,
-        },
-        GIFT_CARD_UPDATED: {
-            "name": "Gift card updated",
-            "permission": GiftcardPermissions.MANAGE_GIFT_CARD,
-        },
-        GIFT_CARD_DELETED: {
-            "name": "Gift card deleted",
-            "permission": GiftcardPermissions.MANAGE_GIFT_CARD,
-        },
-        GIFT_CARD_SENT: {
-            "name": "Gift card sent",
-            "permission": GiftcardPermissions.MANAGE_GIFT_CARD,
-        },
-        GIFT_CARD_STATUS_CHANGED: {
-            "name": "Gift card status changed",
-            "permission": GiftcardPermissions.MANAGE_GIFT_CARD,
-        },
-        GIFT_CARD_METADATA_UPDATED: {
-            "name": "Gift card metadata updated",
-            "permission": GiftcardPermissions.MANAGE_GIFT_CARD,
-        },
-        GIFT_CARD_EXPORT_COMPLETED: {
-            "name": "Gift card export completed",
-            "permission": GiftcardPermissions.MANAGE_GIFT_CARD,
         },
         MENU_CREATED: {
             "name": "Menu created",

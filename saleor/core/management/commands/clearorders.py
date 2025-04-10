@@ -10,7 +10,6 @@ from django.core.management.base import BaseCommand
 from ....account.models import Address, CustomerEvent, CustomerNote, User
 from ....checkout.models import Checkout, CheckoutLine, CheckoutMetadata
 from ....discount.models import OrderDiscount, OrderLineDiscount
-from ....giftcard.models import GiftCard, GiftCardEvent
 from ....order.models import (
     Fulfillment,
     FulfillmentLine,
@@ -100,14 +99,6 @@ class Command(BaseCommand):
         payments = Payment.objects.all()
         payments._raw_delete(payments.db)  # type: ignore[attr-defined] # raw access # noqa: E501
         self.stdout.write("Removed payments and transactions")
-
-    def delete_gift_cards(self):
-        gift_card_events = GiftCardEvent.objects.all()
-        gift_card_events._raw_delete(gift_card_events.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-
-        gift_cards = GiftCard.objects.all()
-        gift_cards._raw_delete(gift_cards.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-        self.stdout.write("Removed gift cards")
 
     def delete_orders(self):
         line_discounts = OrderLineDiscount.objects.all()

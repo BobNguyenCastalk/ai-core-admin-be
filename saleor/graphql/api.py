@@ -27,7 +27,7 @@ from .core.federation.schema import build_federated_schema
 from .core.schema import CoreMutations, CoreQueries
 from .csv.schema import CsvMutations, CsvQueries
 from .discount.schema import DiscountMutations, DiscountQueries
-from .giftcard.schema import GiftCardMutations, GiftCardQueries
+from .giftcard.schema import GiftCardQueries
 from .menu.schema import MenuMutations, MenuQueries
 from .meta.schema import MetaMutations
 from .order.schema import OrderMutations, OrderQueries
@@ -89,7 +89,6 @@ class Mutation(
     DiscountMutations,
     ExternalNotificationMutations,
     PluginsMutations,
-    GiftCardMutations,
     MenuMutations,
     MetaMutations,
     OrderMutations,

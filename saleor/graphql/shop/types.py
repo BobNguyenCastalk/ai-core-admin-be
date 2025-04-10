@@ -54,7 +54,6 @@ from ..translations.fields import TranslationField
 from ..translations.resolvers import resolve_translation
 from ..translations.types import ShopTranslation
 from ..utils import format_permissions_for_display
-from .enums import GiftCardSettingsExpiryTypeEnum
 from .filters import CountryFilterInput
 from .resolvers import resolve_available_shipping_methods, resolve_countries
 
@@ -86,9 +85,6 @@ class OrderSettings(ModelObjectType[site_models.SiteSettings]):
 
 
 class GiftCardSettings(ModelObjectType[site_models.SiteSettings]):
-    expiry_type = GiftCardSettingsExpiryTypeEnum(
-        description="The gift card expiry type settings.", required=True
-    )
     expiry_period = graphene.Field(
         TimePeriod, description="The gift card expiry period settings.", required=False
     )

@@ -61,7 +61,6 @@ from ..core.types import (
     ThumbnailField,
 )
 from ..core.utils import from_global_id_or_error, str_to_enum, to_global_id_or_none
-from ..giftcard.dataloaders import GiftCardsByUserLoader
 from ..meta.types import ObjectWithMetadata
 from ..order.dataloaders import OrderLineByIdLoader, OrdersByUserLoader
 from ..payment.types import StoredPaymentMethod
@@ -368,10 +367,6 @@ class User(ModelObjectType[models.User]):
             description="Slug of a channel for which the data should be returned."
         ),
     )
-    gift_cards = ConnectionField(
-        "saleor.graphql.giftcard.types.GiftCardCountableConnection",
-        description="List of the user gift cards.",
-    )
     note = PermissionsField(
         graphene.String,
         description="A note about the customer.",
@@ -543,19 +538,6 @@ class User(ModelObjectType[models.User]):
                 .then(_resolve_checkouts)
             )
         return CheckoutByUserLoader(info.context).load(root.id).then(_resolve_checkouts)
-
-    @staticmethod
-    def resolve_gift_cards(root: models.User, info: ResolveInfo, **kwargs):
-        from ..giftcard.types import GiftCardCountableConnection
-
-        def _resolve_gift_cards(gift_cards):
-            return create_connection_slice(
-                gift_cards, info, kwargs, GiftCardCountableConnection
-            )
-
-        return (
-            GiftCardsByUserLoader(info.context).load(root.id).then(_resolve_gift_cards)
-        )
 
     @staticmethod
     def resolve_user_permissions(root: models.User, info: ResolveInfo):

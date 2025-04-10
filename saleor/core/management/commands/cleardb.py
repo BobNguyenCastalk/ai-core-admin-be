@@ -13,7 +13,6 @@ from ....account.models import User
 from ....attribute.models import Attribute
 from ....checkout.models import Checkout
 from ....discount.models import Promotion, Voucher
-from ....giftcard.models import GiftCard
 from ....order.models import Order
 from ....page.models import Page, PageType
 from ....payment.models import Payment, Transaction, TransactionItem
@@ -84,9 +83,6 @@ class Command(BaseCommand):
 
         Voucher.objects.all().delete()
         self.stdout.write("Removed vouchers")
-
-        GiftCard.objects.all().delete()
-        self.stdout.write("Removed gift cards")
 
         self.stdout.write("Removed warehouses")
         Warehouse.objects.all().delete()

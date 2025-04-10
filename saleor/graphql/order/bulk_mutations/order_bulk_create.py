@@ -26,7 +26,6 @@ from ....core.utils.url import validate_storefront_url
 from ....core.weight import zero_weight
 from ....discount.models import OrderDiscount, VoucherCode
 from ....discount.utils.manual_discount import apply_discount_to_value
-from ....giftcard.models import GiftCard
 from ....order import (
     FulfillmentStatus,
     OrderEvents,
@@ -123,7 +122,6 @@ class OrderBulkCreateData:
     fulfillments: list[OrderBulkFulfillment] = dataclass_field(default_factory=list)
     transactions: list[OrderBulkTransaction] = dataclass_field(default_factory=list)
     discounts: list[OrderDiscount] = dataclass_field(default_factory=list)
-    gift_cards: list[GiftCard] = dataclass_field(default_factory=list)
     user: Optional[User] = None
     billing_address: Optional[Address] = None
     channel: Optional[Channel] = None
@@ -331,9 +329,6 @@ class ModelIdentifiers:
     )
     variant_external_references: ModelIdentifier = dataclass_field(
         default_factory=lambda: ModelIdentifier(model="ProductVariant")
-    )
-    gift_card_codes: ModelIdentifier = dataclass_field(
-        default_factory=lambda: ModelIdentifier(model="GiftCard")
     )
     app_ids: ModelIdentifier = dataclass_field(
         default_factory=lambda: ModelIdentifier(model="App")
@@ -732,7 +727,6 @@ class OrderBulkCreate(BaseMutation, I18nMixin):
         apps = App.objects.filter(
             pk__in=identifiers.app_ids.keys, removed_at__isnull=True
         )
-        gift_cards = GiftCard.objects.filter(code__in=identifiers.gift_card_codes.keys)
         orders = Order.objects.filter(
             external_reference__in=identifiers.order_external_references.keys
         )
@@ -761,9 +755,6 @@ class OrderBulkCreate(BaseMutation, I18nMixin):
 
         for voucher_code in voucher_codes:
             object_storage[f"VoucherCode.code.{voucher_code.code}"] = voucher_code
-
-        for gift_card in gift_cards:
-            object_storage[f"GiftCard.code.{gift_card.code}"] = gift_card
 
         for order in orders:
             object_storage[f"Order.external_reference.{order.external_reference}"] = (
@@ -1043,22 +1034,6 @@ class OrderBulkCreate(BaseMutation, I18nMixin):
                 key_map={"voucher_code": "code"},
                 object_storage=object_storage,
             )
-
-        code_index = 0
-        codes = order_input.get("gift_cards") or []
-        for code in codes:
-            key = f"GiftCard.code.{code}"
-            if gift_card := object_storage.get(key):
-                order_data.gift_cards.append(gift_card)
-                code_index += 1
-            else:
-                order_data.errors.append(
-                    OrderBulkError(
-                        message=f"Gift card with code {code} doesn't exist.",
-                        code=OrderBulkCreateErrorCode.NOT_FOUND,
-                        path=f"gift_cards.{code_index}",
-                    )
-                )
 
         order_data.user = user
         order_data.channel = channel

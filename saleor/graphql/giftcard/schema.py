@@ -95,7 +95,3 @@ class GiftCardQueries(graphene.ObjectType):
                 get_database_connection_name(info.context)
             ).values_list("currency", flat=True)
         )
-
-
-class GiftCardMutations(graphene.ObjectType):
-    pass

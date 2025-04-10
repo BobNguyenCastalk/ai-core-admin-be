@@ -14,7 +14,6 @@ from ...utils.random_data import (
     create_checkout_with_custom_prices,
     create_checkout_with_preorders,
     create_checkout_with_same_variant_in_multiple_lines,
-    create_gift_cards,
     create_menus,
     create_order_promotions,
     create_orders,
@@ -110,8 +109,6 @@ class Command(BaseCommand):
         for msg in create_users(user_password, 20):
             self.stdout.write(msg)
         for msg in create_orders(20):
-            self.stdout.write(msg)
-        for msg in create_gift_cards():
             self.stdout.write(msg)
         for msg in create_menus():
             self.stdout.write(msg)
