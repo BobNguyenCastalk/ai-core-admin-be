@@ -1289,57 +1289,6 @@ class PromotionRuleDeleted(SubscriptionObjectType, PromotionRuleBase):
         )
 
 
-class InvoiceBase(AbstractType):
-    invoice = graphene.Field(
-        "saleor.graphql.invoice.types.Invoice",
-        description="The invoice the event relates to.",
-    )
-    order = graphene.Field(
-        "saleor.graphql.order.types.Order",
-        description="Order related to the invoice." + ADDED_IN_310,
-    )
-
-    @staticmethod
-    def resolve_invoice(root, _info: ResolveInfo):
-        _, invoice = root
-        return invoice
-
-    @staticmethod
-    def resolve_order(root, _info):
-        _, invoice = root
-        return OrderByIdLoader(_info.context).load(invoice.order_id)
-
-
-class InvoiceRequested(SubscriptionObjectType, InvoiceBase):
-    order = graphene.Field(
-        "saleor.graphql.order.types.Order",
-        required=True,
-        description="Order related to the invoice." + ADDED_IN_310,
-    )
-
-    class Meta:
-        root_type = "Invoice"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when invoice is requested." + ADDED_IN_32
-
-
-class InvoiceDeleted(SubscriptionObjectType, InvoiceBase):
-    class Meta:
-        root_type = "Invoice"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when invoice is deleted." + ADDED_IN_32
-
-
-class InvoiceSent(SubscriptionObjectType, InvoiceBase):
-    class Meta:
-        root_type = "Invoice"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when invoice is sent." + ADDED_IN_32
-
-
 class FulfillmentBase(AbstractType):
     fulfillment = graphene.Field(
         "saleor.graphql.order.types.Fulfillment",
@@ -3014,9 +2963,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.PROMOTION_RULE_CREATED: PromotionRuleCreated,
     WebhookEventAsyncType.PROMOTION_RULE_UPDATED: PromotionRuleUpdated,
     WebhookEventAsyncType.PROMOTION_RULE_DELETED: PromotionRuleDeleted,
-    WebhookEventAsyncType.INVOICE_REQUESTED: InvoiceRequested,
-    WebhookEventAsyncType.INVOICE_DELETED: InvoiceDeleted,
-    WebhookEventAsyncType.INVOICE_SENT: InvoiceSent,
     WebhookEventAsyncType.FULFILLMENT_CREATED: FulfillmentCreated,
     WebhookEventAsyncType.FULFILLMENT_TRACKING_NUMBER_UPDATED: FulfillmentTrackingNumberUpdated,  # noqa: E501
     WebhookEventAsyncType.FULFILLMENT_CANCELED: FulfillmentCanceled,
