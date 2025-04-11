@@ -771,60 +771,6 @@ class BasePlugin:
     # Overwrite this method in case your plugin provides a list of tax categories.
     get_tax_rate_type_choices: Callable[[list["TaxType"]], list["TaxType"]]
 
-    # Trigger when gift card is created.
-    #
-    # Overwrite this method if you need to trigger specific logic after a gift card is
-    # created.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    gift_card_created: Callable[["GiftCard", None, None], None]
-
-    # Trigger when gift card is deleted.
-    #
-    # Overwrite this method if you need to trigger specific logic after a gift card is
-    # deleted.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    gift_card_deleted: Callable[["GiftCard", None, None], None]
-
-    # Trigger when gift card is updated.
-    #
-    # Overwrite this method if you need to trigger specific logic after a gift card is
-    # updated.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    gift_card_updated: Callable[["GiftCard", None], None]
-
-    # Trigger when gift card metadata is updated.
-    #
-    # Overwrite this method if you need to trigger specific logic after a gift card
-    # metadata is updated.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    gift_card_metadata_updated: Callable[["GiftCard", None], None]
-
-    # Trigger when gift card status is changed.
-    #
-    # Overwrite this method if you need to trigger specific logic after a gift card
-    # status is changed.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    gift_card_status_changed: Callable[["GiftCard", None, None], None]
-
-    # Trigger when gift cards export is completed.
-    #
-    # Overwrite this method if you need to trigger specific logic after a gift cards
-    # export is completed.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    gift_card_export_completed: Callable[["ExportFile", None], None]
-
     # Trigger when draft order is created.
     #
     # Overwrite this method if you need to trigger specific logic after an order is

@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("giftcard", "0001_initial"),
+        # ("giftcard", "0001_initial"),
         ("checkout", "0018_auto_20190410_0132"),
     ]
 

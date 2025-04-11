@@ -638,7 +638,6 @@ def _create_order(
     Current user's language is saved in the order so we can later determine
     which language to use when sending email.
     """
-    from ..order.utils import add_gift_cards_to_order
 
     checkout = checkout_info.checkout
     order = Order.objects.filter(checkout_token=checkout.token).first()
@@ -700,8 +699,6 @@ def _create_order(
         check_reservations=is_reservation_enabled(site_settings),
         checkout_lines=[line.line for line in checkout_lines],
     )
-
-    add_gift_cards_to_order(checkout_info, order, total_price_left, user, app)
 
     # assign checkout payments to the order
     checkout.payments.update(order=order)
@@ -1215,8 +1212,6 @@ def _create_order_from_checkout(
     is_automatic_completion: bool = False,
     force_update: bool = False,
 ):
-    from ..order.utils import add_gift_cards_to_order
-
     site_settings = Site.objects.get_current().settings
 
     address = checkout_info.shipping_address or checkout_info.billing_address
@@ -1351,9 +1346,6 @@ def _create_order_from_checkout(
         order.subtotal
         + undiscounted_base_shipping_price
         - checkout_info.checkout.discount
-    )
-    add_gift_cards_to_order(
-        checkout_info, order, total_without_giftcard.gross, user, app
     )
 
     # payments

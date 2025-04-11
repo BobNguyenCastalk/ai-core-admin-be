@@ -67,7 +67,6 @@ from ..core.descriptions import (
 from ..core.doc_category import (
     DOC_CATEGORY_CHECKOUT,
     DOC_CATEGORY_DISCOUNTS,
-    DOC_CATEGORY_GIFT_CARDS,
     DOC_CATEGORY_MISC,
     DOC_CATEGORY_ORDERS,
     DOC_CATEGORY_PAYMENTS,
@@ -679,110 +678,6 @@ class DraftOrderDeleted(SubscriptionObjectType, OrderBase):
         enable_dry_run = True
         interfaces = (Event,)
         description = "Event sent when draft order is deleted." + ADDED_IN_32
-
-
-class GiftCardBase(AbstractType):
-    gift_card = graphene.Field(
-        "saleor.graphql.giftcard.types.GiftCard",
-        description="The gift card the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_gift_card(root, info: ResolveInfo):
-        _, gift_card = root
-        return gift_card
-
-
-class GiftCardCreated(SubscriptionObjectType, GiftCardBase):
-    class Meta:
-        root_type = "GiftCard"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new gift card is created." + ADDED_IN_32
-
-
-class GiftCardUpdated(SubscriptionObjectType, GiftCardBase):
-    class Meta:
-        root_type = "GiftCard"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when gift card is updated." + ADDED_IN_32
-
-
-class GiftCardDeleted(SubscriptionObjectType, GiftCardBase):
-    class Meta:
-        root_type = "GiftCard"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when gift card is deleted." + ADDED_IN_32
-
-
-class GiftCardSent(SubscriptionObjectType, GiftCardBase):
-    channel = graphene.String(
-        description="Slug of a channel for which this gift card email was sent."
-    )
-    sent_to_email = graphene.String(
-        description="E-mail address to which gift card was sent.",
-    )
-
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = (
-            "Event sent when gift card is e-mailed." + ADDED_IN_313 + PREVIEW_FEATURE
-        )
-        doc_category = DOC_CATEGORY_GIFT_CARDS
-
-    @staticmethod
-    def resolve_gift_card(root, info: ResolveInfo):
-        _, data = root
-        return data["gift_card"]
-
-    @staticmethod
-    def resolve_channel(root, info: ResolveInfo):
-        _, data = root
-        return data["channel_slug"]
-
-    @staticmethod
-    def resolve_sent_to_email(root, info: ResolveInfo):
-        _, data = root
-        return data["sent_to_email"]
-
-
-class GiftCardStatusChanged(SubscriptionObjectType, GiftCardBase):
-    class Meta:
-        root_type = "GiftCard"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when gift card status has changed." + ADDED_IN_32
-
-
-class GiftCardMetadataUpdated(SubscriptionObjectType, GiftCardBase):
-    class Meta:
-        root_type = "GiftCard"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when gift card metadata is updated." + ADDED_IN_38
-
-
-class GiftCardExportCompleted(SubscriptionObjectType):
-    export = graphene.Field(
-        "saleor.graphql.csv.types.ExportFile",
-        description="The export file for gift cards.",
-    )
-
-    class Meta:
-        root_type = "ExportFile"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when gift card export is completed." + ADDED_IN_316
-        doc_category = DOC_CATEGORY_GIFT_CARDS
-
-    @staticmethod
-    def resolve_export(root, info: ResolveInfo):
-        _, export_file = root
-        return export_file
 
 
 class MenuBase(AbstractType):
@@ -2906,13 +2801,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.CHANNEL_DELETED: ChannelDeleted,
     WebhookEventAsyncType.CHANNEL_STATUS_CHANGED: ChannelStatusChanged,
     WebhookEventAsyncType.CHANNEL_METADATA_UPDATED: ChannelMetadataUpdated,
-    WebhookEventAsyncType.GIFT_CARD_CREATED: GiftCardCreated,
-    WebhookEventAsyncType.GIFT_CARD_UPDATED: GiftCardUpdated,
-    WebhookEventAsyncType.GIFT_CARD_DELETED: GiftCardDeleted,
-    WebhookEventAsyncType.GIFT_CARD_SENT: GiftCardSent,
-    WebhookEventAsyncType.GIFT_CARD_STATUS_CHANGED: GiftCardStatusChanged,
-    WebhookEventAsyncType.GIFT_CARD_METADATA_UPDATED: GiftCardMetadataUpdated,
-    WebhookEventAsyncType.GIFT_CARD_EXPORT_COMPLETED: GiftCardExportCompleted,
     WebhookEventAsyncType.MENU_CREATED: MenuCreated,
     WebhookEventAsyncType.MENU_UPDATED: MenuUpdated,
     WebhookEventAsyncType.MENU_DELETED: MenuDeleted,
