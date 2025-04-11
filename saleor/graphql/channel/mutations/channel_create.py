@@ -4,7 +4,6 @@ from django.utils.text import slugify
 from ....channel import models
 from ....core.tracing import traced_atomic_transaction
 from ....permission.enums import ChannelPermissions
-from ....tax.models import TaxConfiguration
 from ....webhook.event_types import WebhookEventAsyncType
 from ...account.enums import CountryCodeEnum
 from ...core import ResolveInfo
@@ -297,6 +296,5 @@ class ChannelCreate(ModelMutation):
 
     @classmethod
     def post_save_action(cls, info: ResolveInfo, instance, cleaned_input):
-        TaxConfiguration.objects.create(channel=instance)
         manager = get_plugin_manager_promise(info.context).get()
         cls.call_event(manager.channel_created, instance)

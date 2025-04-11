@@ -44,7 +44,6 @@ from ..permission.enums import (
     ProductTypePermissions,
 )
 from ..seo.models import SeoModel, SeoModelTranslation
-from ..tax.models import TaxClass
 from . import ProductMediaTypes, ProductTypeKind, managers
 
 ALL_PRODUCTS_PERMISSIONS = [
@@ -132,13 +131,6 @@ class ProductType(ModelWithMetadata):
         unit_choices=WeightUnits.CHOICES,
         default=zero_weight,
     )
-    tax_class = models.ForeignKey(
-        TaxClass,
-        related_name="product_types",
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-    )
 
     class Meta(ModelWithMetadata.Meta):
         ordering = ("slug",)
@@ -202,13 +194,6 @@ class Product(SeoModel, ModelWithMetadata, ModelWithExternalReference):
         related_name="+",
     )
     rating = models.FloatField(null=True, blank=True)
-    tax_class = models.ForeignKey(
-        TaxClass,
-        related_name="products",
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-    )
 
     objects = managers.ProductManager()
 

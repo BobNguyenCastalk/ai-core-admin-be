@@ -94,8 +94,6 @@ from ...shipping.models import (
     ShippingMethodType,
     ShippingZone,
 )
-from ...tax.models import TaxClass, TaxConfiguration
-from ...tax.utils import get_tax_class_kwargs_for_order_line
 from ...warehouse import WarehouseClickAndCollectOption
 from ...warehouse.management import increase_stock
 from ...warehouse.models import PreorderAllocation, Stock, Warehouse
@@ -591,7 +589,6 @@ def create_order_lines(order, how_many=10):
     lines = []
     for _ in range(how_many):
         variant = next(variants_iter)
-        lines.append(_get_new_order_line(order, variant, channel))
 
     lines = OrderLine.objects.bulk_create(lines)
     manager = get_plugins_manager(allow_replica=False)
@@ -648,7 +645,6 @@ def create_order_lines_with_preorder(order, how_many=1):
     lines = []
     for _ in range(how_many):
         variant = next(variants_iter)
-        lines.append(_get_new_order_line(order, variant, channel))
 
     lines = OrderLine.objects.bulk_create(lines)
     manager = get_plugins_manager(allow_replica=False)
@@ -694,41 +690,6 @@ def create_order_lines_with_preorder(order, how_many=1):
         ],
     )
     return lines
-
-
-def _get_new_order_line(order, variant, channel):
-    variant_channel_listing = variant.channel_listings.get(channel=channel)
-    product = variant.product
-    quantity = random.randrange(
-        1,
-        variant_channel_listing.preorder_quantity_threshold
-        or variant.preorder_global_threshold
-        or 5,
-    )
-    untaxed_unit_price = variant.get_price(
-        variant_channel_listing,
-    )
-    unit_price = TaxedMoney(net=untaxed_unit_price, gross=untaxed_unit_price)
-    total_price = unit_price * quantity
-    return OrderLine(  # type: ignore[misc] # see below:
-        order=order,
-        product_name=str(product),
-        variant_name=str(variant),
-        product_sku=variant.sku,
-        product_variant_id=variant.get_global_id(),
-        is_shipping_required=variant.is_shipping_required(),
-        is_gift_card=variant.is_gift_card(),
-        quantity=quantity,
-        variant=variant,
-        unit_price=unit_price,  # money field not supported by mypy_django_plugin
-        total_price=total_price,  # money field not supported by mypy_django_plugin
-        undiscounted_unit_price=unit_price,  # money field not supported by mypy_django_plugin # noqa: E501
-        undiscounted_total_price=total_price,  # money field not supported by mypy_django_plugin # noqa: E501
-        base_unit_price=untaxed_unit_price,  # money field not supported by mypy_django_plugin # noqa: E501
-        undiscounted_base_unit_price=untaxed_unit_price,  # money field not supported by mypy_django_plugin # noqa: E501
-        tax_rate=0,
-        **get_tax_class_kwargs_for_order_line(product.tax_class),
-    )
 
 
 def create_fulfillments(order):
@@ -1044,7 +1005,6 @@ def create_channel(channel_name, currency_code, slug=None, country=None):
             "default_country": country,
         },
     )
-    TaxConfiguration.objects.get_or_create(channel=channel)
     return f"Channel: {channel}"
 
 
@@ -1635,12 +1595,3 @@ def create_checkout_with_same_variant_in_multiple_lines():
         "Created checkout with four lines and same variant in multiple lines "
         f"Checkout token: {checkout_info.checkout.token}."
     )
-
-
-def create_tax_classes():
-    names = ["Groceries", "Books"]
-    tax_classes = []
-    for name in names:
-        tax_classes.append(TaxClass(name=name))
-    TaxClass.objects.bulk_create(tax_classes)
-    yield f"Created tax classes: {names}"

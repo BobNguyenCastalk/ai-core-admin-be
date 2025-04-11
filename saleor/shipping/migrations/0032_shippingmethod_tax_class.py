@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("tax", "0001_initial"),
+        # ("tax", "0001_initial"),
         ("shipping", "0031_alter_shippingmethodtranslation_language_code"),
     ]
 

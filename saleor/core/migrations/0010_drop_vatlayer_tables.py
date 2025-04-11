@@ -9,7 +9,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
     dependencies = [
         ("core", "0009_add_temporary_vatlayer_tables"),
-        ("tax", "0007_auto_20230217_0837"),
+        # ("tax", "0007_auto_20230217_0837"),
     ]
 
     operations = [

@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("tax", "0001_initial"),
+        # ("tax", "0001_initial"),
         ("product", "0176_merge_20221007_1324"),
     ]
 

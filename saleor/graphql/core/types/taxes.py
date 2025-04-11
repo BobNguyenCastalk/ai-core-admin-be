@@ -7,7 +7,6 @@ from promise import Promise
 
 from ....checkout import base_calculations
 from ....checkout.models import Checkout, CheckoutLine
-from ....core.db.connection import allow_writer_in_context
 from ....core.prices import quantize_price
 from ....discount import DiscountType
 from ....discount.utils.checkout import has_checkout_order_promotion
@@ -15,8 +14,6 @@ from ....discount.utils.manual_discount import split_manual_discount
 from ....discount.utils.voucher import is_order_level_voucher
 from ....order.base_calculations import base_order_subtotal
 from ....order.models import Order, OrderLine
-from ....order.utils import get_order_country
-from ....tax.utils import get_charge_taxes
 from ...account.dataloaders import AddressByIdLoader
 from ...channel.dataloaders import ChannelByIdLoader
 from ...channel.types import Channel

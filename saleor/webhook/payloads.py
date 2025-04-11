@@ -43,8 +43,6 @@ from ..payment.models import Payment, TransactionItem
 from ..product import ProductMediaTypes
 from ..product.models import Collection, Product, ProductMedia, ProductVariant
 from ..shipping.interface import ShippingMethodData
-from ..tax.models import TaxClassCountryRate
-from ..tax.utils import get_charge_taxes_for_order
 from ..thumbnail.models import Thumbnail
 from ..warehouse.models import Stock, Warehouse
 from . import traced_payload_generator
@@ -52,7 +50,6 @@ from .event_types import WebhookEventAsyncType
 from .payload_serializers import PayloadSerializer
 from .serializers import (
     serialize_checkout_lines,
-    serialize_checkout_lines_for_tax_calculation,
     serialize_product_attributes,
     serialize_variant_attributes,
 )
@@ -662,13 +659,6 @@ def serialize_product_channel_listing_payload(channel_listings):
 
 def _get_charge_taxes_for_product(product: "Product") -> bool:
     charge_taxes = False
-    tax_class_id = product.tax_class_id or product.product_type.tax_class_id
-    if tax_class_id:
-        charge_taxes = (
-            TaxClassCountryRate.objects.filter(tax_class_id=tax_class_id)
-            .exclude(rate=Decimal("0"))
-            .exists()
-        )
     return charge_taxes
 
 
@@ -1289,7 +1279,7 @@ def generate_checkout_payload_for_tax_calculation(
     )
 
     # Prepare line data
-    lines_dict_data = serialize_checkout_lines_for_tax_calculation(checkout_info, lines)
+    lines_dict_data = []
 
     checkout_data = serializer.serialize(
         [checkout],
@@ -1322,8 +1312,7 @@ def _generate_order_lines_payload_for_tax_calculation(lines: QuerySet[OrderLine]
     serializer = PayloadSerializer()
 
     charge_taxes = False
-    if lines:
-        charge_taxes = get_charge_taxes_for_order(lines[0].order)
+
 
     return serializer.serialize(
         lines,

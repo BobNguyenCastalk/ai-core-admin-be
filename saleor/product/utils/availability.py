@@ -5,8 +5,6 @@ from typing import Optional
 from prices import Money, MoneyRange, TaxedMoney, TaxedMoneyRange
 
 from ...product.models import ProductChannelListing, ProductVariantChannelListing
-from ...tax import TaxCalculationStrategy
-from ...tax.calculations import calculate_flat_rate_tax
 
 
 @dataclass
@@ -73,20 +71,6 @@ def get_product_price_range(
     return None
 
 
-def _calculate_product_price_with_taxes(
-    price: Money,
-    tax_rate: Decimal,
-    tax_calculation_strategy: str,
-    prices_entered_with_tax: bool,
-):
-    # Currently only FLAT_RATES strategy allows calculating taxes for product types;
-    # support for apps will be added in the future.
-    if tax_calculation_strategy == TaxCalculationStrategy.FLAT_RATES:
-        return calculate_flat_rate_tax(price, tax_rate, prices_entered_with_tax)
-    else:
-        return TaxedMoney(price, price)
-
-
 def get_product_availability(
     *,
     product_channel_listing: Optional[ProductChannelListing],
@@ -99,42 +83,12 @@ def get_product_availability(
     discounted_net_range = get_product_price_range(
         variants_channel_listing=variants_channel_listing, discounted=True
     )
-    if discounted_net_range is not None:
-        discounted = TaxedMoneyRange(
-            start=_calculate_product_price_with_taxes(
-                discounted_net_range.start,
-                tax_rate,
-                tax_calculation_strategy,
-                prices_entered_with_tax,
-            ),
-            stop=_calculate_product_price_with_taxes(
-                discounted_net_range.stop,
-                tax_rate,
-                tax_calculation_strategy,
-                prices_entered_with_tax,
-            ),
-        )
 
     undiscounted: Optional[TaxedMoneyRange] = None
     undiscounted_net_range = get_product_price_range(
         variants_channel_listing=variants_channel_listing,
         discounted=False,
     )
-    if undiscounted_net_range is not None:
-        undiscounted = TaxedMoneyRange(
-            start=_calculate_product_price_with_taxes(
-                undiscounted_net_range.start,
-                tax_rate,
-                tax_calculation_strategy,
-                prices_entered_with_tax,
-            ),
-            stop=_calculate_product_price_with_taxes(
-                undiscounted_net_range.stop,
-                tax_rate,
-                tax_calculation_strategy,
-                prices_entered_with_tax,
-            ),
-        )
 
     discount = None
     if undiscounted is not None and discounted is not None:
@@ -163,20 +117,8 @@ def get_variant_availability(
 ) -> Optional[VariantAvailability]:
     if variant_channel_listing.price is None:
         return None
-    discounted_price_taxed = _calculate_product_price_with_taxes(
-        variant_channel_listing.discounted_price,
-        tax_rate,
-        tax_calculation_strategy,
-        prices_entered_with_tax,
-    )
-    undiscounted_price = variant_channel_listing.price
-    undiscounted_price_taxed = _calculate_product_price_with_taxes(
-        undiscounted_price,
-        tax_rate,
-        tax_calculation_strategy,
-        prices_entered_with_tax,
-    )
-    discount = _get_total_discount(undiscounted_price_taxed, discounted_price_taxed)
+
+    discount = 0
 
     is_visible = (
         product_channel_listing is not None and product_channel_listing.is_visible
@@ -185,7 +127,7 @@ def get_variant_availability(
 
     return VariantAvailability(
         on_sale=is_on_sale,
-        price=discounted_price_taxed,
-        price_undiscounted=undiscounted_price_taxed,
+        price=0,
+        price_undiscounted=0,
         discount=discount,
     )

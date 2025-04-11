@@ -26,7 +26,6 @@ from ....core.validators import clean_seo_fields, validate_slug_and_generate_if_
 from ....meta.inputs import MetadataInput
 from ....plugins.dataloaders import get_plugin_manager_promise
 from ...types import Product
-from ..utils import clean_tax_code
 
 
 class ProductInput(BaseInputObjectType):
@@ -196,7 +195,6 @@ class ProductCreate(ModelMutation):
                 raise ValidationError({"attributes": exc})
 
         manager = get_plugin_manager_promise(info.context).get()
-        clean_tax_code(cleaned_input, manager)
 
         clean_seo_fields(cleaned_input)
         return cleaned_input

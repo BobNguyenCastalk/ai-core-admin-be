@@ -45,9 +45,6 @@ from ...permission.enums import (
 )
 from ...permission.utils import has_one_of_permissions
 from ...product.models import ALL_PRODUCTS_PERMISSIONS, ProductMediaTypes
-from ...shipping.interface import ShippingMethodData
-from ...shipping.utils import convert_to_shipping_method_data
-from ...tax.utils import get_display_gross_prices
 from ...thumbnail.utils import (
     get_image_or_proxy_url,
     get_thumbnail_format,

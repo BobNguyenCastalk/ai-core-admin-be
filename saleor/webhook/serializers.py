@@ -1,5 +1,4 @@
 from collections import defaultdict
-from collections.abc import Iterable
 from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Optional, Union
@@ -8,15 +7,13 @@ import graphene
 from prices import Money
 
 from ..attribute import AttributeEntityType, AttributeInputType
-from ..checkout import base_calculations
 from ..checkout.fetch import fetch_checkout_lines
 from ..core.prices import quantize_price
 from ..product.models import Product
-from ..tax.utils import get_charge_taxes_for_checkout
 
 if TYPE_CHECKING:
     # pylint: disable=unused-import
-    from ..checkout.fetch import CheckoutInfo, CheckoutLineInfo
+    from ..checkout.fetch import CheckoutLineInfo
     from ..checkout.models import Checkout
     from ..product.models import ProductVariant
 
@@ -72,28 +69,6 @@ def _get_checkout_line_payload_data(line_info: "CheckoutLineInfo") -> dict[str, 
         "product_metadata": line_info.product.metadata,
         "product_type_metadata": line_info.product_type.metadata,
     }
-
-
-def serialize_checkout_lines_for_tax_calculation(
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-) -> list[dict]:
-    charge_taxes = get_charge_taxes_for_checkout(checkout_info, lines)
-    return [
-        {
-            **_get_checkout_line_payload_data(line_info),
-            "charge_taxes": charge_taxes,
-            "unit_amount": quantize_price(
-                base_calculations.calculate_base_line_unit_price(line_info).amount,
-                checkout_info.checkout.currency,
-            ),
-            "total_amount": quantize_price(
-                base_calculations.calculate_base_line_total_price(line_info).amount,
-                checkout_info.checkout.currency,
-            ),
-        }
-        for line_info in lines
-    ]
 
 
 def serialize_product_attributes(product: "Product") -> list[dict]:

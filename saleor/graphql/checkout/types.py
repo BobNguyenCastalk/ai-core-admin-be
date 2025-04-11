@@ -20,7 +20,6 @@ from ...permission.enums import (
     PaymentPermissions,
 )
 from ...shipping.interface import ShippingMethodData
-from ...tax.utils import get_display_gross_prices
 from ...warehouse import models as warehouse_models
 from ...warehouse.reservations import is_reservation_enabled
 from ...webhook.event_types import WebhookEventSyncType

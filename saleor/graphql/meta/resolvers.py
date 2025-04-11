@@ -17,7 +17,6 @@ from ...product import models as product_models
 from ...shipping import models as shipping_models
 from ...shipping.interface import ShippingMethodData
 from ...site import models as site_models
-from ...tax import models as tax_models
 from ...warehouse import models as warehouse_models
 from ..core import ResolveInfo
 from ..utils import get_user_or_app_from_context
@@ -74,8 +73,6 @@ def resolve_object_with_metadata_type(instance):
             shipping_models.ShippingMethod: shipping_types.ShippingMethodType,
             shipping_models.ShippingZone: shipping_types.ShippingZone,
             site_models.SiteSettings: shop_types.Shop,
-            tax_models.TaxClass: tax_types.TaxClass,
-            tax_models.TaxConfiguration: tax_types.TaxConfiguration,
             warehouse_models.Warehouse: warehouse_types.Warehouse,
         }
         if instance.__class__ == discount_models.Promotion and getattr(

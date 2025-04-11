@@ -7,7 +7,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("tax", "0008_auto_20240122_1353"),
+        # ("tax", "0008_auto_20240122_1353"),
         ("product", "0194_auto_20240620_1404"),
         ("checkout", "0070_checkoutline_undiscounted_unit_price_amount"),
     ]

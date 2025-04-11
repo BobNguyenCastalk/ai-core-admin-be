@@ -37,7 +37,6 @@ from ..shipping.utils import (
     convert_to_shipping_method_data,
     initialize_shipping_method_active_status,
 )
-from ..tax.utils import get_display_gross_prices, get_tax_class_kwargs_for_order_line
 from ..warehouse.management import (
     decrease_allocations,
     get_order_lines_with_track_inventory,
@@ -289,7 +288,6 @@ def create_order_line(
         undiscounted_total_price=undiscounted_total_price,
         variant=variant,
         is_price_overridden=price_override is not None,
-        **get_tax_class_kwargs_for_order_line(tax_class),
     )
 
     unit_discount = line.undiscounted_unit_price - line.unit_price
@@ -1089,19 +1087,7 @@ def update_order_display_gross_prices(order: "Order"):
     country and determine whether gross prices should be displayed for this order.
     Doesn't save the value in the database.
     """
-    channel = order.channel
-    tax_configuration = channel.tax_configuration
-    country_code = get_active_country(
-        channel,
-        order.shipping_address,
-        order.billing_address,
-    )
-    country_tax_configuration = tax_configuration.country_exceptions.filter(
-        country=country_code
-    ).first()
-    order.display_gross_prices = get_display_gross_prices(
-        tax_configuration, country_tax_configuration
-    )
+    order.display_gross_prices = 0
 
 
 def calculate_order_granted_refund_status(

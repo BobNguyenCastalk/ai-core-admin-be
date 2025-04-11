@@ -19,7 +19,6 @@ from prices import Money
 from ....account.models import Address, User
 from ....app.models import App
 from ....channel.models import Channel
-from ....core import JobStatus
 from ....core.prices import quantize_price
 from ....core.tracing import traced_atomic_transaction
 from ....core.utils.url import validate_storefront_url
@@ -42,7 +41,6 @@ from ....payment.models import TransactionEvent, TransactionItem
 from ....permission.enums import OrderPermissions
 from ....product.models import ProductVariant
 from ....shipping.models import ShippingMethod, ShippingMethodChannelListing
-from ....tax.models import TaxClass
 from ....warehouse.management import stock_bulk_update
 from ....warehouse.models import Stock, Warehouse
 from ...account.i18n import I18nMixin
@@ -249,7 +247,7 @@ class DeliveryMethod:
     warehouse_name: Optional[str] = None
     shipping_method: Optional[ShippingMethod] = None
     shipping_method_name: Optional[str] = None
-    shipping_tax_class: Optional[TaxClass] = None
+    shipping_tax_class: Optional[str] = None
     shipping_tax_class_name: Optional[str] = None
     shipping_tax_class_metadata: Optional[list[dict[str, str]]] = None
     shipping_tax_class_private_metadata: Optional[list[dict[str, str]]] = None
@@ -723,7 +721,6 @@ class OrderBulkCreate(BaseMutation, I18nMixin):
         shipping_methods = ShippingMethod.objects.filter(
             pk__in=identifiers.shipping_method_ids.keys
         )
-        tax_classes = TaxClass.objects.filter(pk__in=identifiers.tax_class_ids.keys)
         apps = App.objects.filter(
             pk__in=identifiers.app_ids.keys, removed_at__isnull=True
         )
@@ -1285,30 +1282,6 @@ class OrderBulkCreate(BaseMutation, I18nMixin):
                 path="delivery_method.warehouse_id",
             )
 
-        if is_shipping_delivery:
-            shipping_method = cls.get_instance_with_errors(
-                input=delivery_input,
-                errors=order_data.errors,
-                model=ShippingMethod,
-                key_map={"shipping_method_id": "id"},
-                object_storage=object_storage,
-                path="delivery_method.shipping_method_id",
-            )
-            shipping_tax_class = cls.get_instance_with_errors(
-                input=delivery_input,
-                errors=order_data.errors,
-                model=TaxClass,
-                key_map={"shipping_tax_class_id": "id"},
-                object_storage=object_storage,
-                path="delivery_method.shipping_tax_class_id",
-            )
-            shipping_tax_class_metadata = delivery_input.get(
-                "shipping_tax_class_metadata"
-            )
-            shipping_tax_class_private_metadata = delivery_input.get(
-                "shipping_tax_class_private_metadata"
-            )
-
         if not warehouse and not shipping_method:
             order_data.errors.append(
                 OrderBulkError(
@@ -1546,7 +1519,7 @@ class OrderBulkCreate(BaseMutation, I18nMixin):
         line_tax_class = cls.get_instance_with_errors(
             input=order_line_input,
             errors=order_data.errors,
-            model=TaxClass,
+            model=None,
             key_map={"tax_class_id": "id"},
             object_storage=object_storage,
             path=f"lines.{index}",

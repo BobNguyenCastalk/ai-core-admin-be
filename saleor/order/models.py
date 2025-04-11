@@ -239,19 +239,6 @@ class Order(ModelWithMetadata, ModelWithExternalReference):
     shipping_tax_rate = models.DecimalField(
         max_digits=5, decimal_places=4, blank=True, null=True
     )
-    shipping_tax_class = models.ForeignKey(
-        "tax.TaxClass",
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-    )
-    shipping_tax_class_name = models.CharField(max_length=255, blank=True, null=True)
-    shipping_tax_class_private_metadata = JSONField(
-        blank=True, null=True, default=dict, encoder=CustomJsonEncoder
-    )
-    shipping_tax_class_metadata = JSONField(
-        blank=True, null=True, default=dict, encoder=CustomJsonEncoder
-    )
 
     # Token of a checkout instance that this order was created from
     checkout_token = models.CharField(max_length=36, blank=True)
@@ -701,23 +688,6 @@ class OrderLine(ModelWithMetadata):
     )
     undiscounted_base_unit_price = MoneyField(
         amount_field="undiscounted_base_unit_price_amount", currency_field="currency"
-    )
-
-    tax_rate = models.DecimalField(
-        max_digits=5, decimal_places=4, blank=True, null=True
-    )
-    tax_class = models.ForeignKey(
-        "tax.TaxClass",
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-    )
-    tax_class_name = models.CharField(max_length=255, blank=True, null=True)
-    tax_class_private_metadata = JSONField(
-        blank=True, null=True, default=dict, encoder=CustomJsonEncoder
-    )
-    tax_class_metadata = JSONField(
-        blank=True, null=True, default=dict, encoder=CustomJsonEncoder
     )
 
     is_price_overridden = models.BooleanField(null=True, blank=True)

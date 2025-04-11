@@ -15,7 +15,6 @@ from ....core.validators import validate_slug_and_generate_if_needed
 from ....plugins.dataloaders import get_plugin_manager_promise
 from ...enums import ProductTypeKindEnum
 from ...types import ProductType
-from ..utils import clean_tax_code
 
 
 class ProductTypeInput(BaseInputObjectType):
@@ -118,7 +117,6 @@ class ProductTypeCreate(ModelMutation):
             raise ValidationError({"slug": error})
 
         manager = get_plugin_manager_promise(info.context).get()
-        clean_tax_code(cleaned_input, manager)
 
         cls.validate_attributes(cleaned_input)
         return cleaned_input

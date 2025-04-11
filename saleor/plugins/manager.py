@@ -52,7 +52,6 @@ from ..payment.interface import (
     TransactionSessionData,
     TransactionSessionResult,
 )
-from ..tax.utils import calculate_tax_rate
 from .base_plugin import ExcludedShippingMethod, ExternalAccessTokens
 from .models import PluginConfiguration
 
@@ -416,7 +415,7 @@ class PluginsManager(PaymentInterface):
         shipping_price: TaxedMoney,
         plugin_ids: Optional[list[str]] = None,
     ):
-        default_value = calculate_tax_rate(shipping_price)
+        default_value = 0
         return self.__run_method_on_plugins(
             "get_checkout_shipping_tax_rate",
             default_value,
@@ -433,7 +432,7 @@ class PluginsManager(PaymentInterface):
         shipping_price: TaxedMoney,
         plugin_ids: Optional[list[str]] = None,
     ):
-        default_value = calculate_tax_rate(shipping_price)
+        default_value = 0
         return self.__run_method_on_plugins(
             "get_order_shipping_tax_rate",
             default_value,
@@ -603,7 +602,7 @@ class PluginsManager(PaymentInterface):
         price: TaxedMoney,
         plugin_ids: Optional[list[str]] = None,
     ) -> Decimal:
-        default_value = calculate_tax_rate(price)
+        default_value = 0
         return self.__run_method_on_plugins(
             "get_checkout_line_tax_rate",
             default_value,
@@ -624,7 +623,7 @@ class PluginsManager(PaymentInterface):
         price: TaxedMoney,
         plugin_ids: Optional[list[str]] = None,
     ) -> Decimal:
-        default_value = calculate_tax_rate(price)
+        default_value = 0
         return self.__run_method_on_plugins(
             "get_order_line_tax_rate",
             default_value,

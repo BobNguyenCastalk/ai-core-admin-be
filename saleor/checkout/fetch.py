@@ -21,7 +21,6 @@ from ..shipping.utils import (
     convert_to_shipping_method_data,
     initialize_shipping_method_active_status,
 )
-from ..tax.models import TaxClass, TaxConfiguration
 from ..warehouse import WarehouseClickAndCollectOption
 from ..warehouse.models import Warehouse
 
@@ -53,7 +52,6 @@ class CheckoutLineInfo(LineInfo):
     product: "Product"
     product_type: "ProductType"
     discounts: list["CheckoutLineDiscount"]
-    tax_class: Optional["TaxClass"] = None
 
     @cached_property
     def variant_discounted_price(self) -> Money:
@@ -102,15 +100,7 @@ class CheckoutLineInfo(LineInfo):
         if self.line.price_override is not None:
             return Money(self.line.price_override, self.line.currency)
 
-        prices_entered_with_tax = (
-            TaxConfiguration.objects.filter(channel_id=self.line.checkout.channel_id)
-            .values_list("prices_entered_with_tax", flat=True)
-            .first()
-        )
-        if prices_entered_with_tax:
-            base_total_price = self.line.total_price_gross_amount
-        else:
-            base_total_price = self.line.total_price_net_amount
+        base_total_price = self.line.total_price_net_amount
 
         if base_total_price is Decimal(0) or self.line.quantity == 0:
             return Money(Decimal(0), currency=self.line.currency)
@@ -129,7 +119,6 @@ class CheckoutInfo:
     channel: "Channel"
     billing_address: Optional["Address"]
     shipping_address: Optional["Address"]
-    tax_configuration: "TaxConfiguration"
     discounts: list["CheckoutDiscount"]
     lines: Iterable[CheckoutLineInfo]
     shipping_channel_listings: list["ShippingMethodChannelListing"]

@@ -6,7 +6,6 @@ from django.db.models import OuterRef
 from ....celeryconf import app
 from ....core.prices import quantize_price
 from ....product.models import ProductVariantChannelListing
-from ....tax.models import TaxConfiguration
 from ...models import CheckoutLine
 
 # The batch uses 11.39MB of memory. It takes 0.42 seconds to process batch when having
@@ -40,11 +39,7 @@ def propagate_lines_undiscounted_unit_price_task(start_pk=0):
                 )
             )
 
-            channel_ids = {line.checkout.channel_id for line in lines}
-            tax_configurations = TaxConfiguration.objects.filter(
-                channel_id__in=channel_ids
-            ).values_list("channel_id", "prices_entered_with_tax")
-            channel_id_to_prices_with_tax_map = dict(tax_configurations)
+            channel_id_to_prices_with_tax_map = {}
 
             for line in lines:
                 if line.price_override is not None:
