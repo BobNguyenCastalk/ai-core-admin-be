@@ -8,7 +8,6 @@ from django.conf import settings
 from django.utils import timezone
 
 from ...discount.models import VoucherCode
-from ...giftcard.models import GiftCard
 from ...product.models import Product
 from .. import FileTypes
 from ..notifications import send_export_download_link_notification
@@ -66,24 +65,10 @@ def export_gift_cards(
     file_type: str,
     delimiter: str = ",",
 ):
-    from ...graphql.giftcard.filters import GiftCardFilter
-
     file_name = get_filename("gift_card", file_type)
-
-    queryset = get_queryset(GiftCard, GiftCardFilter, scope)
-    # only unused gift cards codes can be exported
-    queryset = queryset.filter(used_by_email__isnull=True)
 
     export_fields = ["code"]
     temporary_file = create_file_with_headers(export_fields, delimiter, file_type)
-
-    export_gift_cards_in_batches(
-        queryset,
-        export_fields,
-        delimiter,
-        temporary_file,
-        file_type,
-    )
 
     save_csv_file_in_export_file(export_file, temporary_file, file_name)
     temporary_file.close()
@@ -220,23 +205,6 @@ def export_products_in_batches(
         )
 
         append_to_file(export_data, headers, temporary_file, file_type, delimiter)
-
-
-def export_gift_cards_in_batches(
-    queryset: "QuerySet",
-    export_fields: list[str],
-    delimiter: str,
-    temporary_file: Any,
-    file_type: str,
-):
-    for batch_pks in queryset_in_batches(queryset):
-        gift_card_batch = GiftCard.objects.using(
-            settings.DATABASE_CONNECTION_REPLICA_NAME
-        ).filter(pk__in=batch_pks)
-
-        export_data = list(gift_card_batch.values(*export_fields))
-
-        append_to_file(export_data, export_fields, temporary_file, file_type, delimiter)
 
 
 def export_voucher_codes_in_batches(

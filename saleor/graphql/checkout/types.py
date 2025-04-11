@@ -58,8 +58,6 @@ from ..core.types import BaseObjectType, ModelObjectType, Money, NonNullList, Ta
 from ..core.utils import CHECKOUT_CALCULATE_TAXES_MESSAGE, WebhookEventInfo, str_to_enum
 from ..decorators import one_of_permissions_required
 from ..discount.dataloaders import VoucherByCodeLoader
-from ..giftcard.dataloaders import GiftCardsByCheckoutIdLoader
-from ..giftcard.types import GiftCard
 from ..meta import resolvers as MetaResolvers
 from ..meta.types import ObjectWithMetadata, _filter_metadata
 from ..payment.types import PaymentGateway, StoredPaymentMethod, TransactionItem
@@ -620,11 +618,6 @@ class Checkout(ModelObjectType[models.Checkout]):
         ],
     )
     email = graphene.String(description="Email of a customer.", required=False)
-    gift_cards = NonNullList(
-        GiftCard,
-        description="List of gift cards associated with this checkout.",
-        required=True,
-    )
     is_shipping_required = graphene.Boolean(
         description="Returns True, if checkout requires shipping.", required=True
     )
@@ -1032,10 +1025,6 @@ class Checkout(ModelObjectType[models.Checkout]):
         return Promise.all([checkout_info, checkout_lines_info]).then(
             get_available_payment_gateways
         )
-
-    @staticmethod
-    def resolve_gift_cards(root: models.Checkout, info):
-        return GiftCardsByCheckoutIdLoader(info.context).load(root.pk)
 
     @staticmethod
     def resolve_is_shipping_required(root: models.Checkout, info: ResolveInfo):

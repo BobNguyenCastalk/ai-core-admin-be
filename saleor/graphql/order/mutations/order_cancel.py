@@ -4,7 +4,6 @@ import graphene
 from django.core.exceptions import ValidationError
 
 from ....core.tracing import traced_atomic_transaction
-from ....giftcard.utils import deactivate_order_gift_cards
 from ....order import models
 from ....order.actions import cancel_order
 from ....order.error_codes import OrderErrorCode
@@ -61,5 +60,4 @@ class OrderCancel(BaseMutation):
                 app=app,
                 manager=manager,
             )
-            deactivate_order_gift_cards(order.id, user, app)
         return OrderCancel(order=order)

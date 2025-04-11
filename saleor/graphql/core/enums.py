@@ -17,7 +17,6 @@ from ...core.units import (
 )
 from ...csv import error_codes as csv_error_codes
 from ...discount import error_codes as discount_error_codes
-from ...giftcard import error_codes as giftcard_error_codes
 from ...menu import error_codes as menu_error_codes
 from ...order import error_codes as order_error_codes
 from ...page import error_codes as page_error_codes
@@ -209,9 +208,6 @@ VoucherCodeBulkDeleteErrorCode = graphene.Enum.from_enum(
 VoucherCodeBulkDeleteErrorCode.doc_category = DOC_CATEGORY_DISCOUNTS
 
 PluginErrorCode = graphene.Enum.from_enum(plugin_error_codes.PluginErrorCode)
-
-GiftCardErrorCode = graphene.Enum.from_enum(giftcard_error_codes.GiftCardErrorCode)
-GiftCardErrorCode.doc_category = DOC_CATEGORY_GIFT_CARDS
 
 MenuErrorCode = graphene.Enum.from_enum(menu_error_codes.MenuErrorCode)
 

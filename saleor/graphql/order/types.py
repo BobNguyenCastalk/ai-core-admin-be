@@ -105,8 +105,6 @@ from ..decorators import one_of_permissions_required
 from ..discount.dataloaders import OrderDiscountsByOrderIDLoader, VoucherByIdLoader
 from ..discount.enums import DiscountValueTypeEnum
 from ..discount.types import Voucher
-from ..giftcard.dataloaders import GiftCardsByOrderIdLoader
-from ..giftcard.types import GiftCard
 from ..meta.resolvers import check_private_metadata_privilege, resolve_metadata
 from ..meta.types import MetadataItem, ObjectWithMetadata
 from ..payment.dataloaders import (
@@ -1401,9 +1399,6 @@ class Order(ModelObjectType[models.Order]):
         required=False,
         description="Voucher code that was used for Order." + ADDED_IN_318,
     )
-    gift_cards = NonNullList(
-        GiftCard, description="List of user gift cards.", required=True
-    )
     customer_note = graphene.String(
         required=True,
         description="Additional information provided by the customer about the order.",
@@ -2230,10 +2225,6 @@ class Order(ModelObjectType[models.Order]):
             .load(root.id)
             .then(lambda lines: any(line.is_shipping_required for line in lines))
         )
-
-    @staticmethod
-    def resolve_gift_cards(root: models.Order, info):
-        return GiftCardsByOrderIdLoader(info.context).load(root.id)
 
     @staticmethod
     def resolve_voucher(root: models.Order, info):

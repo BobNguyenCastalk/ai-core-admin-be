@@ -20,7 +20,6 @@ from ..core.utils.events import (
     call_event_including_protected_events,
     webhook_async_event_requires_sync_webhooks_to_trigger,
 )
-from ..giftcard import GiftCardLineData
 from ..order.utils import order_lines_qs_select_for_update
 from ..payment import (
     ChargeStatus,
@@ -535,7 +534,6 @@ def order_fulfilled(
     app: Optional["App"],
     fulfillment_lines: list[FulfillmentLine],
     manager: "PluginsManager",
-    gift_card_lines_info: list[GiftCardLineData],
     site_settings: "SiteSettings",
     notify_customer=True,
     auto=False,
@@ -888,15 +886,6 @@ def approve_fulfillment(
                     warehouse_pk=warehouse_pk,
                 )
             )
-            if order_line.is_gift_card:
-                gift_card_lines_info.append(
-                    GiftCardLineData(
-                        quantity=fulfillment_line.quantity,
-                        order_line=order_line,
-                        variant=variant,
-                        fulfillment_line=fulfillment_line,
-                    )
-                )
 
         if insufficient_stocks:
             raise InsufficientStock(insufficient_stocks)
@@ -1135,7 +1124,6 @@ def _create_fulfillment_lines(
     warehouse_pk: UUID,
     lines_data: list[OrderFulfillmentLineInfo],
     channel_slug: str,
-    gift_card_lines_info: list[GiftCardLineData],
     manager: "PluginsManager",
     decrease_stock: bool = True,
     allow_stock_to_be_exceeded: bool = False,
@@ -1226,15 +1214,6 @@ def _create_fulfillment_lines(
                 stock=stock,
             )
             fulfillment_lines.append(fulfillment_line)
-            if order_line.is_gift_card:
-                gift_card_lines_info.append(
-                    GiftCardLineData(
-                        quantity=quantity,
-                        order_line=order_line,
-                        variant=variant,
-                        fulfillment_line=fulfillment_line,
-                    )
-                )
 
     if insufficient_stocks:
         raise InsufficientStock(insufficient_stocks)
@@ -1303,7 +1282,6 @@ def create_fulfillments(
     """
     fulfillments: list[Fulfillment] = []
     fulfillment_lines: list[FulfillmentLine] = []
-    gift_card_lines_info: list[GiftCardLineData] = []
     status = (
         FulfillmentStatus.FULFILLED
         if auto_approved

@@ -39,10 +39,6 @@ from ..discount.utils.voucher import (
     get_voucher_code_instance,
     validate_voucher_for_checkout,
 )
-from ..giftcard.utils import (
-    add_gift_card_code_to_checkout,
-    remove_gift_card_code_from_checkout_or_error,
-)
 from ..payment.models import Payment
 from ..plugins.manager import PluginsManager
 from ..product import models as product_models

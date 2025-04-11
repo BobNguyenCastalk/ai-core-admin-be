@@ -13,7 +13,7 @@ from ..core import JobStatus
 from . import events
 from .models import ExportEvent, ExportFile
 from .notifications import send_export_failed_info
-from .utils.export import export_gift_cards, export_products, export_voucher_codes
+from .utils.export import export_products, export_voucher_codes
 
 task_logger = get_task_logger(__name__)
 
@@ -68,17 +68,6 @@ def export_products_task(
 ):
     export_file = ExportFile.objects.get(pk=export_file_id)
     export_products(export_file, scope, export_info, file_type, delimiter)
-
-
-@app.task(name="export-gift-cards", base=ExportTask)
-def export_gift_cards_task(
-    export_file_id: int,
-    scope: dict[str, Union[str, dict]],
-    file_type: str,
-    delimiter: str = ",",
-):
-    export_file = ExportFile.objects.get(pk=export_file_id)
-    export_gift_cards(export_file, scope, file_type, delimiter)
 
 
 @app.task(name="export-voucher-codes", base=ExportTask)

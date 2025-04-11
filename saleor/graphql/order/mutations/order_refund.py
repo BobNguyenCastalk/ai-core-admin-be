@@ -3,7 +3,6 @@ from typing import Optional
 import graphene
 from django.core.exceptions import ValidationError
 
-from ....giftcard.utils import order_has_gift_card_lines
 from ....order import FulfillmentStatus, models
 from ....order.actions import order_refunded
 from ....order.error_codes import OrderErrorCode
@@ -38,15 +37,6 @@ def clean_refund_payment(
 
 
 def clean_order_refund(order: models.Order) -> models.Order:
-    if order_has_gift_card_lines(order):
-        raise ValidationError(
-            {
-                "id": ValidationError(
-                    "Cannot refund order with gift card lines.",
-                    code=OrderErrorCode.CANNOT_REFUND.value,
-                )
-            }
-        )
     return order
 
 

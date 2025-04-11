@@ -9,7 +9,6 @@ from ...checkout import models as checkout_models
 from ...core.exceptions import PermissionDenied
 from ...core.models import ModelWithMetadata
 from ...discount import models as discount_models
-from ...giftcard import models as giftcard_models
 from ...order import models as order_models
 from ...page import models as page_models
 from ...payment import models as payment_models
@@ -27,7 +26,6 @@ from .permissions import PRIVATE_META_PERMISSION_MAP
 
 def resolve_object_with_metadata_type(instance):
     # Imports inside resolvers to avoid circular imports.
-    from ...invoice import models as invoice_models
     from ...menu import models as menu_models
     from ..account import types as account_types
     from ..app import types as app_types
@@ -35,8 +33,6 @@ def resolve_object_with_metadata_type(instance):
     from ..channel import types as channel_types
     from ..checkout import types as checkout_types
     from ..discount import types as discount_types
-    from ..giftcard import types as giftcard_types
-    from ..invoice import types as invoice_types
     from ..menu import types as menu_types
     from ..order import types as order_types
     from ..page import types as page_types
@@ -59,8 +55,6 @@ def resolve_object_with_metadata_type(instance):
             checkout_models.CheckoutLine: checkout_types.CheckoutLine,
             discount_models.Promotion: discount_types.Promotion,
             discount_models.Voucher: discount_types.Voucher,
-            giftcard_models.GiftCard: giftcard_types.GiftCard,
-            invoice_models.Invoice: invoice_types.Invoice,
             menu_models.Menu: menu_types.Menu,
             menu_models.MenuItem: menu_types.MenuItem,
             order_models.Fulfillment: order_types.Fulfillment,

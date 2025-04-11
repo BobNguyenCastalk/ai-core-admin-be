@@ -18,7 +18,6 @@ from prices import Money
 from ..channel.models import Channel
 from ..core.models import ModelWithMetadata
 from ..core.taxes import zero_money
-from ..giftcard.models import GiftCard
 from ..permission.enums import CheckoutPermissions
 from ..shipping.models import ShippingMethod
 from . import CheckoutAuthorizeStatus, CheckoutChargeStatus
@@ -201,7 +200,6 @@ class Checkout(models.Model):
     discount_name = models.CharField(max_length=255, blank=True, null=True)
 
     translated_discount_name = models.CharField(max_length=255, blank=True, null=True)
-    gift_cards = models.ManyToManyField(GiftCard, blank=True, related_name="checkouts")
     voucher_code = models.CharField(max_length=255, blank=True, null=True)
 
     # The field prevents race condition when two different threads are processing
@@ -246,21 +244,6 @@ class Checkout(models.Model):
                 < settings.CHECKOUT_COMPLETION_LOCK_TIME
             )
         )
-
-    def get_total_gift_cards_balance(
-        self, database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME
-    ) -> Money:
-        """Return the total balance of the gift cards assigned to the checkout."""
-        balance = (
-            self.gift_cards.using(database_connection_name)
-            .active(date=date.today())
-            .aggregate(models.Sum("current_balance_amount"))[
-                "current_balance_amount__sum"
-            ]
-        )
-        if balance is None:
-            return zero_money(currency=self.currency)
-        return Money(balance, self.currency)
 
     def get_line(self, variant: "ProductVariant") -> Optional["CheckoutLine"]:
         """Return a line matching the given variant and data if any."""

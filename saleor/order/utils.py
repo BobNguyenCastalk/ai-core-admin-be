@@ -28,9 +28,6 @@ from ..discount.utils.promotion import (
     get_sale_id,
     prepare_promotion_discount_reason,
 )
-from ..giftcard import events as gift_card_events
-from ..giftcard.models import GiftCard
-from ..giftcard.search import mark_gift_cards_search_index_as_dirty
 from ..payment import TransactionEventType
 from ..payment.model_helpers import get_total_authorized
 from ..product.utils.digital_products import get_default_digital_content_settings

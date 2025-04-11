@@ -1,7 +1,6 @@
 import graphene
 from django.core.exceptions import ValidationError
 
-from ....giftcard.utils import order_has_gift_card_lines
 from ....order import FulfillmentLineData
 from ....order import models as order_models
 from ....order.error_codes import OrderErrorCode
@@ -32,19 +31,6 @@ class FulfillmentRefundAndReturnProductBase(BaseMutation):
         cls, order, amount_to_refund, charged_value, cleaned_input
     ):
         if amount_to_refund is not None:
-            if order_has_gift_card_lines(order):
-                raise ValidationError(
-                    {
-                        "amount_to_refund": ValidationError(
-                            (
-                                "Cannot specified amount to refund when order has "
-                                "gift card lines."
-                            ),
-                            code=OrderErrorCode.CANNOT_REFUND.value,
-                        )
-                    }
-                )
-
             if amount_to_refund > charged_value:
                 raise ValidationError(
                     {

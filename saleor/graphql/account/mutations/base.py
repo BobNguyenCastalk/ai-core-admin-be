@@ -15,8 +15,6 @@ from ....checkout import AddressType
 from ....core.exceptions import PermissionDenied
 from ....core.tracing import traced_atomic_transaction
 from ....core.utils.url import prepare_url, validate_storefront_url
-from ....giftcard.search import mark_gift_cards_search_index_as_dirty
-from ....giftcard.utils import get_user_gift_cards
 from ....graphql.utils import get_user_or_app_from_context
 from ....permission.auth_filters import AuthorizationFilters
 from ....permission.enums import AccountPermissions
@@ -406,8 +404,7 @@ class BaseCustomerCreate(ModelMutation, I18nMixin):
             cls.call_event(manager.customer_metadata_updated, instance)
 
         if cleaned_input.get("first_name") or cleaned_input.get("last_name"):
-            if user_gift_cards := get_user_gift_cards(instance):
-                mark_gift_cards_search_index_as_dirty(user_gift_cards)
+            pass
 
 
 class UserDeleteMixin:

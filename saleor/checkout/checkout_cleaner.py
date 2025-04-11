@@ -6,7 +6,6 @@ import graphene
 from django.core.exceptions import ValidationError
 
 from ..core.taxes import TaxError
-from ..giftcard.models import GiftCard
 from ..payment import gateway
 from ..payment import models as payment_models
 from ..payment.error_codes import PaymentErrorCode

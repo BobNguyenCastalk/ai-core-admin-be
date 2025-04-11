@@ -49,7 +49,6 @@ from ..enums import (
     DiscountErrorCode,
     ExportErrorCode,
     ExternalNotificationTriggerErrorCode,
-    GiftCardErrorCode,
     GiftCardSettingsErrorCode,
     IconThumbnailFormatEnum,
     JobStatusEnum,
@@ -729,18 +728,6 @@ class PaymentMethodProcessTokenizationError(Error):
 
     class Meta:
         doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class GiftCardError(Error):
-    code = GiftCardErrorCode(description="The error code.", required=True)
-    tags = NonNullList(
-        graphene.String,
-        description="List of tag values that cause the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_GIFT_CARDS
 
 
 class PluginError(Error):

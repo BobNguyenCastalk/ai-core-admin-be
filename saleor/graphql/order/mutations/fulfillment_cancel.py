@@ -4,7 +4,6 @@ import graphene
 from django.core.exceptions import ValidationError
 
 from ....account.models import User
-from ....giftcard.utils import order_has_gift_card_lines
 from ....order import FulfillmentStatus
 from ....order.actions import cancel_fulfillment, cancel_waiting_fulfillment
 from ....order.error_codes import OrderErrorCode
@@ -74,15 +73,6 @@ class FulfillmentCancel(BaseMutation):
 
     @classmethod
     def validate_order(cls, order):
-        if order_has_gift_card_lines(order):
-            raise ValidationError(
-                {
-                    "fulfillment": ValidationError(
-                        "Cannot cancel fulfillment with gift card lines.",
-                        code=OrderErrorCode.CANNOT_CANCEL_FULFILLMENT.value,
-                    )
-                }
-            )
         return order
 
     @classmethod

@@ -139,7 +139,7 @@ def calculate_checkout_total_with_gift_cards(
         database_connection_name=database_connection_name,
         pregenerated_subscription_payloads=pregenerated_subscription_payloads,
         force_update=force_update,
-    ) - checkout_info.checkout.get_total_gift_cards_balance(database_connection_name)
+    )
 
     return max(total, zero_taxed_money(total.currency))
 

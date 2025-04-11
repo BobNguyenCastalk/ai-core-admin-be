@@ -11,7 +11,6 @@ from ....account.events import CustomerEvents
 from ....account.search import prepare_user_search_document_value
 from ....checkout import AddressType
 from ....core.tracing import traced_atomic_transaction
-from ....giftcard.search import mark_gift_cards_search_index_as_dirty_by_users
 from ....order.utils import match_orders_with_new_user
 from ....permission.enums import AccountPermissions
 from ....webhook.event_types import WebhookEventAsyncType
@@ -639,7 +638,6 @@ class CustomerBulkUpdate(BaseMutation, I18nMixin):
                 )
 
         models.CustomerEvent.objects.bulk_create(customer_events)
-        mark_gift_cards_search_index_as_dirty_by_users(users_with_name_or_email_updated)
 
     @classmethod
     def get_results(cls, instances_data_with_errors_list, reject_everything=False):

@@ -9,8 +9,6 @@ from django.utils import timezone
 from graphql.error import GraphQLError
 
 from ...core.postgres import FlatConcat
-from ...giftcard import GiftCardEvents
-from ...giftcard.models import GiftCardEvent
 from ...order.models import Order, OrderLine
 from ...order.search import search_orders
 from ...payment import ChargeStatus
@@ -176,25 +174,6 @@ def filter_is_preorder(qs, _, values):
         qs = qs.filter(lookup) if values is True else qs.exclude(lookup)
     return qs
 
-
-def filter_gift_card_used(qs, _, value):
-    return filter_by_gift_card(qs, value, GiftCardEvents.USED_IN_ORDER)
-
-
-def filter_gift_card_bought(qs, _, value):
-    return filter_by_gift_card(qs, value, GiftCardEvents.BOUGHT)
-
-
-def filter_by_gift_card(qs, value, gift_card_type):
-    gift_card_events = (
-        GiftCardEvent.objects.using(qs.db)
-        .filter(type=gift_card_type)
-        .values("order_id")
-    )
-    lookup = Exists(gift_card_events.filter(order_id=OuterRef("id")))
-    return qs.filter(lookup) if value is True else qs.exclude(lookup)
-
-
 def filter_order_by_id(qs, _, value):
     if not value:
         return qs
@@ -258,8 +237,6 @@ class OrderFilter(DraftOrderFilter):
     checkout_tokens = ListObjectTypeFilter(
         input_class=UUIDScalar, method=filter_by_checkout_tokens
     )
-    gift_card_used = django_filters.BooleanFilter(method=filter_gift_card_used)
-    gift_card_bought = django_filters.BooleanFilter(method=filter_gift_card_bought)
     numbers = ListObjectTypeFilter(
         input_class=graphene.String, method=filter_by_order_number
     )
