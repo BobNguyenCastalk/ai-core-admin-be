@@ -13,22 +13,7 @@ from ..core.doc_category import DOC_CATEGORY_DISCOUNTS
 from ..core.fields import FilterConnectionField, PermissionsField
 from ..core.types import FilterInputObjectType
 from ..core.utils import from_global_id_or_error
-from ..translations.mutations import (
-    PromotionRuleTranslate,
-    PromotionTranslate,
-    SaleTranslate,
-    VoucherTranslate,
-)
 from .filters import PromotionWhereInput, SaleFilter, VoucherFilter
-from .mutations import (
-    VoucherAddCatalogues,
-    VoucherChannelListingUpdate,
-    VoucherCodeBulkDelete,
-    VoucherCreate,
-    VoucherDelete,
-    VoucherRemoveCatalogues,
-    VoucherUpdate,
-)
 from .resolvers import (
     resolve_promotion,
     resolve_promotions,
@@ -191,19 +176,3 @@ class DiscountQueries(graphene.ObjectType):
             qs, kwargs, allow_replica=info.context.allow_replica
         )
         return create_connection_slice(qs, info, kwargs, PromotionCountableConnection)
-
-
-class DiscountMutations(graphene.ObjectType):
-    promotion_translate = PromotionTranslate.Field()
-    promotion_rule_translate = PromotionRuleTranslate.Field()
-
-    sale_translate = SaleTranslate.Field()
-
-    voucher_create = VoucherCreate.Field()
-    voucher_delete = VoucherDelete.Field()
-    voucher_update = VoucherUpdate.Field()
-    voucher_catalogues_add = VoucherAddCatalogues.Field()
-    voucher_catalogues_remove = VoucherRemoveCatalogues.Field()
-    voucher_translate = VoucherTranslate.Field()
-    voucher_channel_listing_update = VoucherChannelListingUpdate.Field()
-    voucher_code_bulk_delete = VoucherCodeBulkDelete.Field()

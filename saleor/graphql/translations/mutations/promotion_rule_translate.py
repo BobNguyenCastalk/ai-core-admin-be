@@ -7,7 +7,6 @@ from ...core.descriptions import ADDED_IN_317, RICH_CONTENT
 from ...core.enums import LanguageCodeEnum
 from ...core.scalars import JSON
 from ...core.types import TranslationError
-from ...discount.mutations.utils import clear_promotion_old_sale_id
 from ...discount.types import PromotionRule
 from ...plugins.dataloaders import get_plugin_manager_promise
 from .utils import BaseTranslateMutation, NameTranslationInput
@@ -52,8 +51,6 @@ class PromotionRuleTranslate(BaseTranslateMutation):
         translation, created = instance.translations.update_or_create(
             language_code=language_code, defaults=input
         )
-        clear_promotion_old_sale_id(instance.promotion, save=True)
-
         manager = get_plugin_manager_promise(info.context).get()
         if created:
             cls.call_event(manager.translations_created, [translation])

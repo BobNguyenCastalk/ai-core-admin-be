@@ -25,7 +25,7 @@ from .checkout.schema import CheckoutMutations, CheckoutQueries
 from .core.enums import unit_enums
 from .core.federation.schema import build_federated_schema
 from .core.schema import CoreMutations, CoreQueries
-from .discount.schema import DiscountMutations, DiscountQueries
+from .discount.schema import DiscountQueries
 from .menu.schema import MenuMutations, MenuQueries
 from .meta.schema import MetaMutations
 from .order.schema import OrderMutations, OrderQueries
@@ -77,7 +77,6 @@ class Mutation(
     ChannelMutations,
     CheckoutMutations,
     CoreMutations,
-    DiscountMutations,
     ExternalNotificationMutations,
     PluginsMutations,
     MenuMutations,
