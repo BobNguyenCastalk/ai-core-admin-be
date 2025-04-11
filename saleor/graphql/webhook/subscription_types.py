@@ -976,25 +976,6 @@ class ProductVariantStockUpdated(SubscriptionObjectType, ProductVariantBase):
         return WarehouseByIdLoader(info.context).load(stock.warehouse_id)
 
 
-class ProductExportCompleted(SubscriptionObjectType):
-    export = graphene.Field(
-        "saleor.graphql.csv.types.ExportFile",
-        description="The export file for products.",
-    )
-
-    class Meta:
-        root_type = "ExportFile"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when product export is completed." + ADDED_IN_316
-        doc_category = DOC_CATEGORY_PRODUCTS
-
-    @staticmethod
-    def resolve_export(root, info: ResolveInfo):
-        _, export_file = root
-        return export_file
-
-
 class SaleBase(AbstractType):
     sale = graphene.Field(
         "saleor.graphql.discount.types.Sale",
@@ -2250,25 +2231,6 @@ class VoucherMetadataUpdated(SubscriptionObjectType, VoucherBase):
         description = "Event sent when voucher metadata is updated." + ADDED_IN_38
 
 
-class VoucherCodeExportCompleted(SubscriptionObjectType):
-    export = graphene.Field(
-        "saleor.graphql.csv.types.ExportFile",
-        description="The export file for voucher codes.",
-    )
-
-    class Meta:
-        root_type = "ExportFile"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when voucher code export is completed." + ADDED_IN_318
-        doc_category = DOC_CATEGORY_DISCOUNTS
-
-    @staticmethod
-    def resolve_export(root, _info: ResolveInfo):
-        _, export_file = root
-        return export_file
-
-
 class ShopMetadataUpdated(SubscriptionObjectType, AbstractType):
     shop = graphene.Field(Shop, description="Shop data.")
 
@@ -2826,7 +2788,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.PRODUCT_UPDATED: ProductUpdated,
     WebhookEventAsyncType.PRODUCT_DELETED: ProductDeleted,
     WebhookEventAsyncType.PRODUCT_METADATA_UPDATED: ProductMetadataUpdated,
-    WebhookEventAsyncType.PRODUCT_EXPORT_COMPLETED: ProductExportCompleted,
     WebhookEventAsyncType.PRODUCT_MEDIA_CREATED: ProductMediaCreated,
     WebhookEventAsyncType.PRODUCT_MEDIA_UPDATED: ProductMediaUpdated,
     WebhookEventAsyncType.PRODUCT_MEDIA_DELETED: ProductMediaDeleted,
@@ -2893,7 +2854,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.VOUCHER_CODES_CREATED: VoucherCodesCreated,
     WebhookEventAsyncType.VOUCHER_CODES_DELETED: VoucherCodesDeleted,
     WebhookEventAsyncType.VOUCHER_METADATA_UPDATED: VoucherMetadataUpdated,
-    WebhookEventAsyncType.VOUCHER_CODE_EXPORT_COMPLETED: VoucherCodeExportCompleted,
     WebhookEventAsyncType.WAREHOUSE_CREATED: WarehouseCreated,
     WebhookEventAsyncType.WAREHOUSE_UPDATED: WarehouseUpdated,
     WebhookEventAsyncType.WAREHOUSE_DELETED: WarehouseDeleted,
