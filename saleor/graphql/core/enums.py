@@ -15,7 +15,6 @@ from ...core.units import (
     VolumeUnits,
     WeightUnits,
 )
-from ...csv import error_codes as csv_error_codes
 from ...discount import error_codes as discount_error_codes
 from ...menu import error_codes as menu_error_codes
 from ...order import error_codes as order_error_codes
@@ -197,7 +196,6 @@ CustomerBulkUpdateErrorCode.doc_category = DOC_CATEGORY_USERS
 ExternalNotificationTriggerErrorCode = graphene.Enum.from_enum(
     external_notifications_error_codes.ExternalNotificationErrorCodes
 )
-ExportErrorCode = graphene.Enum.from_enum(csv_error_codes.ExportErrorCode)
 
 DiscountErrorCode = graphene.Enum.from_enum(discount_error_codes.DiscountErrorCode)
 DiscountErrorCode.doc_category = DOC_CATEGORY_DISCOUNTS

@@ -47,7 +47,6 @@ from ..enums import (
     CollectionErrorCode,
     CustomerBulkUpdateErrorCode,
     DiscountErrorCode,
-    ExportErrorCode,
     ExternalNotificationTriggerErrorCode,
     GiftCardSettingsErrorCode,
     IconThumbnailFormatEnum,
@@ -317,10 +316,6 @@ class VoucherCodeBulkDeleteError(BulkError):
 
     class Meta:
         doc_category = DOC_CATEGORY_DISCOUNTS
-
-
-class ExportError(Error):
-    code = ExportErrorCode(description="The error code.", required=True)
 
 
 class ExternalNotificationError(Error):
