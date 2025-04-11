@@ -17,7 +17,7 @@ from graphql.execution import ExecutionResult
 
 from ..core.utils.cache import CacheDict
 from .account.schema import AccountMutations, AccountQueries
-from .app.schema import AppMutations, AppQueries
+from .app.schema import AppQueries
 from .attribute.schema import AttributeMutations, AttributeQueries
 from .channel.schema import ChannelMutations, ChannelQueries
 from .checkout.schema import CheckoutMutations, CheckoutQueries
@@ -26,7 +26,6 @@ from .core.federation.schema import build_federated_schema
 from .core.schema import CoreMutations, CoreQueries
 from .discount.schema import DiscountQueries
 from .menu.schema import MenuMutations, MenuQueries
-from .meta.schema import MetaMutations
 from .order.schema import OrderMutations, OrderQueries
 from .payment.schema import PaymentMutations, PaymentQueries
 from .plugins.schema import PluginsMutations, PluginsQueries
@@ -63,14 +62,12 @@ class Query(
 
 class Mutation(
     AccountMutations,
-    AppMutations,
     AttributeMutations,
     ChannelMutations,
     CheckoutMutations,
     CoreMutations,
     PluginsMutations,
     MenuMutations,
-    MetaMutations,
     OrderMutations,
     PaymentMutations,
     ProductMutations,

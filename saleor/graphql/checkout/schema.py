@@ -10,7 +10,6 @@ from ..core.connection import create_connection_slice, filter_connection_queryse
 from ..core.descriptions import (
     ADDED_IN_31,
     ADDED_IN_34,
-    DEPRECATED_IN_3X_FIELD,
     DEPRECATED_IN_3X_INPUT,
 )
 from ..core.doc_category import DOC_CATEGORY_CHECKOUT
