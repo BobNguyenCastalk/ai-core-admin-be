@@ -29,7 +29,6 @@ from .discount.schema import DiscountMutations, DiscountQueries
 from .menu.schema import MenuMutations, MenuQueries
 from .meta.schema import MetaMutations
 from .order.schema import OrderMutations, OrderQueries
-from .page.schema import PageMutations, PageQueries
 from .payment.schema import PaymentMutations, PaymentQueries
 from .plugins.schema import PluginsMutations, PluginsQueries
 from .product.schema import ProductMutations, ProductQueries
@@ -60,7 +59,6 @@ class Query(
     PluginsQueries,
     MenuQueries,
     OrderQueries,
-    PageQueries,
     PaymentQueries,
     ProductQueries,
     ShippingQueries,
@@ -87,7 +85,6 @@ class Mutation(
     MenuMutations,
     MetaMutations,
     OrderMutations,
-    PageMutations,
     PaymentMutations,
     ProductMutations,
     ShippingMutations,

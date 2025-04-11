@@ -2,7 +2,6 @@ import graphene
 from graphene import relay
 
 from ...menu import models
-from ...permission.enums import PagePermissions
 from ...permission.utils import has_one_of_permissions
 from ...product.models import ALL_PRODUCTS_PERMISSIONS
 from ..channel.dataloaders import ChannelBySlugLoader
@@ -16,8 +15,6 @@ from ..core.connection import CountableConnection
 from ..core.doc_category import DOC_CATEGORY_MENU
 from ..core.types import NonNullList
 from ..meta.types import ObjectWithMetadata
-from ..page.dataloaders import PageByIdLoader
-from ..page.types import Page
 from ..product.dataloaders import (
     CategoryByIdLoader,
     CollectionByIdLoader,
@@ -90,14 +87,6 @@ class MenuItem(ChannelContextTypeWithMetadata[models.MenuItem]):
             "A collection associated with this menu item. Requires one of the "
             "following permissions to include the unpublished items: "
             f"{', '.join([p.name for p in ALL_PRODUCTS_PERMISSIONS])}."
-        ),
-    )
-    page = graphene.Field(
-        Page,
-        description=(
-            "A page associated with this menu item. Requires one of the following "
-            f"permissions to include unpublished items: "
-            f"{PagePermissions.MANAGE_PAGES.name}."
         ),
     )
     level = graphene.Int(
@@ -220,22 +209,6 @@ class MenuItem(ChannelContextTypeWithMetadata[models.MenuItem]):
 
     @staticmethod
     def resolve_page(root: ChannelContext[models.MenuItem], info: ResolveInfo):
-        if root.node.page_id:
-            requestor = get_user_or_app_from_context(info.context)
-            requestor_has_access_to_all = (
-                requestor
-                and requestor.is_active
-                and requestor.has_perm(PagePermissions.MANAGE_PAGES)
-            )
-            return (
-                PageByIdLoader(info.context)
-                .load(root.node.page_id)
-                .then(
-                    lambda page: page
-                    if requestor_has_access_to_all or page.is_visible
-                    else None
-                )
-            )
         return None
 
 

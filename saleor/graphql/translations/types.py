@@ -12,7 +12,6 @@ from ...menu import models as menu_models
 from ...page import models as page_models
 from ...permission.enums import (
     DiscountPermissions,
-    PagePermissions,
     ProductPermissions,
     ShippingPermissions,
 )
@@ -41,11 +40,6 @@ from ..discount.dataloaders import (
     VoucherByIdLoader,
 )
 from ..menu.dataloaders import MenuItemByIdLoader
-from ..page.dataloaders import (
-    PageByIdLoader,
-    SelectedAttributesAllByPageIdLoader,
-    SelectedAttributesVisibleInStorefrontPageIdLoader,
-)
 from ..product.dataloaders import (
     CategoryByIdLoader,
     CollectionByIdLoader,
@@ -644,10 +638,6 @@ class PageTranslation(BaseTranslationType[page_models.PageTranslation]):
         content = root.content
         return content if content is not None else {}
 
-    @staticmethod
-    def resolve_translatable_content(root: page_models.PageTranslation, info):
-        return PageByIdLoader(info.context).load(root.page_id)
-
 
 class PageTranslatableContent(ModelObjectType[page_models.Page]):
     id = graphene.GlobalID(
@@ -665,16 +655,6 @@ class PageTranslatableContent(ModelObjectType[page_models.Page]):
         deprecation_reason=f"{DEPRECATED_IN_3X_FIELD} Use the `content` field instead.",
     )
     translation = TranslationField(PageTranslation, type_name="page")
-    page = graphene.Field(
-        "saleor.graphql.page.types.Page",
-        description=(
-            "A static page that can be manually added by a shop operator "
-            "through the dashboard."
-        ),
-        deprecation_reason=(
-            f"{DEPRECATED_IN_3X_FIELD} Get model fields from the root level queries."
-        ),
-    )
     attribute_values = NonNullList(
         AttributeValueTranslatableContent,
         required=True,
@@ -701,26 +681,6 @@ class PageTranslatableContent(ModelObjectType[page_models.Page]):
     def resolve_content_json(root: page_models.Page, _info):
         content = root.content
         return content if content is not None else {}
-
-    @staticmethod
-    def resolve_attribute_values(root: page_models.Page, info):
-        requestor = get_user_or_app_from_context(info.context)
-        if (
-            requestor
-            and requestor.is_active
-            and requestor.has_perm(PagePermissions.MANAGE_PAGES)
-        ):
-            return (
-                SelectedAttributesAllByPageIdLoader(info.context)
-                .load(root.id)
-                .then(get_translatable_attribute_values)
-            )
-        else:
-            return (
-                SelectedAttributesVisibleInStorefrontPageIdLoader(info.context)
-                .load(root.id)
-                .then(get_translatable_attribute_values)
-            )
 
     @staticmethod
     def resolve_page_id(root: page_models.Page, _info):

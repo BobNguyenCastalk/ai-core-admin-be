@@ -14,7 +14,6 @@ from ..core.context import get_database_connection_name
 from ..core.fields import ConnectionField, PermissionsField
 from ..core.utils import from_global_id_or_error
 from ..menu.resolvers import resolve_menu_items
-from ..page.resolvers import resolve_pages
 from ..product.resolvers import resolve_categories
 from ..translations import types as translation_types
 from .resolvers import (
@@ -119,8 +118,6 @@ class TranslationQueries(graphene.ObjectType):
             qs = resolve_collections(info)
         elif kind == TranslatableKinds.CATEGORY:
             qs = resolve_categories(info)
-        elif kind == TranslatableKinds.PAGE:
-            qs = resolve_pages(info)
         elif kind == TranslatableKinds.SHIPPING_METHOD:
             qs = resolve_shipping_methods(info)
         elif kind == TranslatableKinds.VOUCHER:

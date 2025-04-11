@@ -11,7 +11,6 @@ from ...core.mutations import ModelMutation
 from ...core.types import MenuError, NonNullList
 from ...core.utils import WebhookEventInfo
 from ...core.validators import validate_slug_and_generate_if_needed
-from ...page.types import Page
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ...product.types import Category, Collection
 from ..types import Menu
@@ -84,9 +83,6 @@ class MenuCreate(ModelMutation):
                     info, collection, field="items", only_type=Collection
                 )
                 item["collection"] = collection
-            elif page:
-                page = cls.get_node_or_error(info, page, field="items", only_type=Page)
-                item["page"] = page
             elif not url:
                 raise ValidationError(
                     {

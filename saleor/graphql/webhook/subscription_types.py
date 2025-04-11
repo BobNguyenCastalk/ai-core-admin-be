@@ -1404,29 +1404,6 @@ class CheckoutMetadataUpdated(SubscriptionObjectType, CheckoutBase):
         interfaces = (Event,)
         description = "Event sent when checkout metadata is updated." + ADDED_IN_38
 
-
-class PageBase(AbstractType):
-    page = graphene.Field(
-        "saleor.graphql.page.types.Page", description="The page the event relates to."
-    )
-
-    @staticmethod
-    def resolve_page(root, _info: ResolveInfo):
-        _, page = root
-        return page
-
-
-class PageTypeBase(AbstractType):
-    page_type = graphene.Field(
-        "saleor.graphql.page.types.PageType",
-        description="The page type the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_page_type(root, _info: ResolveInfo):
-        _, page_type = root
-        return page_type
-
 class PermissionGroupBase(AbstractType):
     permission_group = graphene.Field(
         "saleor.graphql.account.types.Group",
