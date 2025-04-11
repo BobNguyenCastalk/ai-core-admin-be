@@ -30,9 +30,6 @@ from ...shipping.dataloaders import (
     ShippingMethodByIdLoader,
     ShippingMethodChannelListingByChannelSlugLoader,
 )
-from ...warehouse.dataloaders import (
-    WarehouseByIdLoader,
-)
 from ...webhook.dataloaders.pregenerated_payloads_for_checkout_filter_shipping_methods import (
     PregeneratedCheckoutFilterShippingMethodPayloadsByCheckoutTokenLoader,
 )
@@ -91,9 +88,6 @@ class CheckoutInfoByCheckoutTokenLoader(DataLoader[str, CheckoutInfo]):
                     for checkout in checkouts
                     if checkout.collection_point_id
                 ]
-                collection_points = WarehouseByIdLoader(self.context).load_many(
-                    collection_point_ids
-                )
 
                 voucher_codes = VoucherCodeByCodeLoader(self.context).load_many(
                     {
@@ -103,7 +97,6 @@ class CheckoutInfoByCheckoutTokenLoader(DataLoader[str, CheckoutInfo]):
                     }
                 )
 
-                channel_ids = [channel.id for channel in channels]
                 tax_configurations = []
 
                 def with_checkout_info(results):
@@ -204,7 +197,6 @@ class CheckoutInfoByCheckoutTokenLoader(DataLoader[str, CheckoutInfo]):
                         users,
                         shipping_methods,
                         shipping_method_channel_listings,
-                        collection_points,
                         voucher_codes,
                         tax_configurations,
                     ]

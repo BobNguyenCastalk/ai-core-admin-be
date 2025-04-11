@@ -39,8 +39,6 @@ from ..meta.types import ObjectWithMetadata
 from ..shipping.resolvers import resolve_price_range, resolve_shipping_translation
 from ..translations.fields import TranslationField
 from ..translations.types import ShippingMethodTranslation
-from ..warehouse.dataloaders import WarehousesByShippingZoneIdLoader
-from ..warehouse.types import Warehouse
 from .dataloaders import (
     ChannelsByShippingZoneIdLoader,
     PostalCodeRulesByShippingMethodIdLoader,
@@ -265,11 +263,6 @@ class ShippingZone(ChannelContextTypeWithMetadata[models.ShippingZone]):
             " shipped to countries within this shipping zone."
         ),
     )
-    warehouses = NonNullList(
-        Warehouse,
-        description="List of warehouses for shipping zone.",
-        required=True,
-    )
     channels = NonNullList(
         Channel,
         description="List of channels for shipping zone.",
@@ -321,10 +314,6 @@ class ShippingZone(ChannelContextTypeWithMetadata[models.ShippingZone]):
             .load(root.node.id)
             .then(wrap_shipping_method_with_channel_context)
         )
-
-    @staticmethod
-    def resolve_warehouses(root: ChannelContext[models.ShippingZone], info):
-        return WarehousesByShippingZoneIdLoader(info.context).load(root.node.id)
 
     @staticmethod
     def resolve_channels(root: ChannelContext[models.ShippingZone], info):

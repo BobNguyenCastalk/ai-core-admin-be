@@ -40,15 +40,12 @@ from ..core.doc_category import (
     DOC_CATEGORY_ORDERS,
     DOC_CATEGORY_PAYMENTS,
     DOC_CATEGORY_PRODUCTS,
-    DOC_CATEGORY_TAXES,
 )
 from ..core.fields import PermissionsField
 from ..core.scalars import Day, Minute
 from ..core.types import BaseObjectType, CountryDisplay, ModelObjectType, NonNullList
 from ..meta.types import ObjectWithMetadata
 from ..translations.resolvers import resolve_translation
-from ..warehouse.dataloaders import WarehousesByChannelIdLoader
-from ..warehouse.types import Warehouse
 from . import ChannelContext
 from .dataloaders import ChannelWithHasOrdersByIdLoader
 from .enums import (
@@ -358,15 +355,6 @@ class Channel(ModelObjectType):
             AuthorizationFilters.AUTHENTICATED_STAFF_USER,
         ],
     )
-    warehouses = PermissionsField(
-        NonNullList(Warehouse),
-        description="List of warehouses assigned to this channel." + ADDED_IN_35,
-        required=True,
-        permissions=[
-            AuthorizationFilters.AUTHENTICATED_APP,
-            AuthorizationFilters.AUTHENTICATED_STAFF_USER,
-        ],
-    )
     countries = NonNullList(
         CountryDisplay,
         description="List of shippable countries for the channel." + ADDED_IN_36,
@@ -439,10 +427,6 @@ class Channel(ModelObjectType):
         return CountryDisplay(
             code=root.default_country.code, country=root.default_country.name
         )
-
-    @staticmethod
-    def resolve_warehouses(root: models.Channel, info: ResolveInfo):
-        return WarehousesByChannelIdLoader(info.context).load(root.id)
 
     @staticmethod
     def resolve_countries(root: models.Channel, info: ResolveInfo):

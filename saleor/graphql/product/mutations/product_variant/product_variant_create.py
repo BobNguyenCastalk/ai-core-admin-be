@@ -21,11 +21,9 @@ from ....core.doc_category import DOC_CATEGORY_PRODUCTS
 from ....core.mutations import ModelMutation
 from ....core.scalars import DateTime, WeightScalar
 from ....core.types import BaseInputObjectType, NonNullList, ProductError
-from ....core.utils import get_duplicated_values
 from ....meta.inputs import MetadataInput
 from ....plugins.dataloaders import get_plugin_manager_promise
 from ....shop.utils import get_track_inventory_by_default
-from ....warehouse.types import Warehouse
 from ...types import ProductVariant
 from ...utils import (
     clean_variant_sku,
@@ -202,10 +200,6 @@ class ProductVariantCreate(ModelMutation):
                 }
             )
 
-        stocks = cleaned_input.get("stocks")
-        if stocks:
-            cls.check_for_duplicates_in_stocks(stocks)
-
         if instance.pk:
             # If the variant is getting updated,
             # simply retrieve the associated product type
@@ -289,20 +283,6 @@ class ProductVariantCreate(ModelMutation):
             cleaned_input["preorder_end_date"] = preorder_settings.get("end_date")
 
         return cleaned_input
-
-    @classmethod
-    def check_for_duplicates_in_stocks(cls, stocks_data):
-        warehouse_ids = [stock["warehouse"] for stock in stocks_data]
-        duplicates = get_duplicated_values(warehouse_ids)
-        if duplicates:
-            error_msg = "Duplicated warehouse ID: {}".format(", ".join(duplicates))
-            raise ValidationError(
-                {
-                    "stocks": ValidationError(
-                        error_msg, code=ProductErrorCode.UNIQUE.value
-                    )
-                }
-            )
 
     @classmethod
     def set_track_inventory(cls, _info, instance, cleaned_input):

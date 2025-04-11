@@ -23,7 +23,6 @@ from ...graphql.core.federation.entities import federated_entity
 from ...graphql.core.federation.resolvers import resolve_federation_references
 from ...graphql.order.resolvers import resolve_orders
 from ...graphql.utils import get_user_or_app_from_context
-from ...graphql.warehouse.dataloaders import StockByIdLoader, WarehouseByIdLoader
 from ...order import OrderStatus, calculations, models
 from ...order.calculations import fetch_order_prices_if_expired
 from ...order.models import FulfillmentStatus
@@ -132,7 +131,6 @@ from ..shipping.dataloaders import (
     ShippingMethodChannelListingByChannelSlugLoader,
 )
 from ..shipping.types import ShippingMethod
-from ..warehouse.types import Allocation, Stock, Warehouse
 from .dataloaders import (
     AllocationsByOrderLineIdLoader,
     FulfillmentLinesByFulfillmentIdLoader,
@@ -415,9 +413,6 @@ class OrderEvent(ModelObjectType[models.OrderEvent]):
     fulfilled_items = NonNullList(
         lambda: FulfillmentLine, description="The lines fulfilled."
     )
-    warehouse = graphene.Field(
-        Warehouse, description="The warehouse were items were restocked."
-    )
     transaction_reference = graphene.String(
         description="The transaction reference of captured payment."
     )
@@ -582,12 +577,6 @@ class OrderEvent(ModelObjectType[models.OrderEvent]):
         return FulfillmentLinesByIdLoader(info.context).load_many(fulfillment_lines_ids)
 
     @staticmethod
-    def resolve_warehouse(root: models.OrderEvent, info):
-        if warehouse_pk := root.parameters.get("warehouse"):
-            return WarehouseByIdLoader(info.context).load(UUID(warehouse_pk))
-        return None
-
-    @staticmethod
     def resolve_transaction_reference(root: models.OrderEvent, _info):
         return root.parameters.get("transaction_reference")
 
@@ -677,11 +666,6 @@ class Fulfillment(ModelObjectType[models.Fulfillment]):
         FulfillmentLine, description="List of lines for the fulfillment."
     )
     status_display = graphene.String(description="User-friendly fulfillment status.")
-    warehouse = graphene.Field(
-        Warehouse,
-        required=False,
-        description="Warehouse from fulfillment was fulfilled.",
-    )
     shipping_refunded_amount = graphene.Field(
         Money,
         description="Amount of refunded shipping price." + ADDED_IN_314,
@@ -710,30 +694,6 @@ class Fulfillment(ModelObjectType[models.Fulfillment]):
     @staticmethod
     def resolve_status_display(root: models.Fulfillment, _info):
         return root.get_status_display()
-
-    @staticmethod
-    def resolve_warehouse(root: models.Fulfillment, info):
-        def _resolve_stock_warehouse(stock: Stock):
-            return WarehouseByIdLoader(info.context).load(stock.warehouse_id)
-
-        def _resolve_stock(fulfillment_lines: list[models.FulfillmentLine]):
-            try:
-                line = fulfillment_lines[0]
-            except IndexError:
-                return None
-
-            if stock_id := line.stock_id:
-                return (
-                    StockByIdLoader(info.context)
-                    .load(stock_id)
-                    .then(_resolve_stock_warehouse)
-                )
-
-        return (
-            FulfillmentLinesByFulfillmentIdLoader(info.context)
-            .load(root.id)
-            .then(_resolve_stock)
-        )
 
     @staticmethod
     def resolve_shipping_refunded_amount(root: models.Fulfillment, info):
@@ -866,14 +826,6 @@ class OrderLine(ModelObjectType[models.OrderLine]):
     )
     translated_variant_name = graphene.String(
         required=True, description="Variant name in the customer's language"
-    )
-    allocations = PermissionsField(
-        NonNullList(Allocation),
-        description="List of allocations across warehouses.",
-        permissions=[
-            ProductPermissions.MANAGE_PRODUCTS,
-            OrderPermissions.MANAGE_ORDERS,
-        ],
     )
     sale_id = graphene.ID(
         required=False,
@@ -1254,13 +1206,6 @@ class Order(ModelObjectType[models.Order]):
     shipping_methods = NonNullList(
         ShippingMethod,
         description="Shipping methods related to this order.",
-        required=True,
-    )
-    available_collection_points = NonNullList(
-        Warehouse,
-        description=(
-            "Collection points that can be used for this order." + ADDED_IN_31
-        ),
         required=True,
     )
     number = graphene.String(
@@ -2064,11 +2009,6 @@ class Order(ModelObjectType[models.Order]):
     def resolve_delivery_method(cls, root: models.Order, info):
         if root.shipping_method_id or get_external_shipping_id(root):
             return cls.resolve_shipping_method(root, info)
-        if root.collection_point_id:
-            collection_point = WarehouseByIdLoader(info.context).load(
-                root.collection_point_id
-            )
-            return collection_point
         return None
 
     @classmethod

@@ -15,8 +15,6 @@ from ...core.types import OrderError
 from ...core.utils import WebhookEventInfo
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ..types import Fulfillment, Order
-from .order_fulfill import FulfillmentUpdateTrackingInput
-
 
 class FulfillmentUpdateTracking(BaseMutation):
     fulfillment = graphene.Field(
@@ -28,9 +26,6 @@ class FulfillmentUpdateTracking(BaseMutation):
 
     class Arguments:
         id = graphene.ID(required=True, description="ID of a fulfillment to update.")
-        input = FulfillmentUpdateTrackingInput(
-            required=True, description="Fields required to update a fulfillment."
-        )
 
     class Meta:
         description = "Updates a fulfillment for an order."

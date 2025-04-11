@@ -88,7 +88,6 @@ from ..product.dataloaders import ProductVariantByIdLoader
 from ..shipping.dataloaders import ShippingMethodChannelListingByChannelSlugLoader
 from ..shipping.types import ShippingMethod
 from ..translations import types as translation_types
-from ..warehouse.dataloaders import WarehouseByIdLoader
 from .resolvers import resolve_shipping_methods_for_checkout
 
 TRANSLATIONS_TYPES_MAP = {
@@ -897,84 +896,6 @@ class ProductVariantMetadataUpdated(SubscriptionObjectType, ProductVariantBase):
         description = (
             "Event sent when product variant metadata is updated." + ADDED_IN_38
         )
-
-
-class ProductVariantOutOfStock(SubscriptionObjectType, ProductVariantBase):
-    warehouse = graphene.Field(
-        "saleor.graphql.warehouse.types.Warehouse", description="Look up a warehouse."
-    )
-
-    class Meta:
-        root_type = "Stock"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when product variant is out of stock." + ADDED_IN_32
-
-    @staticmethod
-    def resolve_product_variant(root, info: ResolveInfo, channel=None):
-        _, stock = root
-        variant = stock.product_variant
-        return ChannelContext(node=variant, channel_slug=channel)
-
-    @staticmethod
-    def resolve_warehouse(root, _info: ResolveInfo):
-        _, stock = root
-        return stock.warehouse
-
-
-class ProductVariantBackInStock(SubscriptionObjectType, ProductVariantBase):
-    warehouse = graphene.Field(
-        "saleor.graphql.warehouse.types.Warehouse", description="Look up a warehouse."
-    )
-
-    class Meta:
-        root_type = "Stock"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when product variant is back in stock." + ADDED_IN_32
-
-    @staticmethod
-    def resolve_product_variant(root, _info: ResolveInfo, channel=None):
-        _, stock = root
-        variant = stock.product_variant
-        return ChannelContext(node=variant, channel_slug=channel)
-
-    @staticmethod
-    def resolve_warehouse(root, _info):
-        _, stock = root
-        return stock.warehouse
-
-
-class ProductVariantStockUpdated(SubscriptionObjectType, ProductVariantBase):
-    warehouse = graphene.Field(
-        "saleor.graphql.warehouse.types.Warehouse", description="Look up a warehouse."
-    )
-
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = (
-            "Event sent when product variant stock is updated."
-            + ADDED_IN_311
-            + PREVIEW_FEATURE
-        )
-        doc_category = DOC_CATEGORY_PRODUCTS
-
-    @staticmethod
-    def resolve_product_variant(root, info: ResolveInfo, channel=None):
-        _, stock = root
-        return (
-            ProductVariantByIdLoader(info.context)
-            .load(stock.product_variant.id)
-            .then(lambda variant: ChannelContext(node=variant, channel_slug=None))
-        )
-
-    @staticmethod
-    def resolve_warehouse(root, info: ResolveInfo):
-        _, stock = root
-        return WarehouseByIdLoader(info.context).load(stock.warehouse_id)
-
 
 class SaleBase(AbstractType):
     sale = graphene.Field(
@@ -2395,51 +2316,6 @@ class OrderFilterShippingMethods(SubscriptionObjectType, OrderBase):
         description = "Filter shipping methods for order." + ADDED_IN_36
         doc_category = DOC_CATEGORY_ORDERS
 
-
-class WarehouseBase(AbstractType):
-    warehouse = graphene.Field(
-        "saleor.graphql.warehouse.types.Warehouse",
-        description="The warehouse the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_warehouse(root, _info: ResolveInfo):
-        _, warehouse = root
-        return warehouse
-
-
-class WarehouseCreated(SubscriptionObjectType, WarehouseBase):
-    class Meta:
-        root_type = "Warehouse"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new warehouse is created." + ADDED_IN_34
-
-
-class WarehouseUpdated(SubscriptionObjectType, WarehouseBase):
-    class Meta:
-        root_type = "Warehouse"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when warehouse is updated." + ADDED_IN_34
-
-
-class WarehouseDeleted(SubscriptionObjectType, WarehouseBase):
-    class Meta:
-        root_type = "Warehouse"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when warehouse is deleted." + ADDED_IN_34
-
-
-class WarehouseMetadataUpdated(SubscriptionObjectType, WarehouseBase):
-    class Meta:
-        root_type = "Warehouse"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when warehouse metadata is updated." + ADDED_IN_38
-
-
 def default_order_resolver(root, info, channels=None):
     return Observable.from_([root])
 
@@ -2770,9 +2646,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.PRODUCT_MEDIA_DELETED: ProductMediaDeleted,
     WebhookEventAsyncType.PRODUCT_VARIANT_CREATED: ProductVariantCreated,
     WebhookEventAsyncType.PRODUCT_VARIANT_UPDATED: ProductVariantUpdated,
-    WebhookEventAsyncType.PRODUCT_VARIANT_OUT_OF_STOCK: ProductVariantOutOfStock,
-    WebhookEventAsyncType.PRODUCT_VARIANT_BACK_IN_STOCK: ProductVariantBackInStock,
-    WebhookEventAsyncType.PRODUCT_VARIANT_STOCK_UPDATED: ProductVariantStockUpdated,
     WebhookEventAsyncType.PRODUCT_VARIANT_DELETED: ProductVariantDeleted,
     WebhookEventAsyncType.PRODUCT_VARIANT_METADATA_UPDATED: (
         ProductVariantMetadataUpdated
@@ -2831,10 +2704,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.VOUCHER_CODES_CREATED: VoucherCodesCreated,
     WebhookEventAsyncType.VOUCHER_CODES_DELETED: VoucherCodesDeleted,
     WebhookEventAsyncType.VOUCHER_METADATA_UPDATED: VoucherMetadataUpdated,
-    WebhookEventAsyncType.WAREHOUSE_CREATED: WarehouseCreated,
-    WebhookEventAsyncType.WAREHOUSE_UPDATED: WarehouseUpdated,
-    WebhookEventAsyncType.WAREHOUSE_DELETED: WarehouseDeleted,
-    WebhookEventAsyncType.WAREHOUSE_METADATA_UPDATED: WarehouseMetadataUpdated,
     WebhookEventAsyncType.THUMBNAIL_CREATED: ThumbnailCreated,
 }
 

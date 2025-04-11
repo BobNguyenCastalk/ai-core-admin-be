@@ -44,7 +44,6 @@ from .mutations.order_confirm import OrderConfirm
 from .mutations.order_discount_add import OrderDiscountAdd
 from .mutations.order_discount_delete import OrderDiscountDelete
 from .mutations.order_discount_update import OrderDiscountUpdate
-from .mutations.order_fulfill import OrderFulfill
 from .mutations.order_grant_refund_create import OrderGrantRefundCreate
 from .mutations.order_grant_refund_update import OrderGrantRefundUpdate
 from .mutations.order_line_delete import OrderLineDelete
@@ -255,7 +254,6 @@ class OrderMutations(graphene.ObjectType):
     order_capture = OrderCapture.Field()
     order_confirm = OrderConfirm.Field()
 
-    order_fulfill = OrderFulfill.Field()
     order_fulfillment_cancel = FulfillmentCancel.Field()
     order_fulfillment_approve = FulfillmentApprove.Field()
     order_fulfillment_update_tracking = FulfillmentUpdateTracking.Field()

@@ -79,7 +79,6 @@ from ..utils.filters import (
     filter_where_by_string_field,
     filter_where_range_field,
 )
-from ..warehouse import types as warehouse_types
 from . import types as product_types
 from .enums import (
     CollectionPublished,
@@ -666,34 +665,11 @@ def filter_product_type_kind(qs, _, value):
 def filter_stocks(qs, _, value):
     warehouse_ids = value.get("warehouse_ids")
     quantity = value.get("quantity")
-    if warehouse_ids and not quantity:
-        return filter_warehouses(qs, _, warehouse_ids)
     if quantity and not warehouse_ids:
         return filter_quantity(qs, quantity)
     if quantity and warehouse_ids:
         return filter_quantity(qs, quantity, warehouse_ids)
     return qs
-
-
-def filter_warehouses(qs, _, value):
-    if value:
-        _, warehouse_pks = resolve_global_ids_to_primary_keys(
-            value, warehouse_types.Warehouse
-        )
-        warehouses = (
-            Warehouse.objects.using(qs.db).filter(pk__in=warehouse_pks).values("pk")
-        )
-        variant_ids = (
-            Stock.objects.using(qs.db)
-            .filter(Exists(warehouses.filter(pk=OuterRef("warehouse"))))
-            .values("product_variant_id")
-        )
-        variants = (
-            ProductVariant.objects.using(qs.db).filter(id__in=variant_ids).values("pk")
-        )
-        return qs.filter(Exists(variants.filter(product=OuterRef("pk"))))
-    return qs
-
 
 def filter_sku_list(qs, _, value):
     return qs.filter(sku__in=value)
@@ -718,14 +694,6 @@ def filter_quantity(qs, quantity_value, warehouse_ids=None):
     from stocks which are in given warehouses.
     """
     stocks = Stock.objects.using(qs.db).all()
-    if warehouse_ids:
-        _, warehouse_pks = resolve_global_ids_to_primary_keys(
-            warehouse_ids, warehouse_types.Warehouse
-        )
-        stocks = stocks.filter(warehouse_id__in=warehouse_pks)
-    stocks = stocks.values("product_variant_id").filter(
-        product_variant_id=OuterRef("pk")
-    )
 
     stocks = Subquery(stocks.values_list(Sum("quantity")))
     variants = ProductVariant.objects.using(qs.db).annotate(
@@ -976,33 +944,11 @@ def where_filter_stocks(qs, _, value):
         return qs.none()
     warehouse_ids = value.get("warehouse_ids")
     quantity = value.get("quantity")
-    if warehouse_ids and not quantity:
-        return where_filter_warehouses(qs, _, warehouse_ids)
     if quantity and not warehouse_ids:
         return where_filter_quantity(qs, quantity)
     if quantity and warehouse_ids:
         return where_filter_quantity(qs, quantity, warehouse_ids)
     return qs.none()
-
-
-def where_filter_warehouses(qs, _, value):
-    if not value:
-        return qs.none()
-    _, warehouse_pks = resolve_global_ids_to_primary_keys(
-        value, warehouse_types.Warehouse
-    )
-    warehouses = (
-        Warehouse.objects.using(qs.db).filter(pk__in=warehouse_pks).values("pk")
-    )
-    variant_ids = (
-        Stock.objects.using(qs.db)
-        .filter(Exists(warehouses.filter(pk=OuterRef("warehouse"))))
-        .values("product_variant_id")
-    )
-    variants = (
-        ProductVariant.objects.using(qs.db).filter(id__in=variant_ids).values("pk")
-    )
-    return qs.filter(Exists(variants.filter(product=OuterRef("pk"))))
 
 
 def where_filter_quantity(qs, quantity_value, warehouse_ids=None):
@@ -1013,14 +959,6 @@ def where_filter_quantity(qs, quantity_value, warehouse_ids=None):
     from stocks which are in given warehouses.
     """
     stocks = Stock.objects.using(qs.db).all()
-    if warehouse_ids:
-        _, warehouse_pks = resolve_global_ids_to_primary_keys(
-            warehouse_ids, warehouse_types.Warehouse
-        )
-        stocks = stocks.filter(warehouse_id__in=warehouse_pks)
-    stocks = stocks.values("product_variant_id").filter(
-        product_variant_id=OuterRef("pk")
-    )
 
     stocks = Subquery(stocks.values_list(Sum("quantity")))
     variants = ProductVariant.objects.using(qs.db).annotate(

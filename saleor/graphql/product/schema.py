@@ -46,9 +46,6 @@ from .bulk_mutations import (
     ProductVariantBulkCreate,
     ProductVariantBulkDelete,
     ProductVariantBulkUpdate,
-    ProductVariantStocksCreate,
-    ProductVariantStocksDelete,
-    ProductVariantStocksUpdate,
 )
 from .dataloaders.products import CategoryByIdLoader, CategoryBySlugLoader
 from .filters import (
@@ -673,9 +670,6 @@ class ProductMutations(graphene.ObjectType):
     product_variant_bulk_create = ProductVariantBulkCreate.Field()
     product_variant_bulk_update = ProductVariantBulkUpdate.Field()
     product_variant_bulk_delete = ProductVariantBulkDelete.Field()
-    product_variant_stocks_create = ProductVariantStocksCreate.Field()
-    product_variant_stocks_delete = ProductVariantStocksDelete.Field()
-    product_variant_stocks_update = ProductVariantStocksUpdate.Field()
     product_variant_update = ProductVariantUpdate.Field()
     product_variant_set_default = ProductVariantSetDefault.Field()
     product_variant_translate = ProductVariantTranslate.Field()

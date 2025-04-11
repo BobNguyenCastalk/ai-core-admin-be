@@ -20,7 +20,6 @@ from ...permission.enums import (
     PaymentPermissions,
 )
 from ...shipping.interface import ShippingMethodData
-from ...warehouse import models as warehouse_models
 from ...warehouse.reservations import is_reservation_enabled
 from ...webhook.event_types import WebhookEventSyncType
 from ..account.dataloaders import AddressByIdLoader, UserByUserIdLoader
@@ -72,8 +71,6 @@ from ..product.dataloaders import (
 from ..shipping.types import ShippingMethod
 from ..site.dataloaders import load_site_callback
 from ..utils import get_user_or_app_from_context
-from ..warehouse.dataloaders import StocksReservationsByCheckoutTokenLoader
-from ..warehouse.types import Warehouse
 from ..webhook.dataloaders.pregenerated_payload_for_checkout_tax import (
     PregeneratedCheckoutTaxPayloadsByCheckoutTokenLoader,
 )
@@ -469,21 +466,24 @@ class CheckoutLineCountableConnection(CountableConnection):
         node = CheckoutLine
 
 
+class Draft(graphene.ObjectType):
+    name = graphene.String()
+
+
 class DeliveryMethod(graphene.Union):
+
     class Meta:
         description = (
             "Represents a delivery method chosen for the checkout. "
             '`Warehouse` type is used when checkout is marked as "click and collect" '
             "and `ShippingMethod` otherwise." + ADDED_IN_31
         )
-        types = (Warehouse, ShippingMethod)
+        types = (Draft, ShippingMethod)
 
     @classmethod
     def resolve_type(cls, instance, info: ResolveInfo):
         if isinstance(instance, ShippingMethodData):
             return ShippingMethod
-        if isinstance(instance, warehouse_models.Warehouse):
-            return Warehouse
 
         return super().resolve_type(instance, info)
 
@@ -595,7 +595,7 @@ class Checkout(ModelObjectType[models.Checkout]):
         ],
     )
     available_collection_points = NonNullList(
-        Warehouse,
+        Draft,
         required=True,
         description=(
             "Collection points that can be used for this order." + ADDED_IN_31
@@ -1055,17 +1055,7 @@ class Checkout(ModelObjectType[models.Checkout]):
             if not is_reservation_enabled(site.settings):
                 return None
 
-            def get_oldest_stock_reservation_expiration_date(reservations):
-                if not reservations:
-                    return None
-
-                return min(reservation.reserved_until for reservation in reservations)
-
-            return (
-                StocksReservationsByCheckoutTokenLoader(info.context)
-                .load(root.token)
-                .then(get_oldest_stock_reservation_expiration_date)
-            )
+        return None
 
     @staticmethod
     @one_of_permissions_required(

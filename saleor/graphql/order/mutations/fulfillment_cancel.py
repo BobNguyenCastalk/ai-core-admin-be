@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import cast
 
 import graphene
 from django.core.exceptions import ValidationError
@@ -14,7 +14,6 @@ from ...core.doc_category import DOC_CATEGORY_ORDERS
 from ...core.mutations import BaseMutation
 from ...core.types import BaseInputObjectType, OrderError
 from ...plugins.dataloaders import get_plugin_manager_promise
-from ...warehouse.types import Warehouse
 from ..types import Fulfillment, Order
 
 
@@ -90,12 +89,6 @@ class FulfillmentCancel(BaseMutation):
         warehouse = None
         if fulfillment.status == FulfillmentStatus.WAITING_FOR_APPROVAL:
             warehouse = None
-        elif input:
-            warehouse_id: Optional[str] = input.get("warehouse_id")
-            if warehouse_id:
-                warehouse = cls.get_node_or_error(
-                    info, warehouse_id, only_type=Warehouse, field="warehouse_id"
-                )
 
         cls.validate_fulfillment(fulfillment, warehouse)
 
