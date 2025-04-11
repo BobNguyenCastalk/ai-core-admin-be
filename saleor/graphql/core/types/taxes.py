@@ -36,11 +36,6 @@ from ...product.dataloaders.products import (
     ProductByVariantIdLoader,
     ProductVariantByIdLoader,
 )
-from ...tax.dataloaders import (
-    TaxConfigurationByChannelId,
-    TaxConfigurationPerCountryByTaxConfigurationIDLoader,
-)
-from ...tax.enums import TaxableObjectDiscountTypeEnum
 from .. import ResolveInfo
 from .common import NonNullList
 from .money import Money as MoneyType
@@ -157,65 +152,6 @@ class TaxableObjectLine(BaseObjectType):
         return root
 
     @staticmethod
-    def resolve_charge_taxes(root: Union[CheckoutLine, OrderLine], info: ResolveInfo):
-        def load_tax_configuration(channel, country_code):
-            tax_config = TaxConfigurationByChannelId(info.context).load(channel.pk)
-
-            def load_tax_country_exceptions(tax_config):
-                tax_configs_per_country = (
-                    TaxConfigurationPerCountryByTaxConfigurationIDLoader(
-                        info.context
-                    ).load(tax_config.id)
-                )
-
-                def calculate_charge_taxes(tax_configs_per_country):
-                    tax_config_country = next(
-                        (
-                            tc
-                            for tc in tax_configs_per_country
-                            if tc.country.code == country_code
-                        ),
-                        None,
-                    )
-                    return get_charge_taxes(tax_config, tax_config_country)
-
-                return tax_configs_per_country.then(calculate_charge_taxes)
-
-            return tax_config.then(load_tax_country_exceptions)
-
-        if isinstance(root, CheckoutLine):
-            checkout = CheckoutByTokenLoader(info.context).load(root.checkout_id)
-
-            @allow_writer_in_context(info.context)
-            def load_channel(checkout):
-                country_code = checkout.get_country()
-                load_tax_config_with_country = partial(
-                    load_tax_configuration, country_code=country_code
-                )
-                return (
-                    ChannelByIdLoader(info.context)
-                    .load(checkout.channel_id)
-                    .then(load_tax_config_with_country)
-                )
-
-            return checkout.then(load_channel)
-        else:
-            order = OrderByIdLoader(info.context).load(root.order_id)
-
-            def load_channel(order):
-                country_code = get_order_country(order)
-                load_tax_config_with_country = partial(
-                    load_tax_configuration, country_code=country_code
-                )
-                return (
-                    ChannelByIdLoader(info.context)
-                    .load(order.channel_id)
-                    .then(load_tax_config_with_country)
-                )
-
-            return order.then(load_channel)
-
-    @staticmethod
     def resolve_unit_price(root: Union[CheckoutLine, OrderLine], info: ResolveInfo):
         if isinstance(root, CheckoutLine):
 
@@ -268,22 +204,6 @@ class TaxableObjectLine(BaseObjectType):
         return root.base_unit_price * root.quantity
 
 
-class TaxableObjectDiscount(BaseObjectType):
-    name = graphene.String(description="The name of the discount.")
-    amount = graphene.Field(
-        MoneyType, description="The amount of the discount.", required=True
-    )
-    type = TaxableObjectDiscountTypeEnum(
-        required=True,
-        default_value=TaxableObjectDiscountTypeEnum.SUBTOTAL,
-        description="Indicates which part of the order the discount should affect: SUBTOTAL or SHIPPING.",
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_TAXES
-        description = "Taxable object discount."
-
-
 class TaxableObject(BaseObjectType):
     source_object = graphene.Field(
         TaxSourceObject,
@@ -305,9 +225,6 @@ class TaxableObject(BaseObjectType):
     address = graphene.Field(
         "saleor.graphql.account.types.Address",
         description="The address data.",
-    )
-    discounts = NonNullList(
-        TaxableObjectDiscount, description="List of discounts.", required=True
     )
     lines = NonNullList(
         TaxableObjectLine,
@@ -334,13 +251,6 @@ class TaxableObject(BaseObjectType):
     @staticmethod
     def resolve_source_object(root: Union[Checkout, Order], _info: ResolveInfo):
         return root
-
-    @staticmethod
-    def resolve_prices_entered_with_tax(
-        root: Union[Checkout, Order], info: ResolveInfo
-    ):
-        tax_config = TaxConfigurationByChannelId(info.context).load(root.channel_id)
-        return tax_config.then(lambda tc: tc.prices_entered_with_tax)
 
     @staticmethod
     def resolve_currency(root: Union[Checkout, Order], _info: ResolveInfo):
@@ -390,7 +300,7 @@ class TaxableObject(BaseObjectType):
                         {
                             "name": discount_name,
                             "amount": checkout.discount,
-                            "type": TaxableObjectDiscountTypeEnum.SUBTOTAL,
+                            "type": "SUBTOTAL",
                         }
                     ]
                     if checkout.discount
@@ -437,7 +347,7 @@ class TaxableObject(BaseObjectType):
                         {
                             "name": discount.name,
                             "amount": subtotal_discount,
-                            "type": TaxableObjectDiscountTypeEnum.SUBTOTAL,
+                            "type": "SUBTOTAL",
                         }
                     )
                 if shipping_discount.amount:
@@ -445,7 +355,7 @@ class TaxableObject(BaseObjectType):
                         {
                             "name": discount.name,
                             "amount": shipping_discount,
-                            "type": TaxableObjectDiscountTypeEnum.SHIPPING,
+                            "type": "SHIPPING",
                         }
                     )
 

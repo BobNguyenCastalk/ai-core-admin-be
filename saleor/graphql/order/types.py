@@ -132,17 +132,9 @@ from ..product.dataloaders import (
 )
 from ..product.types import DigitalContentUrl, ProductVariant
 from ..shipping.dataloaders import (
-    ShippingMethodByIdLoader,
     ShippingMethodChannelListingByChannelSlugLoader,
-    ShippingMethodChannelListingByShippingMethodIdAndChannelSlugLoader,
 )
 from ..shipping.types import ShippingMethod
-from ..tax.dataloaders import (
-    TaxClassByIdLoader,
-    TaxConfigurationByChannelId,
-    TaxConfigurationPerCountryByTaxConfigurationIDLoader,
-)
-from ..tax.types import TaxClass
 from ..warehouse.types import Allocation, Stock, Warehouse
 from .dataloaders import (
     AllocationsByOrderLineIdLoader,
@@ -897,17 +889,6 @@ class OrderLine(ModelObjectType[models.OrderLine]):
         required=True,
         description="A quantity of items remaining to be fulfilled." + ADDED_IN_31,
     )
-    tax_class = PermissionsField(
-        TaxClass,
-        description=(
-            "Denormalized tax class of the product in this order line." + ADDED_IN_39
-        ),
-        required=False,
-        permissions=[
-            AuthorizationFilters.AUTHENTICATED_STAFF_USER,
-            AuthorizationFilters.AUTHENTICATED_APP,
-        ],
-    )
     tax_class_name = graphene.Field(
         graphene.String,
         description="Denormalized name of the tax class." + ADDED_IN_39,
@@ -1192,14 +1173,6 @@ class OrderLine(ModelObjectType[models.OrderLine]):
         return AllocationsByOrderLineIdLoader(info.context).load(root.id)
 
     @staticmethod
-    def resolve_tax_class(root: models.OrderLine, info):
-        return (
-            TaxClassByIdLoader(info.context).load(root.tax_class_id)
-            if root.tax_class_id
-            else None
-        )
-
-    @staticmethod
     def resolve_tax_class_metadata(root: models.OrderLine, _info):
         return resolve_metadata(root.tax_class_metadata)
 
@@ -1355,16 +1328,6 @@ class Order(ModelObjectType[models.Order]):
     )
     shipping_tax_rate = graphene.Float(
         required=True, description="The shipping tax rate value."
-    )
-    shipping_tax_class = PermissionsField(
-        TaxClass,
-        description="Denormalized tax class assigned to the shipping method."
-        + ADDED_IN_39,
-        required=False,
-        permissions=[
-            AuthorizationFilters.AUTHENTICATED_STAFF_USER,
-            AuthorizationFilters.AUTHENTICATED_APP,
-        ],
     )
     shipping_tax_class_name = graphene.Field(
         graphene.String,
@@ -2100,64 +2063,6 @@ class Order(ModelObjectType[models.Order]):
 
         return UserByUserIdLoader(info.context).load(root.user_id).then(_resolve_user)
 
-    @staticmethod
-    def resolve_shipping_method(root: models.Order, info):
-        external_app_shipping_id = get_external_shipping_id(root)
-
-        if external_app_shipping_id:
-            tax_config = TaxConfigurationByChannelId(info.context).load(root.channel_id)
-
-            def with_tax_config(tax_config):
-                prices_entered_with_tax = tax_config.prices_entered_with_tax
-                price = (
-                    root.shipping_price_gross
-                    if prices_entered_with_tax
-                    else root.shipping_price_net
-                )
-                return ShippingMethodData(
-                    id=external_app_shipping_id,
-                    name=root.shipping_method_name,
-                    price=price,
-                )
-
-            return tax_config.then(with_tax_config)
-
-        if not root.shipping_method_id:
-            return None
-
-        def wrap_shipping_method_with_channel_context(data):
-            shipping_method, channel = data
-            listing = (
-                ShippingMethodChannelListingByShippingMethodIdAndChannelSlugLoader(
-                    info.context
-                ).load((shipping_method.id, channel.slug))
-            )
-
-            tax_class = None
-            if shipping_method.tax_class_id:
-                tax_class = TaxClassByIdLoader(info.context).load(
-                    shipping_method.tax_class_id
-                )
-
-            def calculate_price(data) -> Optional[ShippingMethodData]:
-                listing, tax_class = data
-                if not listing:
-                    return None
-                return convert_to_shipping_method_data(
-                    shipping_method, listing, tax_class
-                )
-
-            return Promise.all([listing, tax_class]).then(calculate_price)
-
-        shipping_method = ShippingMethodByIdLoader(info.context).load(
-            int(root.shipping_method_id)
-        )
-        channel = ChannelByIdLoader(info.context).load(root.channel_id)
-
-        return Promise.all([shipping_method, channel]).then(
-            wrap_shipping_method_with_channel_context
-        )
-
     @classmethod
     def resolve_delivery_method(cls, root: models.Order, info):
         if root.shipping_method_id or get_external_shipping_id(root):
@@ -2469,32 +2374,6 @@ class Order(ModelObjectType[models.Order]):
         return Promise.all([transactions, payments, granted_refunds]).then(
             _resolve_total_remaining_grant
         )
-
-    def resolve_display_gross_prices(root: models.Order, info):
-        tax_config = TaxConfigurationByChannelId(info.context).load(root.channel_id)
-        country_code = get_order_country(root)
-
-        def load_tax_country_exceptions(tax_config):
-            tax_configs_per_country = (
-                TaxConfigurationPerCountryByTaxConfigurationIDLoader(info.context).load(
-                    tax_config.id
-                )
-            )
-
-            def calculate_display_gross_prices(tax_configs_per_country):
-                tax_config_country = next(
-                    (
-                        tc
-                        for tc in tax_configs_per_country
-                        if tc.country.code == country_code
-                    ),
-                    None,
-                )
-                return get_display_gross_prices(tax_config, tax_config_country)
-
-            return tax_configs_per_country.then(calculate_display_gross_prices)
-
-        return tax_config.then(load_tax_country_exceptions)
 
     @classmethod
     def resolve_shipping_tax_class(cls, root: models.Order, info):

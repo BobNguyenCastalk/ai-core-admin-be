@@ -30,7 +30,6 @@ from ...shipping.dataloaders import (
     ShippingMethodByIdLoader,
     ShippingMethodChannelListingByChannelSlugLoader,
 )
-from ...tax.dataloaders import TaxClassByVariantIdLoader, TaxConfigurationByChannelId
 from ...warehouse.dataloaders import (
     WarehouseByIdLoader,
 )
@@ -105,9 +104,7 @@ class CheckoutInfoByCheckoutTokenLoader(DataLoader[str, CheckoutInfo]):
                 )
 
                 channel_ids = [channel.id for channel in channels]
-                tax_configurations = TaxConfigurationByChannelId(
-                    self.context
-                ).load_many(channel_ids)
+                tax_configurations = []
 
                 def with_checkout_info(results):
                     (
@@ -358,9 +355,7 @@ class CheckoutLinesInfoByCheckoutTokenLoader(DataLoader[str, list[CheckoutLineIn
             collections = CollectionsByVariantIdLoader(self.context).load_many(
                 variants_pks
             )
-            tax_classes = TaxClassByVariantIdLoader(self.context).load_many(
-                variants_pks
-            )
+            tax_classes = []
 
             voucher_codes = {
                 checkout.voucher_code for checkout in checkouts if checkout.voucher_code

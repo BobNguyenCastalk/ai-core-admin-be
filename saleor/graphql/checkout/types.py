@@ -72,10 +72,6 @@ from ..product.dataloaders import (
 )
 from ..shipping.types import ShippingMethod
 from ..site.dataloaders import load_site_callback
-from ..tax.dataloaders import (
-    TaxConfigurationByChannelId,
-    TaxConfigurationPerCountryByTaxConfigurationIDLoader,
-)
 from ..utils import get_user_or_app_from_context
 from ..warehouse.dataloaders import StocksReservationsByCheckoutTokenLoader
 from ..warehouse.types import Warehouse
@@ -1078,33 +1074,6 @@ class Checkout(ModelObjectType[models.Checkout]):
     )
     def resolve_transactions(root: models.Checkout, info: ResolveInfo):
         return TransactionItemsByCheckoutIDLoader(info.context).load(root.pk)
-
-    @staticmethod
-    def resolve_display_gross_prices(root: models.Checkout, info: ResolveInfo):
-        tax_config = TaxConfigurationByChannelId(info.context).load(root.channel_id)
-        country_code = root.get_country()
-
-        def load_tax_country_exceptions(tax_config):
-            tax_configs_per_country = (
-                TaxConfigurationPerCountryByTaxConfigurationIDLoader(info.context).load(
-                    tax_config.id
-                )
-            )
-
-            def calculate_display_gross_prices(tax_configs_per_country):
-                tax_config_country = next(
-                    (
-                        tc
-                        for tc in tax_configs_per_country
-                        if tc.country.code == country_code
-                    ),
-                    None,
-                )
-                return get_display_gross_prices(tax_config, tax_config_country)
-
-            return tax_configs_per_country.then(calculate_display_gross_prices)
-
-        return tax_config.then(load_tax_country_exceptions)
 
     @staticmethod
     def resolve_metadata(root: models.Checkout, info):

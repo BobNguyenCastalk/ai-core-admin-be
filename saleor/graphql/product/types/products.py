@@ -6,7 +6,6 @@ from typing import Optional
 
 import graphene
 from graphene import relay
-from promise import Promise
 
 from ....attribute import models as attribute_models
 from ....channel.models import Channel
@@ -20,16 +19,6 @@ from ....permission.utils import has_one_of_permissions
 from ....product import models
 from ....product.models import ALL_PRODUCTS_PERMISSIONS
 from ....product.utils import calculate_revenue_for_variant
-from ....product.utils.availability import (
-    get_product_availability,
-    get_variant_availability,
-)
-from ....product.utils.variants import get_variant_selection_attributes
-from ....tax.utils import (
-    get_display_gross_prices,
-    get_tax_calculation_strategy,
-    get_tax_rate_for_tax_class,
-)
 from ....thumbnail.utils import (
     get_image_or_proxy_url,
     get_thumbnail_format,
@@ -83,7 +72,6 @@ from ...core.types import (
     NonNullList,
     TaxedMoney,
     TaxedMoneyRange,
-    TaxType,
     ThumbnailField,
     Weight,
 )
@@ -100,17 +88,6 @@ from ...product.dataloaders.products import (
     ProductVariantsByProductIdAndChannel,
 )
 from ...site.dataloaders import load_site_callback
-from ...tax.dataloaders import (
-    ProductChargeTaxesByTaxClassIdLoader,
-    TaxClassByIdLoader,
-    TaxClassByProductIdLoader,
-    TaxClassByVariantIdLoader,
-    TaxClassCountryRateByTaxClassIDLoader,
-    TaxClassDefaultRateByCountryLoader,
-    TaxConfigurationByChannelId,
-    TaxConfigurationPerCountryByTaxConfigurationIDLoader,
-)
-from ...tax.types import TaxClass
 from ...translations.fields import TranslationField
 from ...translations.types import ProductTranslation, ProductVariantTranslation
 from ...utils import get_user_or_app_from_context
@@ -146,7 +123,6 @@ from ..dataloaders import (
     VariantAttributesVisibleInStorefrontByProductTypeIdLoader,
     VariantChannelListingByVariantIdAndChannelSlugLoader,
     VariantChannelListingByVariantIdLoader,
-    VariantsChannelListingByProductIdAndChannelSlugLoader,
 )
 from ..enums import ProductMediaType, ProductTypeKindEnum, VariantAttributeScope
 from ..resolvers import resolve_product_variants, resolve_products
@@ -609,111 +585,6 @@ class ProductVariant(ChannelContextTypeWithMetadata[models.ProductVariant]):
         return VariantChannelListingByVariantIdLoader(info.context).load(root.node.id)
 
     @staticmethod
-    def resolve_pricing(
-        root: ChannelContext[models.ProductVariant], info, *, address=None
-    ):
-        if not root.channel_slug:
-            return None
-
-        channel_slug = str(root.channel_slug)
-        context = info.context
-
-        product_channel_listing = ProductChannelListingByProductIdAndChannelSlugLoader(
-            context
-        ).load((root.node.product_id, channel_slug))
-        variant_channel_listing = VariantChannelListingByVariantIdAndChannelSlugLoader(
-            context
-        ).load((root.node.id, channel_slug))
-        channel = ChannelBySlugLoader(context).load(channel_slug)
-        tax_class = TaxClassByVariantIdLoader(context).load(root.node.id)
-
-        def load_tax_configuration(data):
-            (
-                product_channel_listing,
-                variant_channel_listing,
-                channel,
-                tax_class,
-            ) = data
-
-            if not variant_channel_listing or not product_channel_listing:
-                return None
-            country_code = get_active_country(channel, address_data=address)
-
-            def load_tax_country_exceptions(tax_config):
-                def load_default_tax_rate(tax_configs_per_country):
-                    def calculate_pricing_info(data):
-                        country_rates, default_country_rate_obj = data
-
-                        tax_config_country = next(
-                            (
-                                tc
-                                for tc in tax_configs_per_country
-                                if tc.country.code == country_code
-                            ),
-                            None,
-                        )
-                        tax_calculation_strategy = get_tax_calculation_strategy(
-                            tax_config, tax_config_country
-                        )
-
-                        default_tax_rate = (
-                            default_country_rate_obj.rate
-                            if default_country_rate_obj
-                            else Decimal(0)
-                        )
-                        tax_rate = get_tax_rate_for_tax_class(
-                            tax_class, country_rates, default_tax_rate, country_code
-                        )
-
-                        availability = get_variant_availability(
-                            variant_channel_listing=variant_channel_listing,
-                            product_channel_listing=product_channel_listing,
-                            prices_entered_with_tax=tax_config.prices_entered_with_tax,
-                            tax_calculation_strategy=tax_calculation_strategy,
-                            tax_rate=tax_rate,
-                        )
-                        return (
-                            VariantPricingInfo(**asdict(availability))
-                            if availability
-                            else None
-                        )
-
-                    country_rates = (
-                        TaxClassCountryRateByTaxClassIDLoader(context).load(
-                            tax_class.pk
-                        )
-                        if tax_class
-                        else []
-                    )
-                    default_rate = TaxClassDefaultRateByCountryLoader(context).load(
-                        country_code
-                    )
-                    return Promise.all([country_rates, default_rate]).then(
-                        calculate_pricing_info
-                    )
-
-                return (
-                    TaxConfigurationPerCountryByTaxConfigurationIDLoader(context)
-                    .load(tax_config.id)
-                    .then(load_default_tax_rate)
-                )
-
-            return (
-                TaxConfigurationByChannelId(context)
-                .load(channel.id)
-                .then(load_tax_country_exceptions)
-            )
-
-        return Promise.all(
-            [
-                product_channel_listing,
-                variant_channel_listing,
-                channel,
-                tax_class,
-            ]
-        ).then(load_tax_configuration)
-
-    @staticmethod
     def resolve_product(root: ChannelContext[models.ProductVariant], info):
         product = ProductByIdLoader(info.context).load(root.node.product_id)
         return product.then(
@@ -903,11 +774,6 @@ class Product(ChannelContextTypeWithMetadata[models.Product]):
             "given channel, and published."
         ),
     )
-    tax_type = graphene.Field(
-        TaxType,
-        description="A type of tax. Assigned by enabled tax gateway",
-        deprecation_reason=f"{DEPRECATED_IN_3X_FIELD} Use `taxClass` field instead.",
-    )
     attribute = graphene.Field(
         SelectedAttribute,
         slug=graphene.Argument(
@@ -1002,18 +868,6 @@ class Product(ChannelContextTypeWithMetadata[models.Product]):
             "to customers, but it cannot be purchased."
         )
     )
-    tax_class = PermissionsField(
-        TaxClass,
-        description=(
-            "Tax class assigned to this product type. All products of this product "
-            "type use this tax class, unless it's overridden in the `Product` type."
-        ),
-        required=False,
-        permissions=[
-            AuthorizationFilters.AUTHENTICATED_STAFF_USER,
-            AuthorizationFilters.AUTHENTICATED_APP,
-        ],
-    )
     external_reference = graphene.String(
         description=f"External ID of this product. {ADDED_IN_310}",
         required=False,
@@ -1062,22 +916,6 @@ class Product(ChannelContextTypeWithMetadata[models.Product]):
         return description if description is not None else {}
 
     @staticmethod
-    def resolve_tax_type(root: ChannelContext[models.Product], info):
-        def with_tax_class(data):
-            tax_class, manager = data
-            tax_data = manager.get_tax_code_from_object_meta(
-                tax_class, channel_slug=root.channel_slug
-            )
-            return TaxType(tax_code=tax_data.code, description=tax_data.description)
-
-        if root.node.tax_class_id:
-            tax_class = TaxClassByIdLoader(info.context).load(root.node.tax_class_id)
-            manager = get_plugin_manager_promise(info.context)
-            return Promise.all([tax_class, manager]).then(with_tax_class)
-
-        return None
-
-    @staticmethod
     def resolve_thumbnail(
         root: ChannelContext[models.Product],
         info,
@@ -1119,113 +957,6 @@ class Product(ChannelContextTypeWithMetadata[models.Product]):
     @staticmethod
     def resolve_url(_root, _info):
         return ""
-
-    @staticmethod
-    def resolve_pricing(root: ChannelContext[models.Product], info, *, address=None):
-        if not root.channel_slug:
-            return None
-
-        channel_slug = str(root.channel_slug)
-        context = info.context
-
-        channel = ChannelBySlugLoader(context).load(channel_slug)
-        product_channel_listing = ProductChannelListingByProductIdAndChannelSlugLoader(
-            context
-        ).load((root.node.id, channel_slug))
-        variants_channel_listing = (
-            VariantsChannelListingByProductIdAndChannelSlugLoader(context).load(
-                (root.node.id, channel_slug)
-            )
-        )
-        tax_class = TaxClassByProductIdLoader(context).load(root.node.id)
-
-        def load_tax_configuration(data):
-            (
-                channel,
-                product_channel_listing,
-                variants_channel_listing,
-                tax_class,
-            ) = data
-
-            if not variants_channel_listing:
-                return None
-            country_code = get_active_country(channel, address_data=address)
-
-            def load_tax_country_exceptions(tax_config):
-                def load_default_tax_rate(tax_configs_per_country):
-                    def calculate_pricing_info(data):
-                        country_rates, default_country_rate_obj = data
-                        tax_config_country = next(
-                            (
-                                tc
-                                for tc in tax_configs_per_country
-                                if tc.country.code == country_code
-                            ),
-                            None,
-                        )
-                        display_gross_prices = get_display_gross_prices(
-                            tax_config,
-                            tax_config_country,
-                        )
-                        tax_calculation_strategy = get_tax_calculation_strategy(
-                            tax_config, tax_config_country
-                        )
-
-                        default_tax_rate = (
-                            default_country_rate_obj.rate
-                            if default_country_rate_obj
-                            else Decimal(0)
-                        )
-                        tax_rate = get_tax_rate_for_tax_class(
-                            tax_class, country_rates, default_tax_rate, country_code
-                        )
-
-                        availability = get_product_availability(
-                            product_channel_listing=product_channel_listing,
-                            variants_channel_listing=variants_channel_listing,
-                            prices_entered_with_tax=tax_config.prices_entered_with_tax,
-                            tax_calculation_strategy=tax_calculation_strategy,
-                            tax_rate=tax_rate,
-                        )
-
-                        pricing_info = asdict(availability)
-                        pricing_info["display_gross_prices"] = display_gross_prices
-                        return ProductPricingInfo(**pricing_info)
-
-                    country_rates = (
-                        TaxClassCountryRateByTaxClassIDLoader(context).load(
-                            tax_class.pk
-                        )
-                        if tax_class
-                        else []
-                    )
-                    default_rate = TaxClassDefaultRateByCountryLoader(context).load(
-                        country_code
-                    )
-                    return Promise.all([country_rates, default_rate]).then(
-                        calculate_pricing_info
-                    )
-
-                return (
-                    TaxConfigurationPerCountryByTaxConfigurationIDLoader(context)
-                    .load(tax_config.id)
-                    .then(load_default_tax_rate)
-                )
-
-            return (
-                TaxConfigurationByChannelId(context)
-                .load(channel.id)
-                .then(load_tax_country_exceptions)
-            )
-
-        return Promise.all(
-            [
-                channel,
-                product_channel_listing,
-                variants_channel_listing,
-                tax_class,
-            ]
-        ).then(load_tax_configuration)
 
     @staticmethod
     @traced_resolver
@@ -1557,51 +1288,6 @@ class Product(ChannelContextTypeWithMetadata[models.Product]):
         return ProductTypeByIdLoader(info.context).load(root.node.product_type_id)
 
     @staticmethod
-    def resolve_tax_class(root: ChannelContext[models.Product], info):
-        product_type = (
-            ProductTypeByIdLoader(info.context).load(root.node.product_type_id)
-            if not root.node.tax_class_id
-            else None
-        )
-
-        def resolve_tax_class(product_type):
-            tax_class_id = (
-                product_type.tax_class_id if product_type else root.node.tax_class_id
-            )
-            return (
-                TaxClassByIdLoader(info.context).load(tax_class_id)
-                if tax_class_id
-                else None
-            )
-
-        return Promise.resolve(product_type).then(resolve_tax_class)
-
-    def resolve_charge_taxes(root: ChannelContext[models.Product], info):
-        # Deprecated: this field is deprecated as it only checks whether there are any
-        # non-zero flat rates set for a product. Instead channel tax configuration
-        # should be used to check whether taxes are charged.
-
-        tax_class_id = root.node.tax_class_id
-        if not tax_class_id:
-            product_type = ProductTypeByIdLoader(info.context).load(
-                root.node.product_type_id
-            )
-
-            def with_product_type(product_type):
-                tax_class_id = product_type.tax_class_id
-                return (
-                    ProductChargeTaxesByTaxClassIdLoader(info.context).load(
-                        tax_class_id
-                    )
-                    if tax_class_id
-                    else False
-                )
-
-            return product_type.then(with_product_type)
-
-        return ProductChargeTaxesByTaxClassIdLoader(info.context).load(tax_class_id)
-
-    @staticmethod
     def __resolve_references(roots: list["Product"], info):
         requestor = get_user_or_app_from_context(info.context)
         channels = defaultdict(set)
@@ -1665,23 +1351,6 @@ class ProductType(ModelObjectType[models.ProductType]):
             "Use the top-level `products` query with the `productTypes` filter."
         ),
     )
-    tax_type = graphene.Field(
-        TaxType,
-        description="A type of tax. Assigned by enabled tax gateway",
-        deprecation_reason=f"{DEPRECATED_IN_3X_FIELD} Use `taxClass` field instead.",
-    )
-    tax_class = PermissionsField(
-        TaxClass,
-        description=(
-            "Tax class assigned to this product type. All products of this product "
-            "type use this tax class, unless it's overridden in the `Product` type."
-        ),
-        required=False,
-        permissions=[
-            AuthorizationFilters.AUTHENTICATED_STAFF_USER,
-            AuthorizationFilters.AUTHENTICATED_APP,
-        ],
-    )
     variant_attributes = NonNullList(
         Attribute,
         description="Variant attributes of that product type.",
@@ -1723,19 +1392,6 @@ class ProductType(ModelObjectType[models.ProductType]):
         interfaces = [relay.Node, ObjectWithMetadata]
         model = models.ProductType
 
-    @staticmethod
-    def resolve_tax_type(root: models.ProductType, info):
-        def with_tax_class(data):
-            tax_class, manager = data
-            tax_data = manager.get_tax_code_from_object_meta(tax_class)
-            return TaxType(tax_code=tax_data.code, description=tax_data.description)
-
-        if root.tax_class_id:
-            tax_class = TaxClassByIdLoader(info.context).load(root.tax_class_id)
-            manager = get_plugin_manager_promise(info.context)
-            return Promise.all([tax_class, manager]).then(with_tax_class)
-
-        return None
 
     @staticmethod
     def resolve_product_attributes(root: models.ProductType, info):
@@ -1881,13 +1537,6 @@ class ProductType(ModelObjectType[models.ProductType]):
     def resolve_weight(root: models.ProductType, _info):
         return convert_weight_to_default_weight_unit(root.weight)
 
-    @staticmethod
-    def resolve_tax_class(root: models.ProductType, info):
-        return (
-            TaxClassByIdLoader(info.context).load(root.tax_class_id)
-            if root.tax_class_id
-            else None
-        )
 
     @staticmethod
     def __resolve_references(roots: list["ProductType"], info):
