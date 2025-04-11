@@ -61,10 +61,6 @@ from ...core.types.common import OrderBulkCreateError
 from ...core.utils import from_global_id_or_error
 from ...discount.enums import DiscountValueTypeEnum
 from ...meta.inputs import MetadataInput
-from ...payment.mutations.transaction.transaction_create import (
-    TransactionCreate,
-    TransactionCreateInput,
-)
 from ...payment.utils import metadata_contains_empty_key
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ..enums import OrderStatusEnum, StockUpdatePolicyEnum
@@ -560,9 +556,6 @@ class OrderBulkCreateInput(BaseInputObjectType):
     discounts = NonNullList(OrderDiscountCommonInput, description="List of discounts.")
     fulfillments = NonNullList(
         OrderBulkCreateFulfillmentInput, description="Fulfillments of the order."
-    )
-    transactions = NonNullList(
-        TransactionCreateInput, description="Transactions related to the order."
     )
 
     class Meta:

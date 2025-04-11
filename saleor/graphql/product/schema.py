@@ -36,17 +36,6 @@ from ..translations.mutations import (
     ProductVariantTranslate,
 )
 from ..utils import get_user_or_app_from_context
-from .bulk_mutations import (
-    CategoryBulkDelete,
-    CollectionBulkDelete,
-    ProductBulkCreate,
-    ProductBulkDelete,
-    ProductMediaBulkDelete,
-    ProductTypeBulkDelete,
-    ProductVariantBulkCreate,
-    ProductVariantBulkDelete,
-    ProductVariantBulkUpdate,
-)
 from .dataloaders.products import CategoryByIdLoader, CategoryBySlugLoader
 from .filters import (
     CategoryFilterInput,
@@ -58,54 +47,6 @@ from .filters import (
     ProductVariantFilterInput,
     ProductVariantWhereInput,
     ProductWhereInput,
-)
-from .mutations import (
-    CategoryCreate,
-    CategoryDelete,
-    CategoryUpdate,
-    CollectionAddProducts,
-    CollectionCreate,
-    CollectionDelete,
-    CollectionRemoveProducts,
-    CollectionReorderProducts,
-    CollectionUpdate,
-    ProductCreate,
-    ProductDelete,
-    ProductMediaCreate,
-    ProductMediaDelete,
-    ProductMediaReorder,
-    ProductMediaUpdate,
-    ProductTypeCreate,
-    ProductTypeDelete,
-    ProductTypeUpdate,
-    ProductUpdate,
-    ProductVariantCreate,
-    ProductVariantDelete,
-    ProductVariantPreorderDeactivate,
-    ProductVariantReorder,
-    ProductVariantSetDefault,
-    ProductVariantUpdate,
-    VariantMediaAssign,
-    VariantMediaUnassign,
-)
-from .mutations.attributes import (
-    ProductAttributeAssign,
-    ProductAttributeAssignmentUpdate,
-    ProductAttributeUnassign,
-    ProductReorderAttributeValues,
-    ProductTypeReorderAttributes,
-    ProductVariantReorderAttributeValues,
-)
-from .mutations.channels import (
-    CollectionChannelListingUpdate,
-    ProductChannelListingUpdate,
-    ProductVariantChannelListingUpdate,
-)
-from .mutations.digital_contents import (
-    DigitalContentCreate,
-    DigitalContentDelete,
-    DigitalContentUpdate,
-    DigitalContentUrlCreate,
 )
 from .resolvers import (
     resolve_categories,
@@ -615,70 +556,12 @@ class ProductQueries(graphene.ObjectType):
 
 
 class ProductMutations(graphene.ObjectType):
-    product_attribute_assign = ProductAttributeAssign.Field()
-    product_attribute_assignment_update = ProductAttributeAssignmentUpdate.Field()
-    product_attribute_unassign = ProductAttributeUnassign.Field()
 
-    category_create = CategoryCreate.Field()
-    category_delete = CategoryDelete.Field()
-    category_bulk_delete = CategoryBulkDelete.Field()
-    category_update = CategoryUpdate.Field()
     category_translate = CategoryTranslate.Field()
-
-    collection_add_products = CollectionAddProducts.Field()
-    collection_create = CollectionCreate.Field()
-    collection_delete = CollectionDelete.Field()
-    collection_reorder_products = CollectionReorderProducts.Field()
-    collection_bulk_delete = CollectionBulkDelete.Field()
-    collection_remove_products = CollectionRemoveProducts.Field()
-    collection_update = CollectionUpdate.Field()
     collection_translate = CollectionTranslate.Field()
-    collection_channel_listing_update = CollectionChannelListingUpdate.Field()
 
-    product_create = ProductCreate.Field()
-    product_delete = ProductDelete.Field()
-    product_bulk_create = ProductBulkCreate.Field()
-    product_bulk_delete = ProductBulkDelete.Field()
-    product_update = ProductUpdate.Field()
     product_bulk_translate = ProductBulkTranslate.Field()
     product_translate = ProductTranslate.Field()
 
-    product_channel_listing_update = ProductChannelListingUpdate.Field()
-
-    product_media_create = ProductMediaCreate.Field()
-    product_variant_reorder = ProductVariantReorder.Field()
-    product_media_delete = ProductMediaDelete.Field()
-    product_media_bulk_delete = ProductMediaBulkDelete.Field()
-    product_media_reorder = ProductMediaReorder.Field()
-    product_media_update = ProductMediaUpdate.Field()
-
-    product_type_create = ProductTypeCreate.Field()
-    product_type_delete = ProductTypeDelete.Field()
-    product_type_bulk_delete = ProductTypeBulkDelete.Field()
-    product_type_update = ProductTypeUpdate.Field()
-    product_type_reorder_attributes = ProductTypeReorderAttributes.Field()
-    product_reorder_attribute_values = ProductReorderAttributeValues.Field()
-
-    digital_content_create = DigitalContentCreate.Field()
-    digital_content_delete = DigitalContentDelete.Field()
-    digital_content_update = DigitalContentUpdate.Field()
-
-    digital_content_url_create = DigitalContentUrlCreate.Field()
-
-    product_variant_create = ProductVariantCreate.Field()
-    product_variant_delete = ProductVariantDelete.Field()
-    product_variant_bulk_create = ProductVariantBulkCreate.Field()
-    product_variant_bulk_update = ProductVariantBulkUpdate.Field()
-    product_variant_bulk_delete = ProductVariantBulkDelete.Field()
-    product_variant_update = ProductVariantUpdate.Field()
-    product_variant_set_default = ProductVariantSetDefault.Field()
     product_variant_translate = ProductVariantTranslate.Field()
     product_variant_bulk_translate = ProductVariantBulkTranslate.Field()
-    product_variant_channel_listing_update = ProductVariantChannelListingUpdate.Field()
-    product_variant_reorder_attribute_values = (
-        ProductVariantReorderAttributeValues.Field()
-    )
-    product_variant_preorder_deactivate = ProductVariantPreorderDeactivate.Field()
-
-    variant_media_assign = VariantMediaAssign.Field()
-    variant_media_unassign = VariantMediaUnassign.Field()

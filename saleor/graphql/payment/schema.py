@@ -9,25 +9,6 @@ from ..core.fields import FilterConnectionField, PermissionsField
 from ..core.scalars import UUID
 from ..core.utils import from_global_id_or_error
 from .filters import PaymentFilterInput
-from .mutations import (
-    PaymentCapture,
-    PaymentCheckBalance,
-    PaymentGatewayInitialize,
-    PaymentGatewayInitializeTokenization,
-    PaymentInitialize,
-    PaymentMethodInitializeTokenization,
-    PaymentMethodProcessTokenization,
-    PaymentRefund,
-    PaymentVoid,
-    StoredPaymentMethodRequestDelete,
-    TransactionCreate,
-    TransactionEventReport,
-    TransactionInitialize,
-    TransactionProcess,
-    TransactionRequestAction,
-    TransactionRequestRefundForGrantedRefund,
-    TransactionUpdate,
-)
 from .resolvers import resolve_payment_by_id, resolve_payments, resolve_transaction
 from .types import Payment, PaymentCountableConnection, TransactionItem
 
@@ -107,27 +88,4 @@ class PaymentQueries(graphene.ObjectType):
 
 
 class PaymentMutations(graphene.ObjectType):
-    payment_capture = PaymentCapture.Field()
-    payment_refund = PaymentRefund.Field()
-    payment_void = PaymentVoid.Field()
-    payment_initialize = PaymentInitialize.Field()
-    payment_check_balance = PaymentCheckBalance.Field()
-
-    transaction_create = TransactionCreate.Field()
-    transaction_update = TransactionUpdate.Field()
-    transaction_request_action = TransactionRequestAction.Field()
-    transaction_request_refund_for_granted_refund = (
-        TransactionRequestRefundForGrantedRefund.Field()
-    )
-    transaction_event_report = TransactionEventReport.Field()
-
-    payment_gateway_initialize = PaymentGatewayInitialize.Field()
-    transaction_initialize = TransactionInitialize.Field()
-    transaction_process = TransactionProcess.Field()
-
-    stored_payment_method_request_delete = StoredPaymentMethodRequestDelete.Field()
-    payment_gateway_initialize_tokenization = (
-        PaymentGatewayInitializeTokenization.Field()
-    )
-    payment_method_initialize_tokenization = PaymentMethodInitializeTokenization.Field()
-    payment_method_process_tokenization = PaymentMethodProcessTokenization.Field()
+    pass

@@ -20,7 +20,6 @@ from ...core.mutations import BaseMutation
 from ...core.scalars import Decimal
 from ...core.types import BaseInputObjectType
 from ...core.types.common import Error, NonNullList
-from ...payment.mutations.transaction.utils import get_transaction_item
 from ..enums import OrderGrantRefundCreateErrorCode, OrderGrantRefundCreateLineErrorCode
 from ..types import Order, OrderGrantedRefund
 from .order_grant_refund_utils import (

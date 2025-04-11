@@ -16,7 +16,6 @@ from graphql.backend.base import GraphQLDocument
 from graphql.execution import ExecutionResult
 
 from ..core.utils.cache import CacheDict
-from ..graphql.notifications.schema import ExternalNotificationMutations
 from .account.schema import AccountMutations, AccountQueries
 from .app.schema import AppMutations, AppQueries
 from .attribute.schema import AttributeMutations, AttributeQueries
@@ -69,7 +68,6 @@ class Mutation(
     ChannelMutations,
     CheckoutMutations,
     CoreMutations,
-    ExternalNotificationMutations,
     PluginsMutations,
     MenuMutations,
     MetaMutations,

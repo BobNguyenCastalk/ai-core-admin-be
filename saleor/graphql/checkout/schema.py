@@ -16,7 +16,6 @@ from ..core.descriptions import (
 from ..core.doc_category import DOC_CATEGORY_CHECKOUT
 from ..core.fields import BaseField, ConnectionField, FilterConnectionField
 from ..core.scalars import UUID
-from ..payment.mutations import CheckoutPaymentCreate
 from .filters import CheckoutFilterInput
 from .resolvers import resolve_checkout, resolve_checkout_lines, resolve_checkouts
 from .sorters import CheckoutSortingInput
@@ -95,4 +94,4 @@ class CheckoutQueries(graphene.ObjectType):
 
 
 class CheckoutMutations(graphene.ObjectType):
-    checkout_payment_create = CheckoutPaymentCreate.Field()
+    pass
