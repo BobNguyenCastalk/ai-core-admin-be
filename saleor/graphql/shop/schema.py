@@ -5,21 +5,11 @@ from ...permission.enums import OrderPermissions
 from ..channel.types import OrderSettings
 from ..core.context import get_database_connection_name
 from ..core.descriptions import DEPRECATED_IN_3X_FIELD, DEPRECATED_IN_3X_MUTATION
-from ..core.doc_category import DOC_CATEGORY_GIFT_CARDS, DOC_CATEGORY_ORDERS
+from ..core.doc_category import DOC_CATEGORY_ORDERS
 from ..core.fields import PermissionsField
 from ..site.dataloaders import load_site_callback
 from ..translations.mutations import ShopSettingsTranslate
-from .mutations import (
-    OrderSettingsUpdate,
-    ShopAddressUpdate,
-    ShopDomainUpdate,
-    ShopFetchTaxRates,
-    ShopSettingsUpdate,
-    StaffNotificationRecipientCreate,
-    StaffNotificationRecipientDelete,
-    StaffNotificationRecipientUpdate,
-)
-from .types import GiftCardSettings, Shop
+from .types import Shop
 
 
 class ShopQueries(graphene.ObjectType):
@@ -72,23 +62,5 @@ class ShopQueries(graphene.ObjectType):
 
 
 class ShopMutations(graphene.ObjectType):
-    staff_notification_recipient_create = StaffNotificationRecipientCreate.Field()
-    staff_notification_recipient_update = StaffNotificationRecipientUpdate.Field()
-    staff_notification_recipient_delete = StaffNotificationRecipientDelete.Field()
-
-    shop_domain_update = ShopDomainUpdate.Field(
-        deprecation_reason=DEPRECATED_IN_3X_MUTATION
-        + " Use `PUBLIC_URL` environment variable instead."
-    )
-    shop_settings_update = ShopSettingsUpdate.Field()
-    shop_fetch_tax_rates = ShopFetchTaxRates.Field(
-        deprecation_reason=DEPRECATED_IN_3X_MUTATION
-    )
     shop_settings_translate = ShopSettingsTranslate.Field()
-    shop_address_update = ShopAddressUpdate.Field()
 
-    order_settings_update = OrderSettingsUpdate.Field(
-        deprecation_reason=(
-            DEPRECATED_IN_3X_MUTATION + " Use `channelUpdate` mutation instead."
-        )
-    )
