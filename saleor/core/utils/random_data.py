@@ -11,7 +11,6 @@ from functools import lru_cache
 from typing import Any, Union, cast
 from unittest.mock import patch
 
-import graphene
 from django.conf import settings
 from django.core.files import File
 from django.db import connection
@@ -45,15 +44,6 @@ from ...checkout.fetch import fetch_checkout_info
 from ...checkout.models import Checkout
 from ...checkout.utils import add_variant_to_checkout
 from ...core.weight import zero_weight
-from ...discount import DiscountValueType, RewardValueType, VoucherType
-from ...discount.models import (
-    Promotion,
-    PromotionRule,
-    Voucher,
-    VoucherChannelListing,
-    VoucherCode,
-)
-from ...graphql.discount.enums import RewardTypeEnum
 from ...menu.models import Menu, MenuItem
 from ...order import OrderStatus
 from ...order.models import Fulfillment, Order, OrderLine
@@ -84,10 +74,6 @@ from ...product.models import (
     VariantMedia,
 )
 from ...product.search import update_products_search_vector
-from ...product.tasks import (
-    recalculate_discounted_price_for_products_task,
-    update_variant_relations_for_active_promotion_rules_task,
-)
 from ..postgres import FlatConcatSearchVector
 
 fake = cast(Any, Factory.create())
@@ -700,88 +686,6 @@ def create_fake_order(max_order_lines=5, create_preorder_lines=False):
     return order
 
 
-def create_fake_catalogue_promotion():
-    promotion = Promotion.objects.create(
-        name=f"Happy {fake.word()} day!",
-    )
-    rules = PromotionRule.objects.bulk_create(
-        [
-            PromotionRule(
-                promotion=promotion,
-                reward_value_type=RewardValueType.PERCENTAGE,
-                reward_value=random.choice([10, 20, 30, 40, 50]),
-                variants_dirty=True,
-                catalogue_predicate={
-                    "productPredicate": {
-                        "ids": [
-                            graphene.Node.to_global_id("Product", product.id)
-                            for product in Product.objects.all().order_by("?")[:2]
-                        ]
-                    }
-                },
-            ),
-            PromotionRule(
-                promotion=promotion,
-                reward_value_type=RewardValueType.PERCENTAGE,
-                reward_value=random.choice([10, 20, 30, 40, 50]),
-                variants_dirty=True,
-                catalogue_predicate={
-                    "variantPredicate": {
-                        "ids": [
-                            graphene.Node.to_global_id("ProductVariant", variant.id)
-                            for variant in ProductVariant.objects.all().order_by("?")[
-                                :2
-                            ]
-                        ]
-                    }
-                },
-            ),
-        ]
-    )
-    channels = Channel.objects.all()
-    for rule in rules:
-        rule.channels.add(*channels)
-
-    return promotion
-
-
-def create_fake_order_promotion():
-    promotion = Promotion.objects.create(
-        name=f"Happy {fake.word()} day!",
-    )
-    rules = PromotionRule.objects.bulk_create(
-        [
-            PromotionRule(
-                promotion=promotion,
-                reward_value_type=RewardValueType.PERCENTAGE,
-                reward_value=random.choice([10, 20, 30, 40, 50]),
-                reward_type=RewardTypeEnum.SUBTOTAL_DISCOUNT.name,
-                order_predicate={
-                    "discountedObjectPredicate": {
-                        "baseSubtotalPrice": {"range": {"gte": "200"}}
-                    }
-                },
-            ),
-            PromotionRule(
-                promotion=promotion,
-                reward_value_type=RewardValueType.FIXED,
-                reward_value=random.choice([10, 20, 30, 40, 50]),
-                reward_type=RewardTypeEnum.SUBTOTAL_DISCOUNT.name,
-                order_predicate={
-                    "discountedObjectPredicate": {
-                        "baseSubtotalPrice": {"range": {"gte": "100"}}
-                    }
-                },
-            ),
-        ]
-    )
-    channels = Channel.objects.all()
-    for rule in rules:
-        rule.channels.add(*channels)
-
-    return promotion
-
-
 def create_users(user_password, how_many=10):
     for _ in range(how_many):
         user = create_fake_user(user_password)
@@ -884,22 +788,6 @@ def create_orders(how_many=10):
         yield f"Order: {order}"
 
 
-def create_catalogue_promotions(how_many=5):
-    for _ in range(how_many):
-        promotion = create_fake_catalogue_promotion()
-        yield f"Promotion: {promotion}"
-    # recalculation is handled by celery beat, so we trigger it manually, to receive the
-    # correct amounts in random data created by saleor.
-    update_variant_relations_for_active_promotion_rules_task()
-    recalculate_discounted_price_for_products_task()
-
-
-def create_order_promotions(how_many=5):
-    for _ in range(how_many):
-        promotion = create_fake_order_promotion()
-        yield f"Promotion: {promotion}"
-
-
 def create_channel(channel_name, currency_code, slug=None, country=None):
     if not slug:
         slug = slugify(channel_name)
@@ -928,77 +816,6 @@ def create_channels():
         slug="channel-pln",
         country="PL",
     )
-
-
-def create_vouchers():
-    channels = list(Channel.objects.all())
-    voucher, created = Voucher.objects.get_or_create(
-        name="Free shipping",
-        defaults={
-            "type": VoucherType.SHIPPING,
-            "discount_value_type": DiscountValueType.PERCENTAGE,
-        },
-    )
-    VoucherCode.objects.get_or_create(voucher=voucher, code="FREESHIPPING")
-    for channel in channels:
-        VoucherChannelListing.objects.get_or_create(
-            voucher=voucher,
-            channel=channel,
-            defaults={"discount_value": 100, "currency": channel.currency_code},
-        )
-    if created:
-        yield "Voucher #%d" % voucher.id
-    else:
-        yield "Shipping voucher already exists"
-
-    voucher, created = Voucher.objects.get_or_create(
-        name="Big order discount",
-        defaults={
-            "type": VoucherType.ENTIRE_ORDER,
-            "discount_value_type": DiscountValueType.FIXED,
-        },
-    )
-    VoucherCode.objects.get_or_create(voucher=voucher, code="DISCOUNT")
-
-    for channel in channels:
-        discount_value = 25
-        min_spent_amount = 200
-        if channel.currency_code == "PLN":
-            min_spent_amount *= 4
-            discount_value *= 4
-        VoucherChannelListing.objects.get_or_create(
-            voucher=voucher,
-            channel=channel,
-            defaults={
-                "discount_value": discount_value,
-                "currency": channel.currency_code,
-                "min_spent_amount": 200,
-            },
-        )
-    if created:
-        yield "Voucher #%d" % voucher.id
-    else:
-        yield "Value voucher already exists"
-
-    voucher, created = Voucher.objects.get_or_create(
-        name="Percentage order discount",
-        defaults={
-            "type": VoucherType.ENTIRE_ORDER,
-            "discount_value_type": DiscountValueType.PERCENTAGE,
-        },
-    )
-    VoucherCode.objects.get_or_create(voucher=voucher, code="VCO9KV98LC")
-
-    for channel in channels:
-        VoucherChannelListing.objects.get_or_create(
-            voucher=voucher,
-            channel=channel,
-            defaults={"discount_value": 5, "currency": channel.currency_code},
-        )
-    if created:
-        yield "Voucher #%d" % voucher.id
-    else:
-        yield "Value voucher already exists"
 
 def add_address_to_admin(email):
     address = create_address()

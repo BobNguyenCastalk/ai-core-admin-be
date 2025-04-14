@@ -9,7 +9,6 @@ from django.conf import settings
 from django.db.models import Exists, F, OuterRef, Q, QuerySet
 
 from ..celeryconf import app
-from ..graphql.discount.utils import get_variants_for_catalogue_predicate
 from ..order import OrderStatus
 from ..order.models import Order, OrderLine
 from ..plugins.manager import get_plugins_manager
@@ -174,13 +173,6 @@ def fetch_promotion_variants_and_product_ids(promotions: "QuerySet[Promotion]"):
         lambda: ProductVariant.objects.none()
     )
     variants = ProductVariant.objects.none()
-    rules = PromotionRule.objects.filter(
-        Exists(promotions.filter(id=OuterRef("promotion_id")))
-    )
-    for rule in rules:
-        rule_variants = get_variants_for_catalogue_predicate(rule.catalogue_predicate)
-        variants |= rule_variants
-        promotion_id_to_variants[rule.promotion_id] |= rule_variants
     products = Product.objects.filter(
         Exists(variants.filter(product_id=OuterRef("id")))
     )

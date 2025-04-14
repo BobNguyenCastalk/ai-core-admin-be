@@ -12,13 +12,10 @@ from django.db.models import Q
 from ....account.models import User
 from ....attribute.models import Attribute
 from ....checkout.models import Checkout
-from ....discount.models import Promotion, Voucher
 from ....order.models import Order
 from ....page.models import Page, PageType
 from ....payment.models import Payment, Transaction, TransactionItem
 from ....product.models import Category, Collection, Product, ProductType
-from ....shipping.models import ShippingMethod, ShippingZone
-from ....warehouse.models import Warehouse
 from ....webhook.models import Webhook
 
 
@@ -71,21 +68,6 @@ class Command(BaseCommand):
 
         Collection.objects.all().delete()
         self.stdout.write("Removed collections")
-
-        Promotion.objects.all().delete()
-        self.stdout.write("Removed promotions")
-
-        ShippingMethod.objects.all().delete()
-        self.stdout.write("Removed shipping methods")
-
-        ShippingZone.objects.all().delete()
-        self.stdout.write("Removed shipping zones")
-
-        Voucher.objects.all().delete()
-        self.stdout.write("Removed vouchers")
-
-        self.stdout.write("Removed warehouses")
-        Warehouse.objects.all().delete()
 
         Page.objects.all().delete()
         self.stdout.write("Removed pages")

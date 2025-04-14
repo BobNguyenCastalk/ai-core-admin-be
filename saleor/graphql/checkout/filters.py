@@ -19,9 +19,8 @@ from ..core.filters import (
 )
 from ..core.types import DateRangeInput, FilterInputObjectType
 from ..core.utils import from_global_id_or_error
-from ..discount.filters import DiscountedObjectWhere
 from ..utils import resolve_global_ids_to_primary_keys
-from ..utils.filters import filter_range_field, filter_where_by_numeric_field
+from ..utils.filters import filter_range_field
 from .enums import CheckoutAuthorizeStatusEnum, CheckoutChargeStatusEnum
 
 
@@ -164,27 +163,3 @@ class CheckoutFilterInput(FilterInputObjectType):
         doc_category = DOC_CATEGORY_CHECKOUT
         filterset_class = CheckoutFilter
 
-
-class CheckoutDiscountedObjectWhere(DiscountedObjectWhere):
-    class Meta:
-        model = Checkout
-        fields = ["base_subtotal_price", "base_total_price"]
-
-    def filter_base_subtotal_price(self, queryset, name, value):
-        currency = get_currency_from_filter_data(self.data)
-        return _filter_price(queryset, name, "base_subtotal_amount", value, currency)
-
-    def filter_base_total_price(self, queryset, name, value):
-        currency = get_currency_from_filter_data(self.data)
-        return _filter_price(queryset, name, "base_total_amount", value, currency)
-
-
-def _filter_price(qs, _, field_name, value, currency):
-    # We will have single channel/currency as the rule can applied only
-    # on channels with the same currencies
-    if not currency:
-        raise ValidationError(
-            "You must provide a currency to filter by price field.", code="required"
-        )
-    qs = qs.filter(currency=currency)
-    return filter_where_by_numeric_field(qs, field_name, value)

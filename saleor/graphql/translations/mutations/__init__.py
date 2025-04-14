@@ -10,11 +10,7 @@ from .product_bulk_translate import ProductBulkTranslate
 from .product_translate import ProductTranslate
 from .product_variant_bulk_translate import ProductVariantBulkTranslate
 from .product_variant_translate import ProductVariantTranslate
-from .promotion_rule_translate import PromotionRuleTranslate
-from .promotion_translate import PromotionTranslate
-from .sale_translate import SaleTranslate
 from .shop_settings_translate import ShopSettingsTranslate
-from .voucher_translate import VoucherTranslate
 
 __all__ = [
     "AttributeBulkTranslate",
@@ -29,9 +25,5 @@ __all__ = [
     "ProductBulkTranslate",
     "ProductVariantTranslate",
     "ProductVariantBulkTranslate",
-    "PromotionTranslate",
-    "PromotionRuleTranslate",
-    "SaleTranslate",
     "ShopSettingsTranslate",
-    "VoucherTranslate",
 ]

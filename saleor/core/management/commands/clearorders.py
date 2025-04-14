@@ -9,7 +9,6 @@ from django.core.management.base import BaseCommand
 
 from ....account.models import Address, CustomerEvent, CustomerNote, User
 from ....checkout.models import Checkout, CheckoutLine, CheckoutMetadata
-from ....discount.models import OrderDiscount, OrderLineDiscount
 from ....order.models import (
     Fulfillment,
     FulfillmentLine,
@@ -101,11 +100,6 @@ class Command(BaseCommand):
         self.stdout.write("Removed payments and transactions")
 
     def delete_orders(self):
-        line_discounts = OrderLineDiscount.objects.all()
-        line_discounts._raw_delete(line_discounts.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-
-        discounts = OrderDiscount.objects.all()
-        discounts._raw_delete(discounts.db)  # type: ignore[attr-defined] # raw access # noqa: E501
 
         fulfillment_lines = FulfillmentLine.objects.all()
         fulfillment_lines._raw_delete(fulfillment_lines.db)  # type: ignore[attr-defined] # raw access # noqa: E501

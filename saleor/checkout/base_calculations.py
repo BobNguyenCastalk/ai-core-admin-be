@@ -13,7 +13,6 @@ from prices import Money
 
 from ..core.prices import quantize_price
 from ..core.taxes import zero_money
-from ..discount import VoucherType
 
 if TYPE_CHECKING:
     from ..channel.models import Channel
@@ -46,20 +45,12 @@ def calculate_base_line_total_price(
     The price does not include order promotions and the entire order vouchers.
     When the line is gift reward, the price is zero.
     """
-    from ..discount.utils.voucher import calculate_line_discount_amount_from_voucher
-
     variant_price = line_info.undiscounted_unit_price
 
     total_price = variant_price * line_info.line.quantity
 
     for discount in line_info.discounts:
         discount_amount = Money(discount.amount_value, line_info.line.currency)
-        total_price -= discount_amount
-
-    if include_voucher and line_info.voucher:
-        discount_amount = calculate_line_discount_amount_from_voucher(
-            line_info, total_price
-        )
         total_price -= discount_amount
 
     return quantize_price(total_price, total_price.currency)
@@ -95,16 +86,6 @@ def base_checkout_delivery_price(
     currency = checkout_info.checkout.currency
 
     shipping_price = base_checkout_undiscounted_delivery_price(checkout_info, lines)
-
-    is_shipping_voucher = (
-        checkout_info.voucher.type == VoucherType.SHIPPING
-        if include_voucher and checkout_info.voucher
-        else False
-    )
-
-    if is_shipping_voucher:
-        discount = checkout_info.checkout.discount
-        shipping_price = max(zero_money(currency), shipping_price - discount)
 
     return quantize_price(
         shipping_price,
@@ -204,8 +185,6 @@ def checkout_total(
 
     It should be used as a based value when no flat rate/tax plugin/tax app is active.
     """
-    from ..discount.utils.voucher import is_order_level_voucher
-
     currency = checkout_info.checkout.currency
     subtotal = base_checkout_subtotal(lines, checkout_info.channel, currency)
     shipping_price = base_checkout_delivery_price(checkout_info, lines)
@@ -214,9 +193,7 @@ def checkout_total(
     # order promotion discount and entire_order voucher discount with
     # apply_once_per_order set to False are not included in the total price yet
     discounted_object_promotion = bool(checkout_info.discounts)
-    discount_not_included = discounted_object_promotion or is_order_level_voucher(
-        checkout_info.voucher
-    )
+    discount_not_included = discounted_object_promotion
     # Discount is subtracted from both gross and net values, which may cause negative
     # net value if we are having a discount that covers whole price.
     if discount_not_included:
@@ -240,11 +217,6 @@ def get_line_total_price_with_propagated_checkout_discount(
     base_total_price = calculate_base_line_total_price(
         checkout_line_info,
     )
-    if voucher and (
-        voucher.apply_once_per_order
-        or voucher.type in [VoucherType.SHIPPING, VoucherType.SPECIFIC_PRODUCT]
-    ):
-        return base_total_price
 
     if not voucher and not checkout_info.discounts:
         return base_total_price

@@ -7,17 +7,9 @@ from ....checkout.fetch import (
     CheckoutLineInfo,
 )
 from ....core.db.connection import allow_writer_in_context
-from ....discount import VoucherType
-from ....discount.utils.voucher import apply_voucher_to_line
 from ...account.dataloaders import AddressByIdLoader, UserByUserIdLoader
 from ...channel.dataloaders import ChannelByIdLoader
 from ...core.dataloaders import DataLoader
-from ...discount.dataloaders import (
-    CheckoutDiscountByCheckoutIdLoader,
-    CheckoutLineDiscountsByCheckoutLineIdLoader,
-    VoucherCodeByCodeLoader,
-    VoucherInfoByVoucherCodeLoader,
-)
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ...product.dataloaders import (
     CollectionsByVariantIdLoader,
@@ -66,13 +58,7 @@ class CheckoutInfoByCheckoutTokenLoader(DataLoader[str, CheckoutInfo]):
                     [checkout.user_id for checkout in checkouts if checkout.user_id]
                 )
 
-                voucher_codes = VoucherCodeByCodeLoader(self.context).load_many(
-                    {
-                        checkout.voucher_code
-                        for checkout in checkouts
-                        if checkout.voucher_code
-                    }
-                )
+                voucher_codes = []
 
                 tax_configurations = []
 
@@ -189,7 +175,6 @@ class CheckoutInfoByCheckoutTokenLoader(DataLoader[str, CheckoutInfo]):
         checkout_line_infos = CheckoutLinesInfoByCheckoutTokenLoader(
             self.context
         ).load_many(keys)
-        discounts = CheckoutDiscountByCheckoutIdLoader(self.context).load_many(keys)
         manager = get_plugin_manager_promise(self.context)
         pregenerated_payloads_for_excluded_shipping_methods_loader = (
             PregeneratedCheckoutFilterShippingMethodPayloadsByCheckoutTokenLoader(
@@ -200,7 +185,6 @@ class CheckoutInfoByCheckoutTokenLoader(DataLoader[str, CheckoutInfo]):
             [
                 checkouts,
                 checkout_line_infos,
-                discounts,
                 manager,
                 pregenerated_payloads_for_excluded_shipping_methods_loader,
             ]
@@ -298,19 +282,9 @@ class CheckoutLinesInfoByCheckoutTokenLoader(DataLoader[str, list[CheckoutLineIn
                     if not voucher_info:
                         continue
                     voucher = voucher_info.voucher
-                    if (
-                        voucher.type == VoucherType.SPECIFIC_PRODUCT
-                        or voucher.apply_once_per_order
-                    ):
-                        apply_voucher_to_line(
-                            voucher_info=voucher_info,
-                            lines_info=lines_info_map[checkout.pk],
-                        )
                 return [lines_info_map[key] for key in keys]
 
-            checkout_lines_discounts = CheckoutLineDiscountsByCheckoutLineIdLoader(
-                self.context
-            ).load_many(lines_pks)
+            checkout_lines_discounts = []
             variant_promotion_rules_info = (
                 VariantPromotionRuleInfoByCheckoutLineIdLoader(self.context).load_many(
                     lines_pks
@@ -329,9 +303,6 @@ class CheckoutLinesInfoByCheckoutTokenLoader(DataLoader[str, list[CheckoutLineIn
             voucher_codes = {
                 checkout.voucher_code for checkout in checkouts if checkout.voucher_code
             }
-            voucher_infos = VoucherInfoByVoucherCodeLoader(self.context).load_many(
-                voucher_codes
-            )
 
             variant_ids_channel_ids = []
             for channel_id, lines in zip(channel_pks, checkout_lines):
@@ -352,7 +323,6 @@ class CheckoutLinesInfoByCheckoutTokenLoader(DataLoader[str, list[CheckoutLineIn
                     collections,
                     tax_classes,
                     channel_listings,
-                    voucher_infos,
                     channels,
                     checkout_lines_discounts,
                     variant_promotion_rules_info,

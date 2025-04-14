@@ -9,13 +9,11 @@ from django.db import connection
 from ....account.utils import create_superuser
 from ...utils.random_data import (
     add_address_to_admin,
-    create_catalogue_promotions,
     create_channels,
     create_checkout_with_custom_prices,
     create_checkout_with_preorders,
     create_checkout_with_same_variant_in_multiple_lines,
     create_menus,
-    create_order_promotions,
     create_orders,
     create_page_type,
     create_pages,
@@ -24,7 +22,6 @@ from ...utils.random_data import (
     create_shipping_zones,
     create_staffs,
     create_users,
-    create_vouchers,
 )
 
 
@@ -97,12 +94,6 @@ class Command(BaseCommand):
             self.stdout.write(msg)
         create_products_by_schema(self.placeholders_dir, create_images)
         self.stdout.write("Created products")
-        for msg in create_catalogue_promotions(2):
-            self.stdout.write(msg)
-        for msg in create_order_promotions(2):
-            self.stdout.write(msg)
-        for msg in create_vouchers():
-            self.stdout.write(msg)
         for msg in create_users(user_password, 20):
             self.stdout.write(msg)
         for msg in create_orders(20):

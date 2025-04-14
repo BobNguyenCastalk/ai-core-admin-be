@@ -1,4 +1,3 @@
-import dataclasses
 from operator import itemgetter
 
 from ...account import models as account_models
@@ -8,7 +7,6 @@ from ...channel import models as channel_models
 from ...checkout import models as checkout_models
 from ...core.exceptions import PermissionDenied
 from ...core.models import ModelWithMetadata
-from ...discount import models as discount_models
 from ...order import models as order_models
 from ...page import models as page_models
 from ...payment import models as payment_models
@@ -28,16 +26,11 @@ def resolve_object_with_metadata_type(instance):
     from ..attribute import types as attribute_types
     from ..channel import types as channel_types
     from ..checkout import types as checkout_types
-    from ..discount import types as discount_types
     from ..menu import types as menu_types
     from ..order import types as order_types
-    from ..page import types as page_types
     from ..payment import types as payment_types
     from ..product import types as product_types
-    from ..shipping import types as shipping_types
     from ..shop import types as shop_types
-    from ..tax import types as tax_types
-    from ..warehouse import types as warehouse_types
 
     if isinstance(instance, ModelWithMetadata):
         MODEL_TO_TYPE_MAP = {
@@ -49,15 +42,11 @@ def resolve_object_with_metadata_type(instance):
             checkout_models.Checkout: checkout_types.Checkout,
             checkout_models.CheckoutMetadata: checkout_types.Checkout,
             checkout_models.CheckoutLine: checkout_types.CheckoutLine,
-            discount_models.Promotion: discount_types.Promotion,
-            discount_models.Voucher: discount_types.Voucher,
             menu_models.Menu: menu_types.Menu,
             menu_models.MenuItem: menu_types.MenuItem,
             order_models.Fulfillment: order_types.Fulfillment,
             order_models.Order: order_types.Order,
             order_models.OrderLine: order_types.OrderLine,
-            page_models.Page: page_types.Page,
-            page_models.PageType: page_types.PageType,
             payment_models.Payment: payment_types.Payment,
             payment_models.TransactionItem: payment_types.TransactionItem,
             product_models.Category: product_types.Category,
@@ -69,10 +58,6 @@ def resolve_object_with_metadata_type(instance):
             product_models.ProductVariant: product_types.ProductVariant,
             site_models.SiteSettings: shop_types.Shop,
         }
-        if instance.__class__ == discount_models.Promotion and getattr(
-            instance, "old_sale_id"
-        ):
-            return discount_types.Sale, instance.pk
         return MODEL_TO_TYPE_MAP.get(instance.__class__, None), instance.pk
 
     raise ValueError(f"Unknown type: {instance.__class__}")

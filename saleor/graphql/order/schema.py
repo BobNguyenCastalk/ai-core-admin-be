@@ -29,9 +29,6 @@ from .bulk_mutations.draft_orders import DraftOrderBulkDelete, DraftOrderLinesBu
 from .bulk_mutations.order_bulk_cancel import OrderBulkCancel
 from .filters import DraftOrderFilter, OrderFilter
 from .mutations.draft_order_complete import DraftOrderComplete
-from .mutations.draft_order_create import DraftOrderCreate
-from .mutations.draft_order_delete import DraftOrderDelete
-from .mutations.draft_order_update import DraftOrderUpdate
 from .mutations.fulfillment_approve import FulfillmentApprove
 from .mutations.fulfillment_cancel import FulfillmentCancel
 from .mutations.fulfillment_refund_products import FulfillmentRefundProducts
@@ -40,16 +37,9 @@ from .mutations.fulfillment_update_tracking import FulfillmentUpdateTracking
 from .mutations.order_cancel import OrderCancel
 from .mutations.order_capture import OrderCapture
 from .mutations.order_confirm import OrderConfirm
-from .mutations.order_discount_add import OrderDiscountAdd
-from .mutations.order_discount_delete import OrderDiscountDelete
-from .mutations.order_discount_update import OrderDiscountUpdate
 from .mutations.order_grant_refund_create import OrderGrantRefundCreate
 from .mutations.order_grant_refund_update import OrderGrantRefundUpdate
 from .mutations.order_line_delete import OrderLineDelete
-from .mutations.order_line_discount_remove import OrderLineDiscountRemove
-from .mutations.order_line_discount_update import OrderLineDiscountUpdate
-from .mutations.order_line_update import OrderLineUpdate
-from .mutations.order_lines_create import OrderLinesCreate
 from .mutations.order_mark_as_paid import OrderMarkAsPaid
 from .mutations.order_note_add import OrderAddNote, OrderNoteAdd
 from .mutations.order_note_update import OrderNoteUpdate
@@ -237,13 +227,10 @@ class OrderQueries(graphene.ObjectType):
 
 class OrderMutations(graphene.ObjectType):
     draft_order_complete = DraftOrderComplete.Field()
-    draft_order_create = DraftOrderCreate.Field()
-    draft_order_delete = DraftOrderDelete.Field()
     draft_order_bulk_delete = DraftOrderBulkDelete.Field()
     draft_order_lines_bulk_delete = DraftOrderLinesBulkDelete.Field(
         deprecation_reason=DEPRECATED_IN_3X_FIELD
     )
-    draft_order_update = DraftOrderUpdate.Field()
 
     order_add_note = OrderAddNote.Field(
         deprecation_reason=(f"{DEPRECATED_IN_3X_FIELD} Use `orderNoteAdd` instead.")
@@ -261,16 +248,7 @@ class OrderMutations(graphene.ObjectType):
     order_grant_refund_create = OrderGrantRefundCreate.Field()
     order_grant_refund_update = OrderGrantRefundUpdate.Field()
 
-    order_lines_create = OrderLinesCreate.Field()
     order_line_delete = OrderLineDelete.Field()
-    order_line_update = OrderLineUpdate.Field()
-
-    order_discount_add = OrderDiscountAdd.Field()
-    order_discount_update = OrderDiscountUpdate.Field()
-    order_discount_delete = OrderDiscountDelete.Field()
-
-    order_line_discount_update = OrderLineDiscountUpdate.Field()
-    order_line_discount_remove = OrderLineDiscountRemove.Field()
 
     order_note_add = OrderNoteAdd.Field()
     order_note_update = OrderNoteUpdate.Field()

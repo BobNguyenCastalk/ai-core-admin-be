@@ -7,10 +7,6 @@ import graphene
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from ...core.exceptions import InsufficientStock
-from ...discount.interface import VariantPromotionRuleInfo
-from ...discount.models import NotApplicable
-from ...discount.utils.voucher import validate_voucher_in_order
 from ...order.error_codes import OrderErrorCode
 from ...order.utils import (
     get_total_quantity,
@@ -37,7 +33,6 @@ class OrderLineData:
     line_id: Optional[str] = None
     price_override: Optional[Decimal] = None
     quantity: int = 0
-    rules_info: Optional[Iterable[VariantPromotionRuleInfo]] = None
 
 
 def validate_total_quantity(lines: Iterable["OrderLine"], errors: T_ERRORS):
@@ -298,21 +293,6 @@ def validate_channel_is_active(channel: "Channel", errors: T_ERRORS):
         )
 
 
-def _validate_voucher(
-    order: "Order", lines: Iterable["OrderLine"], channel: "Channel", errors: T_ERRORS
-):
-    if channel.include_draft_order_in_voucher_usage:
-        try:
-            validate_voucher_in_order(order, lines, channel)
-        except NotApplicable as e:
-            errors["voucher"].append(
-                ValidationError(
-                    message=e.args[0],
-                    code=OrderErrorCode.INVALID_VOUCHER.value,
-                )
-            )
-
-
 def validate_draft_order(
     order: "Order",
     lines: Iterable["OrderLine"],
@@ -350,7 +330,6 @@ def validate_draft_order(
         channel, lines, errors, database_connection_name
     )
     validate_variants_is_available(channel, lines, errors, database_connection_name)
-    _validate_voucher(order, lines, channel, errors)
 
     if errors:
         raise ValidationError(errors)

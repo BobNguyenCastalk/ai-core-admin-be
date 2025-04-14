@@ -10,7 +10,6 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.forms.models import model_to_dict
 from django.utils import timezone
 from prices import Money, TaxedMoney
 
@@ -26,10 +25,6 @@ from ..core.taxes import TaxDataError, TaxError, zero_taxed_money
 from ..core.tracing import traced_atomic_transaction
 from ..core.transactions import transaction_with_commit_on_errors
 from ..core.utils.url import validate_storefront_url
-from ..discount import DiscountType, DiscountValueType, VoucherType
-from ..discount.models import CheckoutDiscount, NotApplicable, OrderLineDiscount
-from ..discount.utils.promotion import get_sale_id
-from ..discount.utils.voucher import increase_voucher_usage, release_voucher_code_usage
 from ..graphql.checkout.utils import (
     prepare_insufficient_stock_checkout_validation_error,
 )
@@ -84,87 +79,15 @@ from .utils import (
     delete_checkouts,
     get_checkout_metadata,
     get_or_create_checkout_metadata,
-    get_voucher_for_checkout_info,
     log_unknown_discount_reason,
 )
 
 if TYPE_CHECKING:
     from ..app.models import App
-    from ..discount.models import Voucher, VoucherCode
     from ..plugins.manager import PluginsManager
     from ..site.models import SiteSettings
 
 logger = logging.getLogger(__name__)
-
-
-def _process_voucher_data_for_order(checkout_info: "CheckoutInfo") -> dict:
-    """Fetch, process and return voucher/discount data from checkout.
-
-    Careful! It should be called inside a transaction.
-    If voucher has a usage limit, it will be increased!
-
-    :raises NotApplicable: When the voucher is not applicable in the current checkout.
-    """
-    checkout = checkout_info.checkout
-    voucher, voucher_code = get_voucher_for_checkout_info(checkout_info, with_lock=True)
-
-    if checkout.voucher_code and not voucher_code:
-        msg = "Voucher expired in meantime. Order placement aborted."
-        raise NotApplicable(msg)
-
-    if not voucher_code or not voucher:
-        return {}
-
-    customer_email = cast(str, checkout_info.get_customer_email())
-
-    _increase_checkout_voucher_usage(checkout, voucher_code, voucher, customer_email)
-    return {
-        "voucher": voucher,
-        "voucher_code": voucher_code.code,
-    }
-
-
-@traced_atomic_transaction()
-def _increase_checkout_voucher_usage(
-    checkout: "Checkout",
-    voucher_code: "VoucherCode",
-    voucher: "Voucher",
-    customer_email: str,
-):
-    # Prevent race condition when two different threads are processing the same checkout
-    # with limited usage voucher assigned, both threads increasing the
-    # voucher usage which causing `NotApplicable` error for voucher.
-    if checkout.is_voucher_usage_increased:
-        return
-
-    increase_voucher_usage(voucher, voucher_code, customer_email)
-    checkout.is_voucher_usage_increased = True
-    checkout.save(update_fields=["is_voucher_usage_increased"])
-
-
-@traced_atomic_transaction()
-def _release_checkout_voucher_usage(
-    checkout: "Checkout",
-    voucher_code: Optional["VoucherCode"],
-    voucher: Optional["Voucher"],
-    user_email: Optional[str],
-    checkout_update_fields: Optional[list[str]] = None,
-):
-    if not checkout.is_voucher_usage_increased:
-        return
-
-    checkout.is_voucher_usage_increased = False
-    if checkout_update_fields is None:
-        checkout.save(update_fields=["is_voucher_usage_increased"])
-    else:
-        checkout_update_fields.append("is_voucher_usage_increased")
-
-    if voucher_code:
-        release_voucher_code_usage(
-            voucher_code,
-            voucher,
-            user_email,
-        )
 
 
 def _process_shipping_data_for_order(
@@ -314,14 +237,8 @@ def _create_line_for_order(
         discount_amount = discount_price.net
 
     voucher_code = checkout_info.checkout.voucher_code
-    is_line_voucher_code = bool(checkout_line_info.voucher)
-    is_shipping_voucher = (
-        True
-        if checkout_info.voucher and checkout_info.voucher.type == VoucherType.SHIPPING
-        else False
-    )
     unit_discount_reason = _get_unit_discount_reason(
-        voucher_code, is_line_voucher_code, is_shipping_voucher
+        voucher_code
     )
 
     tax_class = None
@@ -353,7 +270,6 @@ def _create_line_for_order(
         unit_discount=discount_amount,  # money field not supported by mypy_django_plugin # noqa: E501
         unit_discount_reason=unit_discount_reason,
         unit_discount_value=discount_amount.amount,  # we store value as fixed discount
-        unit_discount_type=DiscountValueType.FIXED,
         base_unit_price=base_unit_price,  # money field not supported by mypy_django_plugin # noqa: E501
         undiscounted_base_unit_price=undiscounted_base_unit_price,  # money field not supported by mypy_django_plugin # noqa: E501
         is_price_overridden=is_price_overridden,
@@ -361,22 +277,6 @@ def _create_line_for_order(
         private_metadata=checkout_line.private_metadata,
         **get_tax_class_kwargs_for_order_line(tax_class),
     )
-
-    line_discounts = _create_order_line_discounts(checkout_line_info, line)
-    if line_discounts:
-        # We might have catalogue and gift predicate promotion so there might be more
-        # than one sale_id.
-        # The sale_id will be set only for the catalogue discount if exists.
-        line.sale_id = _get_sale_id(line_discounts)
-        promotion_discount_reason = " & ".join(
-            [discount.reason for discount in line_discounts if discount.reason]
-        )
-        unit_discount_reason = (
-            f"{unit_discount_reason} & {promotion_discount_reason}"
-            if unit_discount_reason
-            else promotion_discount_reason
-        )
-        line.unit_discount_reason = unit_discount_reason
 
     is_digital = line.is_digital
     line_info = OrderLineInfo(
@@ -386,7 +286,7 @@ def _create_line_for_order(
         variant=variant,
         digital_content=variant.digital_content if is_digital and variant else None,
         warehouse_pk=checkout_info.delivery_method_info.warehouse_pk,
-        line_discounts=line_discounts,
+        line_discounts=[],
     )
 
     return line_info
@@ -401,28 +301,6 @@ def _get_unit_discount_reason(
         f"{'Voucher code' if is_line_voucher_code else 'Entire order voucher code'}: "
         f"{voucher_code}"
     )
-
-
-def _create_order_line_discounts(
-    checkout_line_info: "CheckoutLineInfo", order_line: "OrderLine"
-) -> list["OrderLineDiscount"]:
-    line_discounts = []
-    discounts = checkout_line_info.get_promotion_discounts()
-    for discount in discounts:
-        discount_data = model_to_dict(discount)
-        discount_data.pop("line")
-        discount_data["promotion_rule_id"] = discount_data.pop("promotion_rule")
-        discount_data["line_id"] = order_line.pk
-        line_discounts.append(OrderLineDiscount(**discount_data))
-    return line_discounts
-
-
-def _get_sale_id(line_discounts: list[OrderLineDiscount]):
-    for discount in line_discounts:
-        if discount.type == DiscountType.PROMOTION:
-            if rule := discount.promotion_rule:
-                return get_sale_id(rule.promotion)
-
 
 def _create_lines_for_order(
     manager: "PluginsManager",
@@ -586,8 +464,6 @@ def _prepare_order_data(
         }
     )
 
-    order_data.update(_process_voucher_data_for_order(checkout_info))
-
     order_data["total_price_left"] = (
         calculations.checkout_subtotal(
             manager=manager,
@@ -599,16 +475,7 @@ def _prepare_order_data(
         - checkout.discount
     ).gross
 
-    try:
-        manager.preprocess_order_creation(checkout_info, lines)
-    except TaxError:
-        _release_checkout_voucher_usage(
-            checkout,
-            checkout_info.voucher_code,
-            checkout_info.voucher,
-            order_data.get("user_email"),
-        )
-        raise
+    manager.preprocess_order_creation(checkout_info, lines)
 
     return order_data
 
@@ -665,10 +532,8 @@ def _create_order(
         tax_exemption=checkout_info.checkout.tax_exemption,
     )
 
-    _create_order_discount(order, checkout_info)
-
     order_lines: list[OrderLine] = []
-    order_line_discounts: list[OrderLineDiscount] = []
+    order_line_discounts = []
     for line_info in order_lines_info:
         line = line_info.line
         line.order_id = order.pk
@@ -677,7 +542,6 @@ def _create_order(
             order_line_discounts.extend(discounts)
 
     OrderLine.objects.bulk_create(order_lines)
-    OrderLineDiscount.objects.bulk_create(order_line_discounts)
 
     country_code = checkout_info.get_country()
     additional_warehouse_lookup = (
@@ -876,11 +740,6 @@ def _get_order_data(
     except InsufficientStock as e:
         error = prepare_insufficient_stock_checkout_validation_error(e)
         raise error
-    except NotApplicable:
-        raise ValidationError(
-            "Voucher not applicable",
-            code=CheckoutErrorCode.VOUCHER_NOT_APPLICABLE.value,
-        )
     except TaxError as tax_error:
         raise ValidationError(
             f"Unable to calculate taxes - {str(tax_error)}",
@@ -897,8 +756,8 @@ def _process_payment(
     payment_data: Optional[dict],
     manager: "PluginsManager",
     channel_slug: str,
-    voucher_code: Optional["VoucherCode"] = None,
-    voucher: Optional["Voucher"] = None,
+    voucher_code = None,
+    voucher = None,
 ) -> Transaction:
     """Process the payment assigned to checkout."""
     try:
@@ -997,14 +856,6 @@ def complete_checkout_post_payment_part(
             store_customer_id(user, payment.gateway, txn.customer_id)
 
         action_required = txn.action_required
-        if action_required:
-            action_data = txn.action_required_data
-            _release_checkout_voucher_usage(
-                checkout_info.checkout,
-                checkout_info.voucher_code,
-                checkout_info.voucher,
-                order_data.get("user_email"),
-            )
 
     order = None
     if not action_required and not _is_refund_ongoing(payment):
@@ -1057,19 +908,6 @@ def _is_refund_ongoing(payment):
     )
 
 
-def _increase_voucher_code_usage_value(checkout_info: "CheckoutInfo"):
-    """Increase a voucher usage applied to the checkout."""
-    voucher, code = get_voucher_for_checkout_info(checkout_info, with_lock=True)
-    if not voucher or not code:
-        return None
-
-    customer_email = cast(str, checkout_info.get_customer_email())
-
-    checkout = checkout_info.checkout
-    _increase_checkout_voucher_usage(checkout, code, voucher, customer_email)
-    return code
-
-
 def _create_order_lines_from_checkout_lines(
     checkout_info: CheckoutInfo,
     lines: list[CheckoutLineInfo],
@@ -1084,7 +922,7 @@ def _create_order_lines_from_checkout_lines(
         prices_entered_with_tax,
     )
     order_lines = []
-    order_line_discounts: list[OrderLineDiscount] = []
+    order_line_discounts = []
     for line_info in order_lines_info:
         line = line_info.line
         line.order_id = order_pk
@@ -1093,7 +931,6 @@ def _create_order_lines_from_checkout_lines(
             order_line_discounts.extend(discounts)
 
     OrderLine.objects.bulk_create(order_lines)
-    OrderLineDiscount.objects.bulk_create(order_line_discounts)
 
     return list(order_lines_info)
 
@@ -1125,43 +962,6 @@ def _handle_allocations_of_order_lines(
         check_reservations=reservation_enabled,
         checkout_lines=[line.line for line in checkout_lines],
     )
-
-
-def _create_order_discount(order: "Order", checkout_info: "CheckoutInfo"):
-    checkout = checkout_info.checkout
-    checkout_discount = checkout.discounts.first()
-    is_voucher_discount = checkout.discount and not checkout_discount
-    is_promotion_discount = (
-        checkout_discount and checkout_discount.type == DiscountType.ORDER_PROMOTION
-    )
-
-    if is_promotion_discount:
-        checkout_discount = cast(CheckoutDiscount, checkout_discount)
-        discount_data = model_to_dict(checkout_discount)
-        discount_data["promotion_rule"] = checkout_discount.promotion_rule
-        del discount_data["checkout"]
-        order.discounts.create(**discount_data)
-
-    if is_voucher_discount:
-        # Currently, we don't create `CheckoutDiscount` of type VOUCHER, so if there is
-        # discount on checkout, but not related `CheckoutDiscount`, we assume it is
-        # a voucher discount.
-        # Store voucher as a fixed value as it this the simplest solution for now.
-        # This will be solved when we refactor the voucher logic to use .discounts
-        # relations.
-        order.discounts.create(
-            type=DiscountType.VOUCHER,
-            value_type=DiscountValueType.FIXED,
-            value=checkout.discount.amount,
-            name=checkout.discount_name,
-            translated_name=checkout.translated_discount_name,
-            currency=checkout.currency,
-            amount_value=checkout.discount_amount,
-            voucher=checkout_info.voucher,
-            voucher_code=(
-                checkout_info.voucher_code.code if checkout_info.voucher_code else None
-            ),
-        )
 
 
 def _post_create_order_actions(
@@ -1300,9 +1100,6 @@ def _create_order_from_checkout(
         **_process_user_data_for_order(checkout_info, manager),
     )
 
-    # checkout discount
-    _create_order_discount(order, checkout_info)
-
     # lines
     order_lines_info = _create_order_lines_from_checkout_lines(
         checkout_info=checkout_info,
@@ -1339,13 +1136,6 @@ def _create_order_from_checkout(
         order_lines_info=order_lines_info,
         manager=manager,
         reservation_enabled=reservation_enabled,
-    )
-
-    # giftcards
-    total_without_giftcard = (
-        order.subtotal
-        + undiscounted_base_shipping_price
-        - checkout_info.checkout.discount
     )
 
     # payments
@@ -1589,15 +1379,6 @@ def complete_checkout_with_transaction(
             private_metadata_list=private_metadata_list,
             is_automatic_completion=is_automatic_completion,
         )
-    except NotApplicable:
-        raise ValidationError(
-            {
-                "voucher_code": ValidationError(
-                    "Voucher not applicable",
-                    code=CheckoutErrorCode.VOUCHER_NOT_APPLICABLE.value,
-                )
-            }
-        )
     except InsufficientStock as e:
         error = prepare_insufficient_stock_checkout_validation_error(e)
         raise error
@@ -1772,9 +1553,9 @@ def _complete_checkout_fail_handler(
     checkout_info: "CheckoutInfo",
     manager: "PluginsManager",
     *,
-    voucher_code: Optional["VoucherCode"] = None,
-    voucher: Optional["Voucher"] = None,
-    payment: Optional[Payment] = None,
+    voucher_code= None,
+    voucher= None,
+    payment= None,
 ) -> None:
     """Handle the case when the checkout completion failed.
 
@@ -1788,16 +1569,6 @@ def _complete_checkout_fail_handler(
         # release the checkout processing indicator
         checkout.completing_started_at = None
         update_fields.append("completing_started_at")
-
-    # release the voucher usage
-    if voucher:
-        _release_checkout_voucher_usage(
-            checkout,
-            voucher_code,
-            voucher,
-            checkout.get_customer_email(),
-            update_fields,
-        )
 
     if update_fields:
         checkout.save(update_fields=update_fields)

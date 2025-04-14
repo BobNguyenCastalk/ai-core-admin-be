@@ -32,11 +32,6 @@ from ..core.fields import JSONString, PermissionsField
 from ..core.tracing import traced_resolver
 from ..core.types import LanguageDisplay, ModelObjectType, NonNullList
 from ..core.utils import str_to_enum
-from ..discount.dataloaders import (
-    PromotionByIdLoader,
-    PromotionRuleByIdLoader,
-    VoucherByIdLoader,
-)
 from ..menu.dataloaders import MenuItemByIdLoader
 from ..product.dataloaders import (
     CategoryByIdLoader,
@@ -699,10 +694,6 @@ class VoucherTranslation(BaseTranslationType[discount_models.VoucherTranslation]
         interfaces = [graphene.relay.Node]
         description = "Represents voucher translations."
 
-    @staticmethod
-    def resolve_translatable_content(root: discount_models.VoucherTranslation, info):
-        return VoucherByIdLoader(info.context).load(root.voucher_id)
-
 
 class VoucherTranslatableContent(ModelObjectType[discount_models.Voucher]):
     id = graphene.GlobalID(
@@ -714,18 +705,6 @@ class VoucherTranslatableContent(ModelObjectType[discount_models.Voucher]):
     )
     name = graphene.String(description="Voucher name to translate.")
     translation = TranslationField(VoucherTranslation, type_name="voucher")
-    voucher = PermissionsField(
-        "saleor.graphql.discount.types.Voucher",
-        description=(
-            "Vouchers allow giving discounts to particular customers on categories, "
-            "collections or specific products. They can be used during checkout by "
-            "providing valid voucher codes."
-        ),
-        deprecation_reason=(
-            f"{DEPRECATED_IN_3X_FIELD} Get model fields from the root level queries."
-        ),
-        permissions=[DiscountPermissions.MANAGE_DISCOUNTS],
-    )
 
     class Meta:
         model = discount_models.Voucher
@@ -761,10 +740,6 @@ class SaleTranslation(BaseTranslationType[discount_models.PromotionTranslation])
             + " Use `PromotionTranslation` instead."
         )
 
-    @staticmethod
-    def resolve_translatable_content(root: discount_models.PromotionTranslation, info):
-        return PromotionByIdLoader(info.context).load(root.promotion_id)
-
 
 class SaleTranslatableContent(ModelObjectType[discount_models.Promotion]):
     id = graphene.GlobalID(
@@ -776,17 +751,6 @@ class SaleTranslatableContent(ModelObjectType[discount_models.Promotion]):
     )
     name = graphene.String(required=True, description="Name of the sale to translate.")
     translation = TranslationField(SaleTranslation, type_name="sale")
-    sale = PermissionsField(
-        "saleor.graphql.discount.types.Sale",
-        description=(
-            "Sales allow creating discounts for categories, collections "
-            "or products and are visible to all the customers."
-        ),
-        deprecation_reason=(
-            f"{DEPRECATED_IN_3X_FIELD} Get model fields from the root level queries."
-        ),
-        permissions=[DiscountPermissions.MANAGE_DISCOUNTS],
-    )
 
     class Meta:
         model = discount_models.Promotion
@@ -899,10 +863,6 @@ class PromotionTranslation(BaseTranslationType[discount_models.PromotionTranslat
         interfaces = [graphene.relay.Node]
         description = "Represents promotion translations." + ADDED_IN_317
 
-    @staticmethod
-    def resolve_translatable_content(root: discount_models.PromotionTranslation, info):
-        return PromotionByIdLoader(info.context).load(root.promotion_id)
-
 
 class PromotionTranslatableContent(ModelObjectType[discount_models.Promotion]):
     id = graphene.GlobalID(
@@ -947,12 +907,6 @@ class PromotionRuleTranslation(
         model = discount_models.PromotionRule
         interfaces = [graphene.relay.Node]
         description = "Represents promotion rule translations." + ADDED_IN_317
-
-    @staticmethod
-    def resolve_translatable_content(
-        root: discount_models.PromotionRuleTranslation, info
-    ):
-        return PromotionRuleByIdLoader(info.context).load(root.promotion_rule_id)
 
 
 class PromotionRuleTranslatableContent(ModelObjectType[discount_models.Promotion]):

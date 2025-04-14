@@ -53,7 +53,6 @@ from ..core.tracing import traced_resolver
 from ..core.types import BaseObjectType, ModelObjectType, Money, NonNullList, TaxedMoney
 from ..core.utils import CHECKOUT_CALCULATE_TAXES_MESSAGE, WebhookEventInfo, str_to_enum
 from ..decorators import one_of_permissions_required
-from ..discount.dataloaders import VoucherByCodeLoader
 from ..meta import resolvers as MetaResolvers
 from ..meta.types import ObjectWithMetadata, _filter_metadata
 from ..payment.types import PaymentGateway, StoredPaymentMethod, TransactionItem
@@ -540,14 +539,6 @@ class Checkout(ModelObjectType[models.Checkout]):
             "Note: this field is set automatically when "
             "Checkout.languageCode is defined; otherwise it's null"
         )
-    )
-    voucher = PermissionsField(
-        "saleor.graphql.discount.types.vouchers.Voucher",
-        description="The voucher assigned to the checkout." + ADDED_IN_318,
-        permissions=[DiscountPermissions.MANAGE_DISCOUNTS],
-    )
-    voucher_code = graphene.String(
-        description="The code of voucher assigned to the checkout."
     )
     available_collection_points = NonNullList(
         Draft,
@@ -1198,10 +1189,9 @@ class Checkout(ModelObjectType[models.Checkout]):
             voucher, channel = data
             return ChannelContext(node=voucher, channel_slug=channel.slug)
 
-        voucher = VoucherByCodeLoader(info.context).load(root.voucher_code)
         channel = ChannelByIdLoader(info.context).load(root.channel_id)
 
-        return Promise.all([voucher, channel]).then(wrap_voucher_with_channel_context)
+        return Promise.all([channel]).then(wrap_voucher_with_channel_context)
 
 
 class CheckoutCountableConnection(CountableConnection):

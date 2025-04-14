@@ -1,18 +1,6 @@
 from enum import Enum
 
 
-class DiscountErrorCode(Enum):
-    ALREADY_EXISTS = "already_exists"
-    GRAPHQL_ERROR = "graphql_error"
-    INVALID = "invalid"
-    NOT_FOUND = "not_found"
-    REQUIRED = "required"
-    UNIQUE = "unique"
-    CANNOT_MANAGE_PRODUCT_WITHOUT_VARIANT = "cannot_manage_product_without_variant"
-    DUPLICATED_INPUT_ITEM = "duplicated_input_item"
-    VOUCHER_ALREADY_USED = "voucher_already_used"
-
-
 class PromotionCreateErrorCode(Enum):
     GRAPHQL_ERROR = "graphql_error"
     NOT_FOUND = "not_found"
@@ -67,9 +55,3 @@ class PromotionRuleUpdateErrorCode(Enum):
 class PromotionRuleDeleteErrorCode(Enum):
     GRAPHQL_ERROR = "graphql_error"
     NOT_FOUND = "not_found"
-
-
-class VoucherCodeBulkDeleteErrorCode(Enum):
-    GRAPHQL_ERROR = "graphql_error"
-    NOT_FOUND = "not_found"
-    INVALID = "invalid"

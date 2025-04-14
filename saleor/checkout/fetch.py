@@ -13,19 +13,11 @@ from ..core.db.connection import allow_writer
 from ..core.prices import quantize_price
 from ..core.pricing.interface import LineInfo
 from ..core.taxes import zero_money
-from ..discount import VoucherType
-from ..discount.interface import fetch_variant_rules_info, fetch_voucher_info
 
 if TYPE_CHECKING:
     from ..account.models import Address, User
     from ..channel.models import Channel
     from ..checkout.models import CheckoutLine
-    from ..discount.models import (
-        CheckoutDiscount,
-        CheckoutLineDiscount,
-        Voucher,
-        VoucherCode,
-    )
     from ..plugins.manager import PluginsManager
     from ..product.models import (
         Product,
@@ -43,7 +35,7 @@ class CheckoutLineInfo(LineInfo):
     variant: "ProductVariant"
     product: "Product"
     product_type: "ProductType"
-    discounts: list["CheckoutLineDiscount"]
+    discounts: list
 
     @cached_property
     def variant_discounted_price(self) -> Money:
@@ -111,13 +103,13 @@ class CheckoutInfo:
     channel: "Channel"
     billing_address: Optional["Address"]
     shipping_address: Optional["Address"]
-    discounts: list["CheckoutDiscount"]
-    lines: Iterable[CheckoutLineInfo]
+    discounts: list
+    lines: Iterable
     shipping_channel_listings: list
     shipping_method = None
     collection_point = None
-    voucher: Optional["Voucher"] = None
-    voucher_code: Optional["VoucherCode"] = None
+    voucher = None
+    voucher_code = None
     database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME
     pregenerated_payloads_for_excluded_shipping_method: Optional[dict] = None
 
@@ -295,12 +287,10 @@ def fetch_checkout_lines(
     prefetch_variant_attributes: bool = False,
     skip_lines_with_unavailable_variants: bool = True,
     skip_recalculation: bool = False,
-    voucher: Optional["Voucher"] = None,
+    voucher= None,
     database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
 ) -> tuple[Iterable[CheckoutLineInfo], Iterable[int]]:
     """Fetch checkout lines as CheckoutLineInfo objects."""
-    from ..discount.utils.voucher import apply_voucher_to_line
-    from .utils import get_voucher_for_checkout
 
     select_related_fields = ["variant__product__product_type__tax_class"]
     prefetch_related_fields = [
@@ -338,12 +328,7 @@ def fetch_checkout_lines(
         variant_channel_listing = get_variant_channel_listing(
             variant, checkout.channel_id
         )
-        translation_language_code = checkout.language_code
-        rules_info = (
-            fetch_variant_rules_info(variant_channel_listing, translation_language_code)
-            if not line.is_gift
-            else []
-        )
+        rules_info = []
 
         if not skip_recalculation and not _is_variant_valid(
             checkout, product, variant_channel_listing, product_channel_listing_mapping
@@ -383,22 +368,6 @@ def fetch_checkout_lines(
                 voucher_code=None,
             )
         )
-
-    if not skip_recalculation and checkout.voucher_code and lines_info:
-        if not voucher:
-            voucher, _ = get_voucher_for_checkout(
-                checkout,
-                channel_slug=channel.slug,
-                with_prefetch=True,
-                database_connection_name=database_connection_name,
-            )
-        if not voucher:
-            # in case when voucher is expired, it will be null so no need to apply any
-            # discount from voucher
-            return lines_info, unavailable_variant_pks
-        if voucher.type == VoucherType.SPECIFIC_PRODUCT or voucher.apply_once_per_order:
-            voucher_info = fetch_voucher_info(voucher, checkout.voucher_code)
-            apply_voucher_to_line(voucher_info, lines_info)
     return lines_info, unavailable_variant_pks
 
 
@@ -466,25 +435,16 @@ def fetch_checkout_info(
     shipping_channel_listings: Optional[
         Iterable
     ] = None,
-    voucher: Optional["Voucher"] = None,
-    voucher_code: Optional["VoucherCode"] = None,
+    voucher = None,
+    voucher_code = None,
     database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
 ) -> CheckoutInfo:
     """Fetch checkout as CheckoutInfo object."""
-    from .utils import get_voucher_for_checkout
-
     channel = checkout.channel
     tax_configuration = channel.tax_configuration
     shipping_address = checkout.shipping_address
     if shipping_channel_listings is None:
         shipping_channel_listings = channel.shipping_method_listings.all()
-
-    if not voucher or not voucher_code:
-        voucher, voucher_code = get_voucher_for_checkout(
-            checkout,
-            channel_slug=channel.slug,
-            database_connection_name=database_connection_name,
-        )
 
     checkout_info = CheckoutInfo(
         checkout=checkout,
@@ -513,30 +473,9 @@ def get_valid_internal_shipping_method_list_for_checkout_info(
     shipping_channel_listings: Iterable,
     database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
 ) -> list:
-    from . import base_calculations
-
-    country_code = shipping_address.country.code if shipping_address else None
-
-    subtotal = base_calculations.base_checkout_subtotal(
-        lines,
-        checkout_info.channel,
-        checkout_info.checkout.currency,
-    )
-
     # if a voucher is applied to shipping, we don't want to subtract the discount amount
     # as some methods based on shipping price may become unavailable,
     # for example, method on which the discount was applied
-    is_shipping_voucher = (
-        checkout_info.voucher and checkout_info.voucher.type == VoucherType.SHIPPING
-    )
-
-    is_voucher_for_specific_product = (
-        checkout_info.voucher
-        and checkout_info.voucher.type == VoucherType.SPECIFIC_PRODUCT
-    )
-
-    if not is_shipping_voucher and not is_voucher_for_specific_product:
-        subtotal -= checkout_info.checkout.discount
 
     valid_shipping_methods = []
 

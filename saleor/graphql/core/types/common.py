@@ -44,8 +44,6 @@ from ..enums import (
     ChannelErrorCode,
     CheckoutErrorCode,
     CollectionErrorCode,
-    CustomerBulkUpdateErrorCode,
-    DiscountErrorCode,
     ExternalNotificationTriggerErrorCode,
     GiftCardSettingsErrorCode,
     IconThumbnailFormatEnum,
@@ -85,7 +83,6 @@ from ..enums import (
     TransactionUpdateErrorCode,
     TranslationErrorCode,
     UploadErrorCode,
-    VoucherCodeBulkDeleteErrorCode,
     WebhookDryRunErrorCode,
     WebhookErrorCode,
     WebhookTriggerErrorCode,
@@ -274,35 +271,6 @@ class ProductWithoutVariantError(Error):
 
     class Meta:
         doc_category = DOC_CATEGORY_PRODUCTS
-
-
-class DiscountError(ProductWithoutVariantError):
-    code = DiscountErrorCode(description="The error code.", required=True)
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channels IDs which causes the error.",
-        required=False,
-    )
-    voucher_codes = NonNullList(
-        graphene.String,
-        description="List of voucher codes which causes the error." + ADDED_IN_318,
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_DISCOUNTS
-
-
-class VoucherCodeBulkDeleteError(BulkError):
-    code = VoucherCodeBulkDeleteErrorCode(description="The error code.", required=True)
-    voucher_codes = NonNullList(
-        graphene.ID,
-        description="List of voucher codes which causes the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_DISCOUNTS
 
 
 class ExternalNotificationError(Error):

@@ -15,7 +15,6 @@ from ...core.units import (
     VolumeUnits,
     WeightUnits,
 )
-from ...discount import error_codes as discount_error_codes
 from ...menu import error_codes as menu_error_codes
 from ...order import error_codes as order_error_codes
 from ...page import error_codes as page_error_codes
@@ -194,13 +193,6 @@ ExternalNotificationTriggerErrorCode = graphene.Enum.from_enum(
     external_notifications_error_codes.ExternalNotificationErrorCodes
 )
 
-DiscountErrorCode = graphene.Enum.from_enum(discount_error_codes.DiscountErrorCode)
-DiscountErrorCode.doc_category = DOC_CATEGORY_DISCOUNTS
-
-VoucherCodeBulkDeleteErrorCode = graphene.Enum.from_enum(
-    discount_error_codes.VoucherCodeBulkDeleteErrorCode
-)
-VoucherCodeBulkDeleteErrorCode.doc_category = DOC_CATEGORY_DISCOUNTS
 
 PluginErrorCode = graphene.Enum.from_enum(plugin_error_codes.PluginErrorCode)
 

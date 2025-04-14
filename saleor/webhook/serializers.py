@@ -27,10 +27,7 @@ def serialize_checkout_lines(checkout: "Checkout") -> list[dict]:
         variant = line_info.variant
         product = variant.product
         base_price = line_info.undiscounted_unit_price
-        total_discount_amount_for_line = sum(
-            [discount.amount_value for discount in line_info.get_promotion_discounts()],
-            Decimal("0"),
-        )
+        total_discount_amount_for_line = 0
         if total_discount_amount_for_line:
             unit_discount_amount = (
                 total_discount_amount_for_line / line_info.line.quantity

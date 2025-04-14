@@ -16,7 +16,6 @@ from ...core.anonymize import obfuscate_address, obfuscate_email
 from ...core.db.connection import allow_writer_in_context
 from ...core.prices import quantize_price
 from ...core.taxes import zero_money
-from ...discount import DiscountType
 from ...graphql.checkout.types import DeliveryMethod
 from ...graphql.core.context import get_database_connection_name
 from ...graphql.core.federation.entities import federated_entity
@@ -96,9 +95,6 @@ from ..core.types import (
 )
 from ..core.utils import str_to_enum
 from ..decorators import one_of_permissions_required
-from ..discount.dataloaders import OrderDiscountsByOrderIDLoader, VoucherByIdLoader
-from ..discount.enums import DiscountValueTypeEnum
-from ..discount.types import Voucher
 from ..meta.resolvers import check_private_metadata_privilege, resolve_metadata
 from ..meta.types import MetadataItem, ObjectWithMetadata
 from ..payment.dataloaders import (
@@ -323,11 +319,6 @@ class OrderGrantedRefund(ModelObjectType[models.OrderGrantedRefund]):
 
 
 class OrderDiscount(BaseObjectType):
-    value_type = graphene.Field(
-        DiscountValueTypeEnum,
-        required=True,
-        description="Type of the discount: fixed or percent.",
-    )
     value = PositiveDecimal(
         required=True,
         description="Value of the discount. Can store fixed value or percent value.",
@@ -342,11 +333,6 @@ class OrderDiscount(BaseObjectType):
 
 
 class OrderEventDiscountObject(OrderDiscount):
-    old_value_type = graphene.Field(
-        DiscountValueTypeEnum,
-        required=False,
-        description="Type of the discount: fixed or percent.",
-    )
     old_value = PositiveDecimal(
         required=False,
         description="Value of the discount. Can store fixed value or percent value.",
@@ -784,14 +770,6 @@ class OrderLine(ModelObjectType[models.OrderLine]):
         ),
         required=True,
     )
-    unit_discount_type = graphene.Field(
-        DiscountValueTypeEnum,
-        description=(
-            "Type of the discount: `fixed` or `percent`. This field shouldn't be used "
-            "when multiple discounts affect the line. There is a limitation, that after"
-            " running `checkoutComplete` mutation the field is always set to `fixed`."
-        ),
-    )
     total_price = graphene.Field(
         TaxedMoney, description="Price of the order line.", required=True
     )
@@ -848,10 +826,6 @@ class OrderLine(ModelObjectType[models.OrderLine]):
             "Denormalized private metadata of the tax class. Requires staff "
             "permissions to access." + ADDED_IN_39
         ),
-    )
-    voucher_code = graphene.String(
-        required=False,
-        description="Voucher code that was used for this order line." + ADDED_IN_314,
     )
     is_gift = graphene.Boolean(
         description="Determine if the line is a gift." + ADDED_IN_319 + PREVIEW_FEATURE,
@@ -1272,11 +1246,6 @@ class Order(ModelObjectType[models.Order]):
         required=True,
         deprecation_reason=(f"{DEPRECATED_IN_3X_FIELD} Use `id` instead."),
     )
-    voucher = graphene.Field(Voucher, description="Voucher linked to the order.")
-    voucher_code = graphene.String(
-        required=False,
-        description="Voucher code that was used for Order." + ADDED_IN_318,
-    )
     customer_note = graphene.String(
         required=True,
         description="Additional information provided by the customer about the order.",
@@ -1374,11 +1343,6 @@ class Order(ModelObjectType[models.Order]):
         deprecation_reason=(
             f"{DEPRECATED_IN_3X_FIELD} Use the `discounts` field instead. "
         ),
-    )
-    discounts = NonNullList(
-        "saleor.graphql.discount.types.OrderDiscount",
-        description="List of all discounts assigned to the order.",
-        required=True,
     )
     errors = NonNullList(
         OrderError,
@@ -1489,68 +1453,6 @@ class Order(ModelObjectType[models.Order]):
     def resolve_token(root: models.Order, info):
         return root.id
 
-    @staticmethod
-    @prevent_sync_event_circular_query
-    def resolve_discounts(root: models.Order, info):
-        @allow_writer_in_context(info.context)
-        def with_manager(manager):
-            fetch_order_prices_if_expired(root, manager)
-            return OrderDiscountsByOrderIDLoader(info.context).load(root.id)
-
-        return get_plugin_manager_promise(info.context).then(with_manager)
-
-    @staticmethod
-    @traced_resolver
-    def resolve_discount(root: models.Order, info):
-        def return_voucher_discount(discounts) -> Optional[Money]:
-            if not discounts:
-                return None
-            for discount in discounts:
-                if discount.type == DiscountType.VOUCHER:
-                    return Money(
-                        amount=discount.amount_value, currency=discount.currency
-                    )
-            return None
-
-        return (
-            OrderDiscountsByOrderIDLoader(info.context)
-            .load(root.id)
-            .then(return_voucher_discount)
-        )
-
-    @staticmethod
-    @traced_resolver
-    def resolve_discount_name(root: models.Order, info):
-        def return_voucher_name(discounts) -> Optional[Money]:
-            if not discounts:
-                return None
-            for discount in discounts:
-                if discount.type == DiscountType.VOUCHER:
-                    return discount.name
-            return None
-
-        return (
-            OrderDiscountsByOrderIDLoader(info.context)
-            .load(root.id)
-            .then(return_voucher_name)
-        )
-
-    @staticmethod
-    @traced_resolver
-    def resolve_translated_discount_name(root: models.Order, info):
-        def return_voucher_translated_name(discounts) -> Optional[Money]:
-            if not discounts:
-                return None
-            for discount in discounts:
-                if discount.type == DiscountType.VOUCHER:
-                    return discount.translated_name
-            return None
-
-        return (
-            OrderDiscountsByOrderIDLoader(info.context)
-            .load(root.id)
-            .then(return_voucher_translated_name)
-        )
 
     @staticmethod
     @traced_resolver
@@ -2010,25 +1912,6 @@ class Order(ModelObjectType[models.Order]):
             .then(lambda lines: any(line.is_shipping_required for line in lines))
         )
 
-    @staticmethod
-    def resolve_voucher(root: models.Order, info):
-        if not root.voucher_id:
-            return None
-
-        def wrap_voucher_with_channel_context(data):
-            voucher, channel = data
-            return ChannelContext(node=voucher, channel_slug=channel.slug)
-
-        voucher = VoucherByIdLoader(info.context).load(root.voucher_id)
-        channel = ChannelByIdLoader(info.context).load(root.channel_id)
-
-        return Promise.all([voucher, channel]).then(wrap_voucher_with_channel_context)
-
-    @staticmethod
-    def resolve_voucher_code(root: models.Order, info):
-        if not root.voucher_code:
-            return None
-        return root.voucher_code
 
     @staticmethod
     def resolve_language_code_enum(root: models.Order, _info):

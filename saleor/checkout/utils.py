@@ -9,40 +9,18 @@ import graphene
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import prefetch_related_objects
 from django.utils import timezone
-from prices import Money
 
 from ..account.models import User
 from ..checkout.fetch import update_delivery_method_lists_for_checkout_info
 from ..core.db.connection import allow_writer
 from ..core.exceptions import NonExistingCheckoutLines, ProductNotPublished
 from ..core.taxes import zero_taxed_money
-from ..core.utils.promo_code import (
-    InvalidPromoCode,
-    promo_code_is_voucher,
-)
-from ..core.utils.translations import get_translation
 from ..core.weight import zero_weight
-from ..discount import DiscountType, VoucherType
-from ..discount.interface import fetch_voucher_info
-from ..discount.models import CheckoutDiscount, NotApplicable, Voucher, VoucherCode
-from ..discount.utils.checkout import (
-    create_checkout_discount_objects_for_order_promotions,
-    create_checkout_line_discount_objects_for_catalogue_promotions,
-)
-from ..discount.utils.promotion import delete_gift_line
-from ..discount.utils.shared import discount_info_for_logs
-from ..discount.utils.voucher import (
-    get_discounted_lines,
-    get_products_voucher_discount,
-    get_voucher_code_instance,
-    validate_voucher_for_checkout,
-)
 from ..payment.models import Payment
 from ..plugins.manager import PluginsManager
 from ..product import models as product_models
-from . import AddressType, base_calculations, calculations
+from . import AddressType, calculations
 from .error_codes import CheckoutErrorCode
 from .models import Checkout, CheckoutLine, CheckoutMetadata
 
@@ -56,53 +34,6 @@ if TYPE_CHECKING:
 
 
 PRIVATE_META_APP_SHIPPING_ID = "external_app_shipping_id"
-
-
-def invalidate_checkout(
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-    manager: "PluginsManager",
-    *,
-    recalculate_discount: bool = True,
-    save: bool,
-) -> list[str]:
-    """Mark checkout as ready for prices recalculation."""
-    if recalculate_discount:
-        recalculate_checkout_discounts(checkout_info, lines, manager)
-
-    updated_fields = invalidate_checkout_prices(checkout_info, save=save)
-    return updated_fields
-
-
-def recalculate_checkout_discounts(
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-    manager: "PluginsManager",
-):
-    """Recalculate checkout discounts.
-
-    Update line and checkout discounts from vouchers and promotions.
-    Create or remove gift line if needed.
-    """
-    create_checkout_line_discount_objects_for_catalogue_promotions(lines)
-    recalculate_checkout_discount(manager, checkout_info, lines)
-
-
-def invalidate_checkout_prices(
-    checkout_info: "CheckoutInfo",
-    *,
-    save: bool,
-) -> list[str]:
-    """Mark checkout as ready for prices recalculation."""
-    checkout = checkout_info.checkout
-
-    checkout.price_expiration = timezone.now()
-    updated_fields = ["price_expiration", "last_change"]
-
-    if save:
-        checkout.save(update_fields=updated_fields)
-
-    return updated_fields
 
 
 def checkout_lines_qs_select_for_update():
@@ -480,50 +411,6 @@ def change_shipping_address_in_checkout(
     return updated_fields
 
 
-def _get_shipping_voucher_discount_for_checkout(
-    voucher: Voucher,
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-    address: Optional["Address"],
-):
-    """Calculate discount value for a voucher of shipping type."""
-    if not is_shipping_required(lines):
-        msg = "Your order does not require shipping."
-        raise NotApplicable(msg)
-    shipping_method = checkout_info.delivery_method_info.delivery_method
-    if not shipping_method:
-        msg = "Please select a delivery method first."
-        raise NotApplicable(msg)
-
-    # check if voucher is limited to specified countries
-    if address:
-        if voucher.countries and address.country.code not in voucher.countries:
-            msg = "This offer is not valid in your country."
-            raise NotApplicable(msg)
-
-    shipping_price = base_calculations.base_checkout_undiscounted_delivery_price(
-        checkout_info=checkout_info, lines=lines
-    )
-    return voucher.get_discount_amount_for(shipping_price, checkout_info.channel)
-
-
-def get_prices_of_discounted_specific_product(
-    lines: Iterable["LineInfo"],
-    voucher: Voucher,
-) -> list[Money]:
-    """Get prices of variants belonging to the discounted specific products.
-
-    Specific products are products, collections and categories.
-    Product must be assigned directly to the discounted category, assigning
-    product to child category won't work.
-    """
-    voucher_info = fetch_voucher_info(voucher)
-    discounted_lines: Iterable[LineInfo] = get_discounted_lines(lines, voucher_info)
-    line_prices = get_base_lines_prices(discounted_lines)
-
-    return line_prices
-
-
 def get_base_lines_prices(
     lines: Iterable["LineInfo"],
 ):
@@ -533,356 +420,6 @@ def get_base_lines_prices(
         for line_info in lines
         for i in range(line_info.line.quantity)
     ]
-
-
-def get_voucher_discount_for_checkout(
-    manager: PluginsManager,
-    voucher: Voucher,
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-    address: Optional["Address"],
-) -> Money:
-    """Calculate discount value depending on voucher and discount types.
-
-    Raise NotApplicable if voucher of given type cannot be applied.
-    """
-    validate_voucher_for_checkout(manager, voucher, checkout_info, lines)
-    if voucher.type == VoucherType.ENTIRE_ORDER:
-        if voucher.apply_once_per_order:
-            prices = get_base_lines_prices(lines)
-            return voucher.get_discount_amount_for(min(prices), checkout_info.channel)
-        subtotal = base_calculations.base_checkout_subtotal(
-            lines,
-            checkout_info.channel,
-            checkout_info.checkout.currency,
-        )
-        return voucher.get_discount_amount_for(subtotal, checkout_info.channel)
-    if voucher.type == VoucherType.SHIPPING:
-        return _get_shipping_voucher_discount_for_checkout(
-            voucher,
-            checkout_info,
-            lines,
-            address,
-        )
-    if voucher.type == VoucherType.SPECIFIC_PRODUCT:
-        return _get_products_voucher_discount(checkout_info, lines, voucher)
-    raise NotImplementedError("Unknown discount type")
-
-
-def _get_products_voucher_discount(
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-    voucher,
-):
-    """Calculate products discount value for a voucher, depending on its type."""
-    prices = None
-    if voucher.type == VoucherType.SPECIFIC_PRODUCT:
-        prices = get_prices_of_discounted_specific_product(lines, voucher)
-    if not prices:
-        msg = "This offer is only valid for selected items."
-        raise NotApplicable(msg)
-    return get_products_voucher_discount(voucher, prices, checkout_info.channel)
-
-
-def get_voucher_for_checkout(
-    checkout: "Checkout",
-    channel_slug: str,
-    with_lock: bool = False,
-    with_prefetch: bool = False,
-    database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
-) -> tuple[Optional[Voucher], Optional[VoucherCode]]:
-    """Return voucher assigned to checkout."""
-    if checkout.voucher_code is not None:
-        try:
-            code = VoucherCode.objects.using(database_connection_name).get(
-                code=checkout.voucher_code, is_active=True
-            )
-        except VoucherCode.DoesNotExist:
-            return None, None
-
-        # The voucher validation should be performed only when the voucher
-        # usage for this checkout hasn't been increased.
-        if checkout.is_voucher_usage_increased:
-            voucher = (
-                Voucher.objects.using(database_connection_name)
-                .filter(id=code.voucher_id)
-                .first()
-            )
-        else:
-            voucher = (
-                Voucher.objects.using(database_connection_name)
-                .active_in_channel(date=timezone.now(), channel_slug=channel_slug)
-                .filter(id=code.voucher_id)
-                .first()
-            )
-
-        if not voucher:
-            return None, None
-
-        if with_prefetch:
-            prefetch_related_objects(
-                [voucher],
-                "products",
-                "collections",
-                "categories",
-                "variants",
-                "channel_listings",
-            )
-
-        if voucher.usage_limit is not None and with_lock:
-            code = (
-                VoucherCode.objects.using(database_connection_name)
-                .select_for_update()
-                .get(code=checkout.voucher_code)
-            )
-
-        return voucher, code
-    return None, None
-
-
-def get_voucher_for_checkout_info(
-    checkout_info: "CheckoutInfo", with_lock: bool = False, with_prefetch: bool = False
-) -> tuple[Optional[Voucher], Optional[VoucherCode]]:
-    """Return voucher with voucher code saved in checkout if active or None."""
-    checkout = checkout_info.checkout
-    return get_voucher_for_checkout(
-        checkout,
-        channel_slug=checkout_info.channel.slug,
-        with_lock=with_lock,
-        with_prefetch=with_prefetch,
-    )
-
-
-def check_voucher_for_checkout(
-    voucher: Voucher,
-    manager: PluginsManager,
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-):
-    checkout = checkout_info.checkout
-    address = checkout_info.shipping_address or checkout_info.billing_address
-    try:
-        discount = get_voucher_discount_for_checkout(
-            manager,
-            voucher,
-            checkout_info,
-            lines,
-            address,
-        )
-        return discount
-    except NotApplicable:
-        remove_voucher_from_checkout(checkout)
-        checkout_info.voucher = None
-        return None
-
-
-def recalculate_checkout_discount(
-    manager: PluginsManager,
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-):
-    """Recalculate `checkout.discount` based on the voucher.
-
-    Will clear both voucher and discount if the discount is no longer
-    applicable.
-    """
-    checkout = checkout_info.checkout
-    if voucher := checkout_info.voucher:
-        discount = check_voucher_for_checkout(
-            voucher,
-            manager,
-            checkout_info,
-            lines,
-        )
-        if discount:
-            subtotal = base_calculations.base_checkout_subtotal(
-                lines,
-                checkout_info.channel,
-                checkout_info.checkout.currency,
-            )
-            checkout.discount = (
-                min(discount, subtotal)
-                if voucher.type != VoucherType.SHIPPING
-                else discount
-            )
-            checkout.discount_name = voucher.name
-
-            language_code = checkout.language_code
-            translated_discount_name = get_translation(voucher, language_code).name
-            checkout.translated_discount_name = (
-                translated_discount_name
-                if translated_discount_name != voucher.name
-                else ""
-            )
-
-            checkout.save(
-                update_fields=[
-                    "translated_discount_name",
-                    "discount_amount",
-                    "discount_name",
-                    "currency",
-                    "last_change",
-                ]
-            )
-    else:
-        remove_voucher_from_checkout(checkout)
-
-    create_checkout_discount_objects_for_order_promotions(
-        checkout_info, lines, save=True
-    )
-
-
-def add_promo_code_to_checkout(
-    manager: PluginsManager,
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-    promo_code: str,
-):
-    """Add gift card or voucher data to checkout.
-
-    Raise InvalidPromoCode if promo code does not match to any voucher or gift card.
-    """
-    if promo_code_is_voucher(promo_code):
-        add_voucher_code_to_checkout(
-            manager,
-            checkout_info,
-            lines,
-            promo_code,
-        )
-    else:
-        raise InvalidPromoCode()
-
-
-def add_voucher_code_to_checkout(
-    manager: PluginsManager,
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-    voucher_code: str,
-):
-    """Add voucher data to checkout by code.
-
-    Raise InvalidPromoCode() if voucher of given type cannot be applied.
-    """
-    code_instance = get_voucher_code_instance(voucher_code, checkout_info.channel.slug)
-    try:
-        add_voucher_to_checkout(
-            manager, checkout_info, lines, code_instance.voucher, code_instance
-        )
-    except NotApplicable:
-        raise ValidationError(
-            {
-                "promo_code": ValidationError(
-                    "Voucher is not applicable to this checkout.",
-                    code=CheckoutErrorCode.VOUCHER_NOT_APPLICABLE.value,
-                )
-            }
-        )
-
-
-def add_voucher_to_checkout(
-    manager: PluginsManager,
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-    voucher: Voucher,
-    voucher_code: VoucherCode,
-):
-    """Add voucher data to checkout.
-
-    Raise NotApplicable if voucher of given type cannot be applied.
-    """
-    checkout = checkout_info.checkout
-    address = checkout_info.shipping_address or checkout_info.billing_address
-    discount = get_voucher_discount_for_checkout(
-        manager,
-        voucher,
-        checkout_info,
-        lines,
-        address,
-    )
-    checkout.voucher_code = voucher_code.code
-    checkout.discount_name = voucher.name
-
-    language_code = checkout.language_code
-    translated_discount_name = get_translation(voucher, language_code).name
-    checkout.translated_discount_name = (
-        translated_discount_name if translated_discount_name != voucher.name else ""
-    )
-
-    checkout.discount = discount
-    checkout_info.voucher = voucher
-    checkout_info.voucher_code = voucher_code
-
-    # delete discounts from order promotions as cannot be mixed with vouchers
-    with transaction.atomic():
-        checkout.save(
-            update_fields=[
-                "voucher_code",
-                "discount_name",
-                "translated_discount_name",
-                "discount_amount",
-                "last_change",
-            ]
-        )
-        CheckoutDiscount.objects.filter(
-            checkout=checkout_info.checkout,
-            type=DiscountType.ORDER_PROMOTION,
-        ).delete()
-        # delete gift line if exists
-        delete_gift_line(checkout_info.checkout, lines)
-
-
-def remove_promo_code_from_checkout_or_error(
-    checkout_info: "CheckoutInfo", promo_code: str
-) -> None:
-    """Remove gift card or voucher data from checkout or raise an error."""
-
-    if promo_code_is_voucher(promo_code):
-        remove_voucher_code_from_checkout_or_error(checkout_info, promo_code)
-    elif promo_code == checkout_info.checkout.voucher_code:
-        remove_voucher_code_from_checkout_or_error(checkout_info, promo_code)
-    else:
-        raise ValidationError(
-            "Promo code does not exists.",
-            code=CheckoutErrorCode.NOT_FOUND.value,
-        )
-
-
-def remove_voucher_code_from_checkout_or_error(
-    checkout_info: "CheckoutInfo", voucher_code: str
-) -> None:
-    """Remove voucher data from checkout by code or raise an error."""
-
-    if checkout_info.voucher and voucher_code in checkout_info.voucher.promo_codes:
-        remove_voucher_from_checkout(checkout_info.checkout)
-        checkout_info.voucher = None
-    elif (
-        not checkout_info.voucher
-        and checkout_info.checkout.voucher_code == voucher_code
-    ):
-        remove_voucher_from_checkout(checkout_info.checkout)
-    else:
-        raise ValidationError(
-            "Cannot remove a voucher not attached to this checkout.",
-            code=CheckoutErrorCode.INVALID.value,
-        )
-
-
-def remove_voucher_from_checkout(checkout: Checkout):
-    """Remove voucher data from checkout."""
-    checkout.voucher_code = None
-    checkout.discount_name = None
-    checkout.translated_discount_name = None
-    checkout.discount_amount = Decimal("0")
-    checkout.save(
-        update_fields=[
-            "voucher_code",
-            "discount_name",
-            "translated_discount_name",
-            "discount_amount",
-            "currency",
-            "last_change",
-        ]
-    )
 
 
 def get_valid_collection_points_for_checkout(
@@ -1132,7 +669,6 @@ def checkout_info_for_logs(
             "prices_entered_with_tax": tax_configuration.prices_entered_with_tax,
             "tax_app_id": tax_configuration.tax_app_id,
         },
-        "discounts": discount_info_for_logs(checkout_info.discounts),
         "lines": [
             {
                 "id": graphene.Node.to_global_id("CheckoutLine", line_info.line.pk),
@@ -1169,7 +705,6 @@ def checkout_info_for_logs(
                     if line_info.product.channel_listings
                     else None
                 ),
-                "discounts": discount_info_for_logs(line_info.discounts),
             }
             for line_info in checkout_lines_info
         ],

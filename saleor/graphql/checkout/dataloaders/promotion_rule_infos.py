@@ -2,12 +2,7 @@ from collections import defaultdict
 
 from promise import Promise
 
-from ....discount.interface import VariantPromotionRuleInfo
 from ...core.dataloaders import DataLoader
-from ...discount.dataloaders import (
-    PromotionByRuleIdLoader,
-    PromotionRuleByIdLoader,
-)
 from ...product.dataloaders import (
     VariantChannelListingByVariantIdAndChannelIdLoader,
     VariantChannelListingPromotionRuleByListingIdLoader,
@@ -86,33 +81,6 @@ class VariantPromotionRuleInfoByCheckoutLineIdLoader(DataLoader):
                                 for checkout, line in zip(checkouts, checkout_lines):
                                     if not line:
                                         continue
-                                    channel_listing = channel_listings_map[
-                                        (line.variant_id, checkout.channel_id)
-                                    ]
-                                    listing_promotion_rules = (
-                                        listing_promotion_rules_map[channel_listing.id]
-                                        if channel_listing
-                                        else []
-                                    )
-                                    rules_info_map[line.id] = [
-                                        VariantPromotionRuleInfo(
-                                            rule=rule_map[
-                                                listing_rule.promotion_rule_id
-                                            ],
-                                            variant_listing_promotion_rule=listing_rule,
-                                            promotion=rule_id_to_promotion_map[
-                                                listing_rule.promotion_rule_id
-                                            ],
-                                            rule_translation=rule_id_to_rule_translation[
-                                                listing_rule.promotion_rule_id
-                                            ],
-                                            promotion_translation=rule_id_to_promotion_translation[
-                                                listing_rule.promotion_rule_id
-                                            ],
-                                        )
-                                        for listing_rule in listing_promotion_rules
-                                    ]
-
                                 return [rules_info_map.get(key) for key in keys]
 
                             return (
@@ -123,12 +91,8 @@ class VariantPromotionRuleInfoByCheckoutLineIdLoader(DataLoader):
                                 .then(with_promotion_translations)
                             )
 
-                        promotion_rules = PromotionRuleByIdLoader(
-                            self.context
-                        ).load_many(rule_ids)
-                        promotions = PromotionByRuleIdLoader(self.context).load_many(
-                            rule_ids
-                        )
+                        promotion_rules = []
+                        promotions = []
 
                         rules_translations = (
                             PromotionRuleTranslationByIdAndLanguageCodeLoader(
