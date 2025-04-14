@@ -26,7 +26,6 @@ from ...product import error_codes as product_error_codes
 from ...site import error_codes as site_error_codes
 from ...thumbnail import IconThumbnailFormat, ThumbnailFormat
 from ...translations import error_codes as translatable_error_codes
-from ...warehouse import error_codes as warehouse_error_codes
 from ...webhook import error_codes as webhook_error_codes
 from ..notifications import error_codes as external_notifications_error_codes
 from .doc_category import (
@@ -40,7 +39,6 @@ from .doc_category import (
     DOC_CATEGORY_PAGES,
     DOC_CATEGORY_PAYMENTS,
     DOC_CATEGORY_PRODUCTS,
-    DOC_CATEGORY_SHIPPING,
     DOC_CATEGORY_USERS,
     DOC_CATEGORY_WEBHOOKS,
 )
@@ -337,18 +335,7 @@ SendConfirmationEmailErrorCode.doc_category = DOC_CATEGORY_USERS
 
 ShopErrorCode = graphene.Enum.from_enum(core_error_codes.ShopErrorCode)
 
-StockErrorCode = graphene.Enum.from_enum(warehouse_error_codes.StockErrorCode)
-StockErrorCode.doc_category = DOC_CATEGORY_PRODUCTS
-
-StockBulkUpdateErrorCode = graphene.Enum.from_enum(
-    warehouse_error_codes.StockBulkUpdateErrorCode
-)
-StockBulkUpdateErrorCode.doc_category = DOC_CATEGORY_PRODUCTS
-
 UploadErrorCode = graphene.Enum.from_enum(core_error_codes.UploadErrorCode)
-
-WarehouseErrorCode = graphene.Enum.from_enum(warehouse_error_codes.WarehouseErrorCode)
-WarehouseErrorCode.doc_category = DOC_CATEGORY_PRODUCTS
 
 TranslationErrorCode = graphene.Enum.from_enum(core_error_codes.TranslationErrorCode)
 

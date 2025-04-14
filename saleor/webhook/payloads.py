@@ -43,7 +43,6 @@ from ..payment.models import Payment, TransactionItem
 from ..product import ProductMediaTypes
 from ..product.models import Collection, Product, ProductMedia, ProductVariant
 from ..thumbnail.models import Thumbnail
-from ..warehouse.models import Stock, Warehouse
 from . import traced_payload_generator
 from .event_types import WebhookEventAsyncType
 from .payload_serializers import PayloadSerializer
@@ -164,10 +163,6 @@ def prepare_order_lines_allocations_payload(line):
             "quantity_allocated", warehouse_id=F("stock__warehouse_id")
         )
     )
-    for item in warehouse_id_quantity_allocated_map:
-        item["warehouse_id"] = graphene.Node.to_global_id(
-            "Warehouse", item["warehouse_id"]
-        )
     return warehouse_id_quantity_allocated_map
 
 
@@ -223,23 +218,6 @@ def generate_order_lines_payload(lines: Iterable[OrderLine]):
             "allocations": (lambda line: prepare_order_lines_allocations_payload(line)),
         },
     )
-
-
-def _generate_collection_point_payload(warehouse: "Warehouse"):
-    serializer = PayloadSerializer()
-    collection_point_fields = (
-        "name",
-        "email",
-        "click_and_collect_option",
-        "is_private",
-    )
-    collection_point_data = serializer.serialize(
-        [warehouse],
-        fields=collection_point_fields,
-        additional_fields={"address": (lambda w: w.address, ADDRESS_FIELDS)},
-    )
-    return collection_point_data
-
 
 def _generate_shipping_method_payload(shipping_method, channel):
     if not shipping_method:
@@ -331,11 +309,6 @@ def generate_order_payload(
         "original": graphene.Node.to_global_id("Order", order.original_id),
         "lines": json.loads(generate_order_lines_payload(lines)),
         "fulfillments": json.loads(fulfillments_data),
-        "collection_point": json.loads(
-            _generate_collection_point_payload(order.collection_point)
-        )[0]
-        if order.collection_point
-        else None,
         "payments": json.loads(_generate_order_payment_payload(payments)),
         "shipping_method": _generate_shipping_method_payload(
             order.shipping_method, order.channel
@@ -507,10 +480,6 @@ def generate_checkout_payload(
 
     # todo use the most appropriate warehouse
     warehouse = None
-    if checkout.shipping_address:
-        warehouse = Warehouse.objects.for_country_and_channel(
-            checkout.shipping_address.country.code, checkout.channel_id
-        ).first()
 
     checkout_data = serializer.serialize(
         [checkout],
@@ -532,11 +501,6 @@ def generate_checkout_payload(
                 checkout.shipping_method, checkout.channel
             ),
             "lines": list(lines_dict_data),
-            "collection_point": json.loads(
-                _generate_collection_point_payload(checkout.collection_point)
-            )[0]
-            if checkout.collection_point
-            else None,
             "meta": generate_meta(requestor_data=generate_requestor(requestor)),
             "created": checkout.created_at,
             # We add token as a graphql ID as it worked in that way since we introduce
@@ -772,7 +736,7 @@ def generate_product_variant_media_payload(product_variant):
 @allow_writer()
 @traced_payload_generator
 def generate_product_variant_with_stock_payload(
-    stocks: Iterable["Stock"], requestor: Optional["RequestorOrLazyObject"] = None
+    stocks, requestor: Optional["RequestorOrLazyObject"] = None
 ):
     serializer = PayloadSerializer()
     extra_dict_data = {
@@ -781,9 +745,6 @@ def generate_product_variant_with_stock_payload(
         ),
         "product_variant_id": lambda v: graphene.Node.to_global_id(
             "ProductVariant", v.product_variant_id
-        ),
-        "warehouse_id": lambda v: graphene.Node.to_global_id(
-            "Warehouse", v.warehouse_id
         ),
         "product_slug": lambda v: v.product_variant.product.slug,
         "meta": generate_meta(requestor_data=generate_requestor(requestor)),
@@ -896,11 +857,6 @@ def generate_fulfillment_lines_payload(fulfillment: Fulfillment):
                 * fl.quantity
             ),
             "currency": lambda fl: fl.order_line.currency,
-            "warehouse_id": lambda fl: graphene.Node.to_global_id(
-                "Warehouse", fl.stock.warehouse_id
-            )
-            if fl.stock
-            else None,
             "sale_id": lambda fl: fl.order_line.sale_id,
             "voucher_code": lambda fl: fl.order_line.voucher_code,
         },
@@ -934,10 +890,6 @@ def generate_fulfillment_payload(
     fulfillment_line = fulfillment.lines.first()
     if fulfillment_line and fulfillment_line.stock:
         warehouse = fulfillment_line.stock.warehouse
-    else:
-        warehouse = Warehouse.objects.for_country_and_channel(
-            order_country, order.channel_id
-        ).first()
     fulfillment_data = serializer.serialize(
         [fulfillment],
         fields=fulfillment_fields,

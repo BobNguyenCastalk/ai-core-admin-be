@@ -33,13 +33,6 @@ from ..payment.interface import RefundData
 from ..payment.models import Payment, Transaction, TransactionItem
 from ..payment.utils import create_payment, create_transaction_for_order
 from ..plugins.manager import PluginsManager
-from ..warehouse.management import (
-    deallocate_stock,
-    deallocate_stock_for_order,
-    decrease_stock,
-    get_order_lines_with_track_inventory,
-)
-from ..warehouse.models import Stock
 from ..webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
 from ..webhook.utils import get_webhooks_for_multiple_events
 from . import (
@@ -73,7 +66,6 @@ from .utils import (
     clean_order_line_quantities,
     get_valid_shipping_methods_for_order,
     order_line_needs_automatic_fulfillment,
-    restock_fulfillment_lines,
     update_order_authorize_data,
     update_order_charge_data,
     update_order_status,
@@ -415,7 +407,6 @@ def cancel_order(
     # transaction ensures proper allocation and event triggering
     with traced_atomic_transaction():
         events.order_canceled_event(order=order, user=user, app=app)
-        deallocate_stock_for_order(order, manager)
         order.status = OrderStatus.CANCELED
         order.save(update_fields=["status", "updated_at"])
         if not webhook_event_map:
@@ -784,15 +775,6 @@ def cancel_fulfillment(
         events.fulfillment_canceled_event(
             order=fulfillment.order, user=user, app=app, fulfillment=fulfillment
         )
-        if warehouse:
-            restock_fulfillment_lines(fulfillment, warehouse)
-            events.fulfillment_restocked_items_event(
-                order=fulfillment.order,
-                user=user,
-                app=app,
-                fulfillment=fulfillment,
-                warehouse_pk=warehouse.pk,
-            )
         fulfillment.status = FulfillmentStatus.CANCELED
         fulfillment.save(update_fields=["status"])
         update_order_status(fulfillment.order)
@@ -887,7 +869,6 @@ def approve_fulfillment(
         if insufficient_stocks:
             raise InsufficientStock(insufficient_stocks)
 
-        _decrease_stocks(lines_to_fulfill, manager, allow_stock_to_be_exceeded)
         order.refresh_from_db()
         order_fulfilled(
             [fulfillment],
@@ -1018,17 +999,6 @@ def clean_mark_order_as_paid(order: "Order"):
             "Orders with transactions can not be manually marked as paid.",
         )
 
-
-def _decrease_stocks(order_lines_info, manager, allow_stock_to_be_exceeded=False):
-    lines_to_decrease_stock = get_order_lines_with_track_inventory(order_lines_info)
-    if lines_to_decrease_stock:
-        decrease_stock(
-            lines_to_decrease_stock,
-            manager,
-            allow_stock_to_be_exceeded=allow_stock_to_be_exceeded,
-        )
-
-
 def _increase_order_line_quantity(order_lines_info):
     order_lines = []
     for line_info in order_lines_info:
@@ -1048,7 +1018,6 @@ def fulfill_order_lines(
     # transaction ensures that there is a consistency between quantities in order line
     # and stocks
     with traced_atomic_transaction():
-        _decrease_stocks(order_lines_info, manager, allow_stock_to_be_exceeded)
         _increase_order_line_quantity(order_lines_info)
 
 
@@ -1163,7 +1132,7 @@ def _create_fulfillment_lines(
         .select_related("product_variant")
     )
 
-    variant_to_stock: dict[int, list[Stock]] = defaultdict(list)
+    variant_to_stock: dict[int, list] = defaultdict(list)
     for stock in stocks:
         variant_to_stock[stock.product_variant_id].append(stock)
 
@@ -1216,8 +1185,6 @@ def _create_fulfillment_lines(
         raise InsufficientStock(insufficient_stocks)
 
     if lines_info:
-        if decrease_stock:
-            _decrease_stocks(lines_info, manager, allow_stock_to_be_exceeded)
         _increase_order_line_quantity(lines_info)
 
     return fulfillment_lines
@@ -1420,15 +1387,6 @@ def _move_order_lines_to_target_fulfillment(
             if line_allocations_exists:
                 lines_to_dellocate.append(
                     OrderLineInfo(line=line_to_move, quantity=unfulfilled_to_move)
-                )
-
-        if lines_to_dellocate:
-            try:
-                deallocate_stock(lines_to_dellocate, manager)
-            except AllocationError as e:
-                lines = [str(line.pk) for line in e.order_lines]
-                logger.warning(
-                    "Unable to deallocate stock for lines.", extra={"lines": lines}
                 )
 
         created_fulfillment_lines = FulfillmentLine.objects.bulk_create(

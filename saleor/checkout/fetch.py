@@ -15,8 +15,6 @@ from ..core.pricing.interface import LineInfo
 from ..core.taxes import zero_money
 from ..discount import VoucherType
 from ..discount.interface import fetch_variant_rules_info, fetch_voucher_info
-from ..warehouse import WarehouseClickAndCollectOption
-from ..warehouse.models import Warehouse
 
 if TYPE_CHECKING:
     from ..account.models import Address, User
@@ -117,7 +115,7 @@ class CheckoutInfo:
     lines: Iterable[CheckoutLineInfo]
     shipping_channel_listings: list
     shipping_method = None
-    collection_point: Optional["Warehouse"] = None
+    collection_point = None
     voucher: Optional["Voucher"] = None
     voucher_code: Optional["VoucherCode"] = None
     database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME
@@ -248,10 +246,7 @@ class CollectionPointInfo(DeliveryMethodBase):
 
     @property
     def is_local_collection_point(self):
-        return (
-            self.delivery_method.click_and_collect_option
-            == WarehouseClickAndCollectOption.LOCAL_STOCK
-        )
+        return True
 
     @property
     def delivery_method_name(self) -> dict[str, Optional[str]]:

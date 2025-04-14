@@ -270,15 +270,7 @@ class ProductVariantQueryset(models.QuerySet):
           which is calculated as `quantity - quantity_allocated`.
         """
 
-        from saleor.warehouse.models import Allocation
-
-        allocations_subquery = (
-            Allocation.objects.using(self.db)
-            .filter(stock__product_variant=OuterRef("pk"))
-            .values("stock__product_variant")
-            .annotate(total_allocated=Coalesce(Sum("quantity_allocated"), 0))
-            .values("total_allocated")
-        )
+        allocations_subquery = []
 
         return self.annotate(
             quantity=Coalesce(Sum("stocks__quantity"), Value(0)),

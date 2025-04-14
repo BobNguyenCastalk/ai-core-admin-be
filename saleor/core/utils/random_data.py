@@ -88,9 +88,6 @@ from ...product.tasks import (
     recalculate_discounted_price_for_products_task,
     update_variant_relations_for_active_promotion_rules_task,
 )
-from ...warehouse import WarehouseClickAndCollectOption
-from ...warehouse.management import increase_stock
-from ...warehouse.models import PreorderAllocation, Stock, Warehouse
 from ..postgres import FlatConcatSearchVector
 
 fake = cast(Any, Factory.create())
@@ -285,17 +282,6 @@ def create_product_channel_listings(product_channel_listings_data):
         defaults["channel_id"] = channel_USD.pk if channel == 1 else channel_PLN.pk
         ProductChannelListing.objects.update_or_create(pk=pk, defaults=defaults)
 
-
-def create_stocks(variant, warehouse_qs=None, **defaults):
-    if warehouse_qs is None:
-        warehouse_qs = Warehouse.objects.all()
-
-    for warehouse in warehouse_qs:
-        Stock.objects.update_or_create(
-            warehouse=warehouse, product_variant=variant, defaults=defaults
-        )
-
-
 def create_product_variants(variants_data, create_images):
     for variant in variants_data:
         pk = variant["pk"]
@@ -318,7 +304,6 @@ def create_product_variants(variants_data, create_images):
             image = variant.product.get_first_image()
             VariantMedia.objects.get_or_create(variant=variant, media=image)
         quantity = random.randint(100, 500)
-        create_stocks(variant, quantity=quantity)
 
 
 def create_product_variant_channel_listings(product_variant_channel_listings_data):
@@ -586,11 +571,7 @@ def create_order_lines(order, how_many=10):
 
     lines = OrderLine.objects.bulk_create(lines)
     manager = get_plugins_manager(allow_replica=False)
-    country = order.shipping_method.shipping_zone.countries[0]
-    warehouses = Warehouse.objects.filter(
-        shipping_zones__countries__contains=country
-    ).order_by("?")
-    warehouse_iter = itertools.cycle(warehouses)
+    warehouses = []
     for line in lines:
         variant = cast(ProductVariant, line.variant)
         unit_price_data = manager.calculate_order_line_unit(
@@ -607,8 +588,6 @@ def create_order_lines(order, how_many=10):
             unit_price_data.price_with_discounts.tax
             / unit_price_data.price_with_discounts.net
         )
-        warehouse = next(warehouse_iter)
-        increase_stock(line, warehouse, line.quantity, allocate=True)
     OrderLine.objects.bulk_update(
         lines,
         [
@@ -623,68 +602,6 @@ def create_order_lines(order, how_many=10):
         ],
     )
     return lines
-
-
-def create_order_lines_with_preorder(order, how_many=1):
-    channel = order.channel
-    available_variant_ids = channel.variant_listings.values_list(
-        "variant_id", flat=True
-    )
-    variants = (
-        ProductVariant.objects.filter(pk__in=available_variant_ids, is_preorder=True)
-        .order_by("?")
-        .prefetch_related("product__product_type")[:how_many]
-    )
-    variants_iter = itertools.cycle(variants)
-    lines = []
-    for _ in range(how_many):
-        variant = next(variants_iter)
-
-    lines = OrderLine.objects.bulk_create(lines)
-    manager = get_plugins_manager(allow_replica=False)
-
-    preorder_allocations = []
-    for line in lines:
-        variant = cast(ProductVariant, line.variant)
-        unit_price_data = manager.calculate_order_line_unit(
-            order, line, variant, variant.product, lines
-        )
-        total_price_data = manager.calculate_order_line_total(
-            order, line, variant, variant.product, lines
-        )
-        line.unit_price = unit_price_data.price_with_discounts
-        line.total_price = total_price_data.price_with_discounts
-        line.undiscounted_unit_price = unit_price_data.undiscounted_price
-        line.undiscounted_total_price = total_price_data.undiscounted_price
-        line.tax_rate = (
-            unit_price_data.price_with_discounts.tax
-            / unit_price_data.price_with_discounts.net
-        )
-        variant_channel_listing = variant.channel_listings.get(channel=channel)
-        preorder_allocations.append(
-            PreorderAllocation(
-                order_line=line,
-                product_variant_channel_listing=variant_channel_listing,
-                quantity=line.quantity,
-            )
-        )
-    PreorderAllocation.objects.bulk_create(preorder_allocations)
-
-    OrderLine.objects.bulk_update(
-        lines,
-        [
-            "unit_price_net_amount",
-            "unit_price_gross_amount",
-            "undiscounted_unit_price_gross_amount",
-            "undiscounted_unit_price_net_amount",
-            "undiscounted_total_price_gross_amount",
-            "undiscounted_total_price_net_amount",
-            "currency",
-            "tax_rate",
-        ],
-    )
-    return lines
-
 
 def create_fulfillments(order):
     for line in order.lines.all():
@@ -761,7 +678,7 @@ def create_fake_order(max_order_lines=5, create_preorder_lines=False):
 
     order = Order.objects.create(**order_data)
     if create_preorder_lines:
-        lines = create_order_lines_with_preorder(order)
+        pass
     else:
         lines = create_order_lines(order, random.randrange(1, max_order_lines))
     order.total = sum([line.total_price for line in lines], shipping_price)
@@ -1011,56 +928,6 @@ def create_channels():
         slug="channel-pln",
         country="PL",
     )
-
-
-def create_additional_cc_warehouse():
-    channel = Channel.objects.first()
-    if not channel:
-        raise Exception("No channels found")
-    shipping_zone = None
-    if not shipping_zone:
-        raise Exception("No shipping zones found")
-    warehouse_name = f"{shipping_zone.name} for click and collect"
-    warehouse, _ = Warehouse.objects.update_or_create(
-        name=warehouse_name,
-        slug=slugify(warehouse_name),
-        defaults={
-            "address": create_address(),
-            "is_private": False,
-            "click_and_collect_option": WarehouseClickAndCollectOption.LOCAL_STOCK,
-        },
-    )
-    warehouse.shipping_zones.add(shipping_zone)
-    warehouse.channels.add(channel)
-
-
-def create_warehouses():
-    channels = Channel.objects.all()
-    for shipping_zone in []:
-        shipping_zone_name = shipping_zone.name
-        is_private = random.choice([True, False])
-        cc_option = random.choice(
-            [
-                option[0]
-                for option in WarehouseClickAndCollectOption.CHOICES
-                if not (
-                    is_private and option == WarehouseClickAndCollectOption.LOCAL_STOCK
-                )
-            ]
-        )
-        warehouse, _ = Warehouse.objects.update_or_create(
-            name=shipping_zone_name,
-            slug=slugify(shipping_zone_name),
-            defaults={
-                "address": create_address(company_name=fake.company()),
-                "is_private": is_private,
-                "click_and_collect_option": cc_option,
-            },
-        )
-        warehouse.shipping_zones.add(shipping_zone)
-        warehouse.channels.add(*channels)
-
-    create_additional_cc_warehouse()
 
 
 def create_vouchers():

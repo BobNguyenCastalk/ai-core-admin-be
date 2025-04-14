@@ -6,20 +6,8 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("warehouse", "0007_auto_20200406_0341"),
         ("order", "0081_auto_20200406_0456"),
     ]
 
     operations = [
-        migrations.AddField(
-            model_name="fulfillmentline",
-            name="stock",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="fulfillment_lines",
-                to="warehouse.Stock",
-            ),
-        ),
     ]

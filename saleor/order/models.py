@@ -162,14 +162,6 @@ class Order(ModelWithMetadata, ModelWithExternalReference):
     currency = models.CharField(
         max_length=settings.DEFAULT_CURRENCY_CODE_LENGTH,
     )
-
-    collection_point = models.ForeignKey(
-        "warehouse.Warehouse",
-        blank=True,
-        null=True,
-        related_name="orders",
-        on_delete=models.SET_NULL,
-    )
     shipping_method_name = models.CharField(
         max_length=255, null=True, default=None, blank=True, editable=False
     )
@@ -788,13 +780,6 @@ class FulfillmentLine(models.Model):
         Fulfillment, related_name="lines", on_delete=models.CASCADE
     )
     quantity = models.PositiveIntegerField()
-    stock = models.ForeignKey(
-        "warehouse.Stock",
-        related_name="fulfillment_lines",
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-    )
 
 
 class OrderEvent(models.Model):

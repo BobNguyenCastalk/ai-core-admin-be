@@ -29,13 +29,6 @@ from ..discount.utils.promotion import (
 from ..payment import TransactionEventType
 from ..payment.model_helpers import get_total_authorized
 from ..product.utils.digital_products import get_default_digital_content_settings
-from ..warehouse.management import (
-    decrease_allocations,
-    get_order_lines_with_track_inventory,
-    increase_allocations,
-    increase_stock,
-)
-from ..warehouse.models import Warehouse
 from . import (
     ORDER_EDITABLE_STATUS,
     FulfillmentStatus,
@@ -313,20 +306,6 @@ def create_order_line(
             ]
         )
 
-    if allocate_stock:
-        increase_allocations(
-            [
-                OrderLineInfo(
-                    line=line,
-                    quantity=quantity,
-                    variant=variant,
-                    warehouse_pk=None,
-                )
-            ],
-            channel,
-            manager=manager,
-        )
-
     return line
 
 
@@ -398,20 +377,6 @@ def add_variant_to_order(
         if update_fields:
             line.save(update_fields=update_fields)
 
-        if allocate_stock:
-            increase_allocations(
-                [
-                    OrderLineInfo(
-                        line=line,
-                        quantity=line_data.quantity,
-                        variant=line_data.variant,
-                        warehouse_pk=None,
-                    )
-                ],
-                channel,
-                manager=manager,
-            )
-
         return line
 
     if line_data.variant_id:
@@ -454,26 +419,6 @@ def update_line_base_unit_prices_with_custom_price(
         ]
     )
 
-def _update_allocations_for_line(
-    line_info: OrderLineInfo,
-    old_quantity: int,
-    new_quantity: int,
-    channel: "Channel",
-    manager: "PluginsManager",
-):
-    if old_quantity == new_quantity:
-        return
-
-    if not get_order_lines_with_track_inventory([line_info]):
-        return
-
-    if old_quantity < new_quantity:
-        line_info.quantity = new_quantity - old_quantity
-        increase_allocations([line_info], channel, manager)
-    else:
-        line_info.quantity = old_quantity - new_quantity
-        decrease_allocations([line_info], manager)
-
 
 def change_order_line_quantity(
     user,
@@ -489,10 +434,6 @@ def change_order_line_quantity(
     """Change the quantity of ordered items in a order line."""
     line = line_info.line
     if new_quantity:
-        if line.order.is_unconfirmed():
-            _update_allocations_for_line(
-                line_info, old_quantity, new_quantity, channel, manager
-            )
         line.quantity = new_quantity
         total_price_net_amount = line.quantity * line.unit_price_net_amount
         total_price_gross_amount = line.quantity * line.unit_price_gross_amount
@@ -553,24 +494,7 @@ def create_order_event(line, user, app, quantity_diff):
 
 def delete_order_line(line_info, manager):
     """Delete an order line from an order."""
-    if line_info.line.order.is_unconfirmed():
-        decrease_allocations([line_info], manager)
     line_info.line.delete()
-
-
-def restock_fulfillment_lines(fulfillment, warehouse):
-    """Return fulfilled products to corresponding stocks.
-
-    Return products to stocks and update order lines quantity fulfilled values.
-    """
-    order_lines = []
-    for line in fulfillment:
-        if line.order_line.variant and line.order_line.variant.track_inventory:
-            increase_stock(line.order_line, warehouse, line.quantity, allocate=True)
-        order_line = line.order_line
-        order_line.quantity_fulfilled -= line.quantity
-        order_lines.append(order_line)
-    OrderLine.objects.bulk_update(order_lines, ["quantity_fulfilled"])
 
 
 def sum_order_totals(qs, currency_code):
@@ -613,9 +537,7 @@ def get_valid_collection_points_for_order(
     line_ids = [line.id for line in lines]
     qs = OrderLine.objects.using(database_connection_name).filter(id__in=line_ids)
 
-    return Warehouse.objects.using(
-        database_connection_name
-    ).applicable_for_click_and_collect(qs, channel_id)
+    return []
 
 
 def get_discounted_lines(lines, voucher):

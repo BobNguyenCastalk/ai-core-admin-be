@@ -14,7 +14,6 @@ from ..core.utils import from_global_id_or_error
 from ..core.validators import validate_one_of_args_is_in_query
 from .bulk_mutations import (
     CustomerBulkDelete,
-    CustomerBulkUpdate,
     StaffBulkDelete,
     UserBulkSetActive,
 )
@@ -302,7 +301,6 @@ class AccountMutations(graphene.ObjectType):
     customer_update = CustomerUpdate.Field()
     customer_delete = CustomerDelete.Field()
     customer_bulk_delete = CustomerBulkDelete.Field()
-    customer_bulk_update = CustomerBulkUpdate.Field()
 
     staff_create = StaffCreate.Field()
     staff_update = StaffUpdate.Field()

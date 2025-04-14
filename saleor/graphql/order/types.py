@@ -29,7 +29,6 @@ from ...order.models import FulfillmentStatus
 from ...order.utils import (
     get_order_country,
     get_valid_collection_points_for_order,
-    get_valid_shipping_methods_for_order,
 )
 from ...payment import ChargeStatus, TransactionKind
 from ...payment.dataloaders import PaymentsByOrderIdLoader
@@ -40,7 +39,6 @@ from ...permission.enums import (
     AppPermission,
     OrderPermissions,
     PaymentPermissions,
-    ProductPermissions,
 )
 from ...permission.utils import has_one_of_permissions
 from ...product.models import ALL_PRODUCTS_PERMISSIONS, ProductMediaTypes
@@ -128,7 +126,6 @@ from ..product.dataloaders import (
 )
 from ..product.types import DigitalContentUrl, ProductVariant
 from .dataloaders import (
-    AllocationsByOrderLineIdLoader,
     FulfillmentLinesByFulfillmentIdLoader,
     FulfillmentLinesByIdLoader,
     FulfillmentsByOrderIdLoader,
@@ -1112,10 +1109,6 @@ class OrderLine(ModelObjectType[models.OrderLine]):
         channel = ChannelByOrderIdLoader(context).load(root.order_id)
 
         return Promise.all([variant, channel]).then(requestor_has_access_to_variant)
-
-    @staticmethod
-    def resolve_allocations(root: models.OrderLine, info):
-        return AllocationsByOrderLineIdLoader(info.context).load(root.id)
 
     @staticmethod
     def resolve_tax_class_metadata(root: models.OrderLine, _info):

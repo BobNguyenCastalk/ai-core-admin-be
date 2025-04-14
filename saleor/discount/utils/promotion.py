@@ -27,7 +27,6 @@ from ...product.models import (
     ProductVariant,
     ProductVariantChannelListing,
 )
-from ...warehouse.availability import check_stock_quantity_bulk
 from .. import (
     DiscountType,
     PromotionRuleInfo,
@@ -437,20 +436,6 @@ def _get_best_gift_reward(
     variant_ids_with_insufficient_stock = set()
     if not variants:
         return None, None
-
-    try:
-        check_stock_quantity_bulk(
-            variants,
-            country,
-            [1] * variants.count(),
-            channel.slug,
-            None,
-            database_connection_name=database_connection_name,
-        )
-    except InsufficientStock as error:
-        variant_ids_with_insufficient_stock = {
-            item.variant.pk for item in error.items if item.variant
-        }
 
     available_variant_ids = (
         set(variants.values_list("id", flat=True)) - variant_ids_with_insufficient_stock

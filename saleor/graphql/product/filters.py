@@ -33,7 +33,6 @@ from ...product.models import (
     ProductVariantChannelListing,
 )
 from ...product.search import search_products
-from ...warehouse.models import Allocation, Reservation, Stock, Warehouse
 from ..channel.filters import get_channel_slug_from_filter_data
 from ..core.descriptions import ADDED_IN_38, ADDED_IN_317
 from ..core.doc_category import DOC_CATEGORY_PRODUCTS
@@ -389,39 +388,13 @@ def filter_products_by_collections(qs, collection_pks):
 
 
 def filter_products_by_stock_availability(qs, stock_availability, channel_slug):
-    allocations = (
-        Allocation.objects.using(qs.db)
-        .values("stock_id")
-        .filter(quantity_allocated__gt=0, stock_id=OuterRef("pk"))
-        .values_list(Sum("quantity_allocated"))
-    )
+    allocations = []
     allocated_subquery = Subquery(queryset=allocations, output_field=IntegerField())
 
-    reservations = (
-        Reservation.objects.using(qs.db)
-        .values("stock_id")
-        .filter(
-            quantity_reserved__gt=0,
-            stock_id=OuterRef("pk"),
-            reserved_until__gt=timezone.now(),
-        )
-        .values_list(Sum("quantity_reserved"))
-    )
+    reservations = []
     reservation_subquery = Subquery(queryset=reservations, output_field=IntegerField())
-    warehouse_pks = list(
-        Warehouse.objects.using(qs.db)
-        .for_channel_with_active_shipping_zone_or_cc(channel_slug)
-        .values_list("pk", flat=True)
-    )
-    stocks = (
-        Stock.objects.using(qs.db)
-        .filter(
-            warehouse_id__in=warehouse_pks,
-            quantity__gt=Coalesce(allocated_subquery, 0)
-            + Coalesce(reservation_subquery, 0),
-        )
-        .values("product_variant_id")
-    )
+    warehouse_pks = []
+    stocks = []
 
     variants = (
         ProductVariant.objects.using(qs.db)
@@ -693,7 +666,7 @@ def filter_quantity(qs, quantity_value, warehouse_ids=None):
     between given range. If warehouses is given, it aggregates quantity only
     from stocks which are in given warehouses.
     """
-    stocks = Stock.objects.using(qs.db).all()
+    stocks = []
 
     stocks = Subquery(stocks.values_list(Sum("quantity")))
     variants = ProductVariant.objects.using(qs.db).annotate(
@@ -958,7 +931,7 @@ def where_filter_quantity(qs, quantity_value, warehouse_ids=None):
     between given range. If warehouses is given, it aggregates quantity only
     from stocks which are in given warehouses.
     """
-    stocks = Stock.objects.using(qs.db).all()
+    stocks = []
 
     stocks = Subquery(stocks.values_list(Sum("quantity")))
     variants = ProductVariant.objects.using(qs.db).annotate(

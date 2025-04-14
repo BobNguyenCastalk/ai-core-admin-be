@@ -42,9 +42,6 @@ from ..discount.utils.voucher import (
 from ..payment.models import Payment
 from ..plugins.manager import PluginsManager
 from ..product import models as product_models
-from ..warehouse.availability import check_stock_and_preorder_quantity
-from ..warehouse.models import Warehouse
-from ..warehouse.reservations import reserve_stocks_and_preorders
 from . import AddressType, base_calculations, calculations
 from .error_codes import CheckoutErrorCode
 from .models import Checkout, CheckoutLine, CheckoutMetadata
@@ -179,16 +176,6 @@ def check_variant_in_stock(
     if new_quantity < 0:
         raise ValueError(
             f"{quantity!r} is not a valid quantity (results in {new_quantity!r})"
-        )
-
-    if new_quantity > 0 and check_quantity:
-        check_stock_and_preorder_quantity(
-            variant,
-            checkout.get_country(),
-            channel_slug,
-            new_quantity,
-            checkout_lines,
-            check_reservations,
         )
 
     return new_quantity, line
@@ -355,16 +342,6 @@ def add_variants_to_checkout(
             for line in checkout_lines:
                 if line.pk not in updated_lines_ids:
                     lines_to_update_reservation_time.append(line)
-
-            reserve_stocks_and_preorders(
-                to_reserve,
-                lines_to_update_reservation_time,
-                variants,
-                country_code,
-                channel,
-                reservation_length,
-                replace=replace_reservations,
-            )
 
     return checkout
 
@@ -926,15 +903,7 @@ def get_valid_collection_points_for_checkout(
     line_ids = [line_info.line.id for line_info in lines]
     lines = CheckoutLine.objects.using(database_connection_name).filter(id__in=line_ids)
 
-    return (
-        Warehouse.objects.using(
-            database_connection_name
-        ).applicable_for_click_and_collect(lines, channel_id)
-        if quantity_check
-        else Warehouse.objects.using(
-            database_connection_name
-        ).applicable_for_click_and_collect_no_quantity_check(lines, channel_id)
-    )
+    return []
 
 
 def clear_delivery_method(

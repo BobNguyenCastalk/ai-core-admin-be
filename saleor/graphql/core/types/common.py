@@ -73,8 +73,6 @@ from ..enums import (
     ProductVariantTranslateErrorCode,
     SendConfirmationEmailErrorCode,
     ShopErrorCode,
-    StockBulkUpdateErrorCode,
-    StockErrorCode,
     StoredPaymentMethodRequestDeleteErrorCode,
     ThumbnailFormatEnum,
     TimePeriodTypeEnum,
@@ -88,7 +86,6 @@ from ..enums import (
     TranslationErrorCode,
     UploadErrorCode,
     VoucherCodeBulkDeleteErrorCode,
-    WarehouseErrorCode,
     WebhookDryRunErrorCode,
     WebhookErrorCode,
     WebhookTriggerErrorCode,
@@ -268,14 +265,6 @@ class CheckoutError(Error):
 
     class Meta:
         doc_category = DOC_CATEGORY_CHECKOUT
-
-
-class CustomerBulkUpdateError(BulkError):
-    code = CustomerBulkUpdateErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_USERS
-
 
 class ProductWithoutVariantError(Error):
     products = NonNullList(
@@ -709,13 +698,6 @@ class PluginError(Error):
     code = PluginErrorCode(description="The error code.", required=True)
 
 
-class StockError(Error):
-    code = StockErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
-
-
 class BulkStockError(ProductError):
     index = graphene.Int(
         description="Index of an input list item that caused the error."
@@ -725,27 +707,8 @@ class BulkStockError(ProductError):
         doc_category = DOC_CATEGORY_PRODUCTS
 
 
-class StockBulkUpdateError(Error):
-    code = StockBulkUpdateErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
-
-
 class UploadError(Error):
     code = UploadErrorCode(description="The error code.", required=True)
-
-
-class WarehouseError(Error):
-    code = WarehouseErrorCode(description="The error code.", required=True)
-    shipping_zones = NonNullList(
-        graphene.ID,
-        description="List of shipping zones IDs which causes the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
 
 
 class WebhookError(Error):

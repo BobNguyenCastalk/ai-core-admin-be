@@ -19,8 +19,6 @@ from ....order.fetch import OrderInfo, OrderLineInfo
 from ....order.search import prepare_order_search_vector_value
 from ....order.utils import get_order_country, update_order_display_gross_prices
 from ....permission.enums import OrderPermissions
-from ....warehouse.management import allocate_preorders, allocate_stocks
-from ....warehouse.reservations import is_reservation_enabled
 from ...app.dataloaders import get_app_promise
 from ...core import ResolveInfo
 from ...core.doc_category import DOC_CATEGORY_ORDERS
@@ -161,28 +159,6 @@ class DraftOrderComplete(BaseMutation):
                         line=line, quantity=line.quantity, variant=line.variant
                     )
                     order_lines_info.append(line_data)
-                    site = get_site_promise(info.context).get()
-                    try:
-                        with traced_atomic_transaction():
-                            allocate_stocks(
-                                [line_data],
-                                country,
-                                channel,
-                                manager,
-                                check_reservations=is_reservation_enabled(
-                                    site.settings
-                                ),
-                            )
-                            allocate_preorders(
-                                [line_data],
-                                channel.slug,
-                                check_reservations=is_reservation_enabled(
-                                    site.settings
-                                ),
-                            )
-                    except InsufficientStock as exc:
-                        errors = prepare_insufficient_stock_order_validation_errors(exc)
-                        raise ValidationError({"lines": errors})
 
             order_info = OrderInfo(
                 order=order,

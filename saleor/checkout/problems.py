@@ -8,7 +8,6 @@ import pytz
 
 from ..graphql.channel import ChannelContext
 from ..product.models import ProductChannelListing, ProductVariant
-from ..warehouse.models import Stock
 from .fetch import CheckoutInfo, CheckoutLineInfo
 from .models import CheckoutLine
 
@@ -48,7 +47,7 @@ def get_insufficient_stock_lines(
             CHANNEL_SLUG,
             COUNTRY_CODE,
         ],
-        Iterable[Stock],
+        Iterable,
     ],
     country_code: str,
 ) -> list[tuple["CheckoutLineInfo", int]]:
@@ -138,7 +137,7 @@ def get_checkout_lines_problems(
             CHANNEL_SLUG,
             COUNTRY_CODE,
         ],
-        Iterable[Stock],
+        Iterable,
     ],
     product_channel_listings_map: dict[
         tuple[

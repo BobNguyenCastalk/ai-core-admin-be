@@ -13,11 +13,9 @@ from django.utils import timezone
 
 from ..attribute.models import Attribute
 from ..celeryconf import app
-from ..core.exceptions import PreorderAllocationError
 from ..discount import PromotionType
 from ..discount.models import Promotion, PromotionRule
 from ..plugins.manager import get_plugins_manager
-from ..warehouse.management import deactivate_preorder_for_variant
 from ..webhook.event_types import WebhookEventAsyncType
 from ..webhook.utils import get_webhooks_for_event
 from .models import Product, ProductChannelListing, ProductType, ProductVariant
@@ -273,19 +271,7 @@ def update_discounted_prices_task(product_ids: Iterable[int]):
 
 @app.task
 def deactivate_preorder_for_variants_task():
-    variants_to_clean = _get_preorder_variants_to_clean()
-
-    for variant in variants_to_clean:
-        try:
-            deactivate_preorder_for_variant(variant)
-        except PreorderAllocationError as e:
-            task_logger.warning(str(e))
-
-
-def _get_preorder_variants_to_clean():
-    return ProductVariant.objects.filter(
-        is_preorder=True, preorder_end_date__lt=timezone.now()
-    )
+    pass
 
 
 @app.task(

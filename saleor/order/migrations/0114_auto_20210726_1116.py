@@ -6,22 +6,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("warehouse", "0015_auto_20210713_0904"),
         ("order", "0113_orderevent_app"),
     ]
 
     operations = [
-        migrations.AddField(
-            model_name="order",
-            name="collection_point",
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="orders",
-                to="warehouse.warehouse",
-            ),
-        ),
         migrations.AddField(
             model_name="order",
             name="collection_point_name",

@@ -11,13 +11,8 @@ from graphql import GraphQLError
 from ...core.tracing import traced_atomic_transaction
 from ...order import OrderStatus
 from ...order import models as order_models
-from ...warehouse.models import Stock
 from ..core.enums import ProductErrorCode
 from .sorters import ProductOrderField
-
-if TYPE_CHECKING:
-    from ...product.models import ProductVariant
-    from ...warehouse.models import Warehouse
 
 import logging
 
@@ -72,29 +67,6 @@ def get_used_variants_attribute_values(product):
         if attribute_values:
             used_attribute_values.append(attribute_values)
     return used_attribute_values
-
-
-@traced_atomic_transaction()
-def create_stocks(
-    variant: "ProductVariant",
-    stocks_data: list[dict[str, str]],
-    warehouses: Iterable["Warehouse"],
-):
-    try:
-        new_stocks = Stock.objects.bulk_create(
-            [
-                Stock(
-                    product_variant=variant,
-                    warehouse=warehouse,
-                    quantity=stock_data["quantity"],
-                )
-                for stock_data, warehouse in zip(stocks_data, warehouses)
-            ]
-        )
-    except IntegrityError:
-        msg = "Stock for one of warehouses already exists for this product variant."
-        raise ValidationError(msg)
-    return new_stocks
 
 
 DraftOrderLinesData = namedtuple(

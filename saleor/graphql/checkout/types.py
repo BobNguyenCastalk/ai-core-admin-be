@@ -19,7 +19,6 @@ from ...permission.enums import (
     DiscountPermissions,
     PaymentPermissions,
 )
-from ...warehouse.reservations import is_reservation_enabled
 from ...webhook.event_types import WebhookEventSyncType
 from ..account.dataloaders import AddressByIdLoader, UserByUserIdLoader
 from ..account.utils import check_is_owner_or_has_one_of_perms
@@ -970,10 +969,6 @@ class Checkout(ModelObjectType[models.Checkout]):
     def resolve_stock_reservation_expires(
         root: models.Checkout, info: ResolveInfo, site
     ):
-        with allow_writer_in_context(info.context):
-            if not is_reservation_enabled(site.settings):
-                return None
-
         return None
 
     @staticmethod

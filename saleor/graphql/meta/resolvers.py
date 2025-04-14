@@ -15,7 +15,6 @@ from ...payment import models as payment_models
 from ...permission.utils import one_of_permissions_or_auth_filter_required
 from ...product import models as product_models
 from ...site import models as site_models
-from ...warehouse import models as warehouse_models
 from ..core import ResolveInfo
 from ..utils import get_user_or_app_from_context
 from .permissions import PRIVATE_META_PERMISSION_MAP
@@ -69,7 +68,6 @@ def resolve_object_with_metadata_type(instance):
             product_models.ProductType: product_types.ProductType,
             product_models.ProductVariant: product_types.ProductVariant,
             site_models.SiteSettings: shop_types.Shop,
-            warehouse_models.Warehouse: warehouse_types.Warehouse,
         }
         if instance.__class__ == discount_models.Promotion and getattr(
             instance, "old_sale_id"

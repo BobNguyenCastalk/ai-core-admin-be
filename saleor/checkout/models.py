@@ -77,14 +77,6 @@ class Checkout(models.Model):
     external_shipping_method_id = models.CharField(
         max_length=512, null=True, default=None, blank=True, editable=False
     )
-
-    collection_point = models.ForeignKey(
-        "warehouse.Warehouse",
-        blank=True,
-        null=True,
-        related_name="checkouts",
-        on_delete=models.SET_NULL,
-    )
     note = models.TextField(blank=True, default="")
 
     currency = models.CharField(

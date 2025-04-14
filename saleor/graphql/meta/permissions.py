@@ -28,7 +28,6 @@ from ...permission.enums import (
     SitePermissions,
 )
 from ...site import models as site_models
-from ...warehouse import models as warehouse_models
 from ..app.dataloaders import get_app_promise
 from ..core import ResolveInfo
 from ..core.context import get_database_connection_name
@@ -121,12 +120,6 @@ def public_address_permissions(
     if address.user_addresses.filter(Exists(staff_users.filter(id=OuterRef("id")))):
         return [AccountPermissions.MANAGE_STAFF]
     elif (
-        warehouse_models.Warehouse.objects.using(database_connection_name)
-        .filter(address_id=address.id)
-        .exists()
-    ):
-        return [ProductPermissions.MANAGE_PRODUCTS]
-    elif (
         site_models.SiteSettings.objects.using(database_connection_name)
         .filter(company_address_id=address.id)
         .exists()
@@ -159,15 +152,6 @@ def private_address_permissions(
     )
     if address.user_addresses.filter(Exists(staff_users.filter(id=OuterRef("id")))):
         return [AccountPermissions.MANAGE_STAFF]
-    if (
-        warehouse_models.Warehouse.objects.using(database_connection_name)
-        .filter(address_id=address.id)
-        .exists()
-        or site_models.SiteSettings.objects.using(database_connection_name)
-        .filter(company_address_id=address.id)
-        .exists()
-    ):
-        raise PermissionDenied()
     return [AccountPermissions.MANAGE_USERS]
 
 

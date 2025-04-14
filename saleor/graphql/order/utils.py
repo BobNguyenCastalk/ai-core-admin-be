@@ -19,7 +19,6 @@ from ...order.utils import (
 )
 from ...plugins.manager import PluginsManager
 from ...product.models import Product, ProductChannelListing, ProductVariant
-from ...warehouse.availability import check_stock_and_preorder_quantity
 from ..core.validators import validate_variants_available_in_channel
 
 if TYPE_CHECKING:
@@ -156,20 +155,6 @@ def validate_order_lines(
                     code=OrderErrorCode.NOT_FOUND.value,
                 )
             )
-        elif line.variant.track_inventory:
-            try:
-                check_stock_and_preorder_quantity(
-                    line.variant,
-                    country,
-                    channel.slug,
-                    line.quantity,
-                    order_line=line,
-                    database_connection_name=database_connection_name,
-                )
-            except InsufficientStock as exc:
-                errors["lines"].extend(
-                    prepare_insufficient_stock_order_validation_errors(exc)
-                )
 
 
 def validate_variants_is_available(

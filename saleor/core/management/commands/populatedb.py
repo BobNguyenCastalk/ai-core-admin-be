@@ -25,7 +25,6 @@ from ...utils.random_data import (
     create_staffs,
     create_users,
     create_vouchers,
-    create_warehouses,
 )
 
 
@@ -91,7 +90,6 @@ class Command(BaseCommand):
             self.stdout.write(msg)
         for msg in create_shipping_zones():
             self.stdout.write(msg)
-        create_warehouses()
         self.stdout.write("Created warehouses")
         for msg in create_page_type():
             self.stdout.write(msg)

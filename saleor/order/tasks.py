@@ -12,7 +12,6 @@ from ..core.tracing import traced_atomic_transaction
 from ..discount.models import Voucher, VoucherCode, VoucherCustomer
 from ..payment.models import Payment, TransactionItem
 from ..plugins.manager import get_plugins_manager
-from ..warehouse.management import deallocate_stock_for_orders
 from ..webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
 from ..webhook.utils import get_webhooks_for_multiple_events
 from . import OrderEvents, OrderStatus
@@ -159,7 +158,6 @@ def _expire_orders(manager, now):
         )
         _bulk_release_voucher_usage(ids_batch)
         _order_expired_events(ids_batch)
-        deallocate_stock_for_orders(ids_batch, manager)
         _call_expired_order_events(ids_batch, manager)
 
 
