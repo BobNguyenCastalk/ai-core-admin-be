@@ -359,13 +359,6 @@ class Channel(ModelObjectType):
         CountryDisplay,
         description="List of shippable countries for the channel." + ADDED_IN_36,
     )
-
-    available_shipping_methods_per_country = graphene.Field(
-        NonNullList("saleor.graphql.shipping.types.ShippingMethodsPerCountry"),
-        countries=graphene.Argument(NonNullList(CountryCodeEnum)),
-        description="Shipping methods that are available for the channel."
-        + ADDED_IN_36,
-    )
     stock_settings = PermissionsField(
         StockSettings,
         description=("Define the stock setting for this channel." + ADDED_IN_37),

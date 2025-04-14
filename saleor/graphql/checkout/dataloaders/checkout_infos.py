@@ -26,10 +26,6 @@ from ...product.dataloaders import (
     ProductVariantByIdLoader,
     VariantChannelListingByVariantIdAndChannelIdLoader,
 )
-from ...shipping.dataloaders import (
-    ShippingMethodByIdLoader,
-    ShippingMethodChannelListingByChannelSlugLoader,
-)
 from ...webhook.dataloaders.pregenerated_payloads_for_checkout_filter_shipping_methods import (
     PregeneratedCheckoutFilterShippingMethodPayloadsByCheckoutTokenLoader,
 )
@@ -69,25 +65,6 @@ class CheckoutInfoByCheckoutTokenLoader(DataLoader[str, CheckoutInfo]):
                 users = UserByUserIdLoader(self.context).load_many(
                     [checkout.user_id for checkout in checkouts if checkout.user_id]
                 )
-                shipping_method_ids = [
-                    checkout.shipping_method_id
-                    for checkout in checkouts
-                    if checkout.shipping_method_id
-                ]
-                shipping_methods = ShippingMethodByIdLoader(self.context).load_many(
-                    shipping_method_ids
-                )
-                channel_slugs = [channel.slug for channel in channels]
-                shipping_method_channel_listings = (
-                    ShippingMethodChannelListingByChannelSlugLoader(
-                        self.context
-                    ).load_many(channel_slugs)
-                )
-                collection_point_ids = [
-                    checkout.collection_point_id
-                    for checkout in checkouts
-                    if checkout.collection_point_id
-                ]
 
                 voucher_codes = VoucherCodeByCodeLoader(self.context).load_many(
                     {

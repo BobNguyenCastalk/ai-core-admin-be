@@ -49,7 +49,6 @@ from ..product.dataloaders import (
     SelectedAttributesByProductVariantIdLoader,
     SelectedAttributesVisibleInStorefrontByProductIdLoader,
 )
-from ..shipping.dataloaders import ShippingMethodByIdLoader
 from ..utils import get_user_or_app_from_context
 from .fields import TranslationField
 
@@ -905,12 +904,6 @@ class ShippingMethodTranslation(
         interfaces = [graphene.relay.Node]
         description = "Represents shipping method translations."
 
-    @staticmethod
-    def resolve_translatable_content(
-        root: shipping_models.ShippingMethodTranslation, info
-    ):
-        return ShippingMethodByIdLoader(info.context).load(root.shipping_method_id)
-
 
 class ShippingMethodTranslatableContent(
     ModelObjectType[shipping_models.ShippingMethod]
@@ -930,19 +923,6 @@ class ShippingMethodTranslatableContent(
     )
     translation = TranslationField(
         ShippingMethodTranslation, type_name="shipping method"
-    )
-    shipping_method = PermissionsField(
-        "saleor.graphql.shipping.types.ShippingMethodType",
-        description=(
-            "Shipping method are the methods you'll use to get customer's orders "
-            " to them. They are directly exposed to the customers."
-        ),
-        deprecation_reason=(
-            f"{DEPRECATED_IN_3X_FIELD} Get model fields from the root level queries."
-        ),
-        permissions=[
-            ShippingPermissions.MANAGE_SHIPPING,
-        ],
     )
 
     class Meta:

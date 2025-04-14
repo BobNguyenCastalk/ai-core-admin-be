@@ -68,7 +68,6 @@ from ..product.dataloaders import (
     ProductTypeByVariantIdLoader,
     ProductVariantByIdLoader,
 )
-from ..shipping.types import ShippingMethod
 from ..site.dataloaders import load_site_callback
 from ..utils import get_user_or_app_from_context
 from ..webhook.dataloaders.pregenerated_payload_for_checkout_tax import (
@@ -469,6 +468,9 @@ class CheckoutLineCountableConnection(CountableConnection):
 class Draft(graphene.ObjectType):
     name = graphene.String()
 
+class ShippingMethod(BaseObjectType):
+    name = graphene.String(required=True, description="Shipping method name.") 
+
 
 class DeliveryMethod(graphene.Union):
 
@@ -482,8 +484,6 @@ class DeliveryMethod(graphene.Union):
 
     @classmethod
     def resolve_type(cls, instance, info: ResolveInfo):
-        if isinstance(instance, ShippingMethodData):
-            return ShippingMethod
 
         return super().resolve_type(instance, info)
 
@@ -551,49 +551,6 @@ class Checkout(ModelObjectType[models.Checkout]):
     voucher_code = graphene.String(
         description="The code of voucher assigned to the checkout."
     )
-    available_shipping_methods = BaseField(
-        NonNullList(ShippingMethod),
-        required=True,
-        description="Shipping methods that can be used with this checkout.",
-        deprecation_reason=(f"{DEPRECATED_IN_3X_FIELD} Use `shippingMethods` instead."),
-        webhook_events_info=[
-            WebhookEventInfo(
-                type=WebhookEventSyncType.SHIPPING_LIST_METHODS_FOR_CHECKOUT,
-                description=(
-                    "Optionally triggered when cached external shipping methods are "
-                    "invalid."
-                ),
-            ),
-            WebhookEventInfo(
-                type=WebhookEventSyncType.CHECKOUT_FILTER_SHIPPING_METHODS,
-                description=(
-                    "Optionally triggered when cached filtered shipping methods are "
-                    "invalid."
-                ),
-            ),
-        ],
-    )
-    shipping_methods = BaseField(
-        NonNullList(ShippingMethod),
-        required=True,
-        description="Shipping methods that can be used with this checkout.",
-        webhook_events_info=[
-            WebhookEventInfo(
-                type=WebhookEventSyncType.SHIPPING_LIST_METHODS_FOR_CHECKOUT,
-                description=(
-                    "Optionally triggered when cached external shipping methods are "
-                    "invalid."
-                ),
-            ),
-            WebhookEventInfo(
-                type=WebhookEventSyncType.CHECKOUT_FILTER_SHIPPING_METHODS,
-                description=(
-                    "Optionally triggered when cached filtered shipping methods are "
-                    "invalid."
-                ),
-            ),
-        ],
-    )
     available_collection_points = NonNullList(
         Draft,
         required=True,
@@ -642,27 +599,6 @@ class Checkout(ModelObjectType[models.Checkout]):
             WebhookEventInfo(
                 type=WebhookEventSyncType.CHECKOUT_CALCULATE_TAXES,
                 description=CHECKOUT_CALCULATE_TAXES_MESSAGE,
-            ),
-        ],
-    )
-    shipping_method = BaseField(
-        ShippingMethod,
-        description="The shipping method related with checkout.",
-        deprecation_reason=(f"{DEPRECATED_IN_3X_FIELD} Use `deliveryMethod` instead."),
-        webhook_events_info=[
-            WebhookEventInfo(
-                type=WebhookEventSyncType.SHIPPING_LIST_METHODS_FOR_CHECKOUT,
-                description=(
-                    "Optionally triggered when cached external shipping methods are "
-                    "invalid."
-                ),
-            ),
-            WebhookEventInfo(
-                type=WebhookEventSyncType.CHECKOUT_FILTER_SHIPPING_METHODS,
-                description=(
-                    "Optionally triggered when cached filtered shipping methods are "
-                    "invalid."
-                ),
             ),
         ],
     )

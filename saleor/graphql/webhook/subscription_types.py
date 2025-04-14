@@ -83,12 +83,7 @@ from ..order.dataloaders import OrderByIdLoader
 from ..order.types import Order, OrderGrantedRefund
 from ..payment.enums import TokenizedPaymentFlowEnum, TransactionActionEnum
 from ..payment.types import TransactionItem
-from ..plugins.dataloaders import plugin_manager_promise_callback
-from ..product.dataloaders import ProductVariantByIdLoader
-from ..shipping.dataloaders import ShippingMethodChannelListingByChannelSlugLoader
-from ..shipping.types import ShippingMethod
 from ..translations import types as translation_types
-from .resolvers import resolve_shipping_methods_for_checkout
 
 TRANSLATIONS_TYPES_MAP = {
     ProductTranslation: translation_types.ProductTranslation,
@@ -1360,108 +1355,6 @@ class PermissionGroupDeleted(SubscriptionObjectType, PermissionGroupBase):
         interfaces = (Event,)
         description = "Event sent when permission group is deleted." + ADDED_IN_36
 
-
-class ShippingPriceBase(AbstractType):
-    shipping_method = graphene.Field(
-        "saleor.graphql.shipping.types.ShippingMethodType",
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-        description="The shipping method the event relates to.",
-    )
-    shipping_zone = graphene.Field(
-        "saleor.graphql.shipping.types.ShippingZone",
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-        description="The shipping zone the shipping method belongs to.",
-    )
-
-    @staticmethod
-    def resolve_shipping_method(root, _info: ResolveInfo, channel=None):
-        _, shipping_method = root
-        return ChannelContext(node=shipping_method, channel_slug=channel)
-
-    @staticmethod
-    def resolve_shipping_zone(root, _info: ResolveInfo, channel=None):
-        _, shipping_method = root
-        return ChannelContext(node=shipping_method.shipping_zone, channel_slug=channel)
-
-
-class ShippingPriceCreated(SubscriptionObjectType, ShippingPriceBase):
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = "Event sent when new shipping price is created." + ADDED_IN_32
-        doc_category = DOC_CATEGORY_SHIPPING
-
-
-class ShippingPriceUpdated(SubscriptionObjectType, ShippingPriceBase):
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = "Event sent when shipping price is updated." + ADDED_IN_32
-        doc_category = DOC_CATEGORY_SHIPPING
-
-
-class ShippingPriceDeleted(SubscriptionObjectType, ShippingPriceBase):
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = "Event sent when shipping price is deleted." + ADDED_IN_32
-        doc_category = DOC_CATEGORY_SHIPPING
-
-
-class ShippingZoneBase(AbstractType):
-    shipping_zone = graphene.Field(
-        "saleor.graphql.shipping.types.ShippingZone",
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-        description="The shipping zone the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_shipping_zone(root, _info: ResolveInfo, channel=None):
-        _, shipping_zone = root
-        return ChannelContext(node=shipping_zone, channel_slug=channel)
-
-
-class ShippingZoneCreated(SubscriptionObjectType, ShippingZoneBase):
-    class Meta:
-        root_type = "ShippingZone"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new shipping zone is created." + ADDED_IN_32
-
-
-class ShippingZoneUpdated(SubscriptionObjectType, ShippingZoneBase):
-    class Meta:
-        root_type = "ShippingZone"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when shipping zone is updated." + ADDED_IN_32
-
-
-class ShippingZoneDeleted(SubscriptionObjectType, ShippingZoneBase):
-    class Meta:
-        root_type = "ShippingZone"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when shipping zone is deleted." + ADDED_IN_32
-
-
-class ShippingZoneMetadataUpdated(SubscriptionObjectType, ShippingZoneBase):
-    class Meta:
-        root_type = "ShippingZone"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when shipping zone metadata is updated." + ADDED_IN_38
-
-
 class StaffCreated(SubscriptionObjectType, UserBase):
     class Meta:
         root_type = "User"
@@ -2218,30 +2111,6 @@ class PaymentListGateways(SubscriptionObjectType, CheckoutBase):
         doc_category = DOC_CATEGORY_PAYMENTS
 
 
-class ShippingListMethodsForCheckout(SubscriptionObjectType, CheckoutBase):
-    shipping_methods = NonNullList(
-        ShippingMethod,
-        description="Shipping methods that can be used with this checkout."
-        + ADDED_IN_36,
-    )
-
-    @staticmethod
-    @plugin_manager_promise_callback
-    def resolve_shipping_methods(root, info: ResolveInfo, manager):
-        _, checkout = root
-        database_connection_name = get_database_connection_name(info.context)
-        return resolve_shipping_methods_for_checkout(
-            info, checkout, manager, database_connection_name
-        )
-
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = "List shipping methods for checkout." + ADDED_IN_36
-        doc_category = DOC_CATEGORY_CHECKOUT
-
-
 class CalculateTaxes(SubscriptionObjectType):
     tax_base = graphene.Field(
         "saleor.graphql.core.types.taxes.TaxableObject", required=True
@@ -2261,60 +2130,6 @@ class CalculateTaxes(SubscriptionObjectType):
         _, tax_base = root
         return tax_base
 
-
-class CheckoutFilterShippingMethods(SubscriptionObjectType, CheckoutBase):
-    shipping_methods = NonNullList(
-        ShippingMethod,
-        description="Shipping methods that can be used with this checkout."
-        + ADDED_IN_36,
-    )
-
-    @staticmethod
-    @plugin_manager_promise_callback
-    def resolve_shipping_methods(root, info: ResolveInfo, manager):
-        _, checkout = root
-        database_connection_name = get_database_connection_name(info.context)
-        return resolve_shipping_methods_for_checkout(
-            info, checkout, manager, database_connection_name
-        )
-
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = "Filter shipping methods for checkout." + ADDED_IN_36
-        doc_category = DOC_CATEGORY_CHECKOUT
-
-
-class OrderFilterShippingMethods(SubscriptionObjectType, OrderBase):
-    shipping_methods = NonNullList(
-        ShippingMethod,
-        description="Shipping methods that can be used with this checkout."
-        + ADDED_IN_36,
-    )
-
-    @staticmethod
-    def resolve_shipping_methods(root, info: ResolveInfo):
-        _, order = root
-
-        def with_channel(channel):
-            def with_listings(channel_listings):
-                return get_all_shipping_methods_for_order(order, channel_listings)
-
-            return (
-                ShippingMethodChannelListingByChannelSlugLoader(info.context)
-                .load(channel.slug)
-                .then(with_listings)
-            )
-
-        return ChannelByIdLoader(info.context).load(order.channel_id).then(with_channel)
-
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = "Filter shipping methods for order." + ADDED_IN_36
-        doc_category = DOC_CATEGORY_ORDERS
 
 def default_order_resolver(root, info, channels=None):
     return Observable.from_([root])
@@ -2557,13 +2372,6 @@ SYNC_WEBHOOK_TYPES_MAP = {
     ),
     WebhookEventSyncType.TRANSACTION_CHARGE_REQUESTED: TransactionChargeRequested,
     WebhookEventSyncType.TRANSACTION_REFUND_REQUESTED: TransactionRefundRequested,
-    WebhookEventSyncType.ORDER_FILTER_SHIPPING_METHODS: OrderFilterShippingMethods,
-    WebhookEventSyncType.CHECKOUT_FILTER_SHIPPING_METHODS: (
-        CheckoutFilterShippingMethods
-    ),
-    WebhookEventSyncType.SHIPPING_LIST_METHODS_FOR_CHECKOUT: (
-        ShippingListMethodsForCheckout
-    ),
     WebhookEventSyncType.CHECKOUT_CALCULATE_TAXES: CalculateTaxes,
     WebhookEventSyncType.ORDER_CALCULATE_TAXES: CalculateTaxes,
     WebhookEventSyncType.PAYMENT_GATEWAY_INITIALIZE_SESSION: (
@@ -2681,13 +2489,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.PERMISSION_GROUP_CREATED: PermissionGroupCreated,
     WebhookEventAsyncType.PERMISSION_GROUP_UPDATED: PermissionGroupUpdated,
     WebhookEventAsyncType.PERMISSION_GROUP_DELETED: PermissionGroupDeleted,
-    WebhookEventAsyncType.SHIPPING_PRICE_CREATED: ShippingPriceCreated,
-    WebhookEventAsyncType.SHIPPING_PRICE_UPDATED: ShippingPriceUpdated,
-    WebhookEventAsyncType.SHIPPING_PRICE_DELETED: ShippingPriceDeleted,
-    WebhookEventAsyncType.SHIPPING_ZONE_CREATED: ShippingZoneCreated,
-    WebhookEventAsyncType.SHIPPING_ZONE_UPDATED: ShippingZoneUpdated,
-    WebhookEventAsyncType.SHIPPING_ZONE_DELETED: ShippingZoneDeleted,
-    WebhookEventAsyncType.SHIPPING_ZONE_METADATA_UPDATED: ShippingZoneMetadataUpdated,
     WebhookEventAsyncType.SHOP_METADATA_UPDATED: ShopMetadataUpdated,
     WebhookEventAsyncType.STAFF_CREATED: StaffCreated,
     WebhookEventAsyncType.STAFF_UPDATED: StaffUpdated,

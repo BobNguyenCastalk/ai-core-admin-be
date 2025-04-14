@@ -42,7 +42,6 @@ from ...core.types import BaseInputObjectType, NonNullList, OrderError
 from ...core.utils import from_global_id_or_error
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ...product.types import ProductVariant
-from ...shipping.utils import get_shipping_model_by_object_id
 from ..types import Order
 from ..utils import (
     OrderLineData,
@@ -186,11 +185,6 @@ class DraftOrderCreate(
         redirect_url = data.pop("redirect_url", None)
         shipping_method_input = {}
         manager = get_plugin_manager_promise(info.context).get()
-        if "shipping_method" in data:
-            shipping_method_input["shipping_method"] = get_shipping_model_by_object_id(
-                object_id=data.pop("shipping_method", None),
-                error_field="shipping_method",
-            )
 
         if email := data.get("user_email", None):
             try:

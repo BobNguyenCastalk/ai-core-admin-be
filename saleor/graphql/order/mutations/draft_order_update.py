@@ -31,7 +31,6 @@ from ...core.mutations import (
 )
 from ...core.types import OrderError
 from ...plugins.dataloaders import get_plugin_manager_promise
-from ...shipping.utils import get_shipping_model_by_object_id
 from ..types import Order
 from . import draft_order_cleaner
 from .draft_order_create import DraftOrderInput
@@ -106,11 +105,6 @@ class DraftOrderUpdate(
         redirect_url = data.pop("redirect_url", None)
 
         shipping_method_input = {}
-        if "shipping_method" in data:
-            shipping_method_input["shipping_method"] = get_shipping_model_by_object_id(
-                object_id=data.pop("shipping_method", None),
-                error_field="shipping_method",
-            )
 
         if email := data.get("user_email", None):
             try:

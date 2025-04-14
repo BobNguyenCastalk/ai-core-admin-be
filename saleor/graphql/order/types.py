@@ -127,10 +127,6 @@ from ..product.dataloaders import (
     ThumbnailByProductMediaIdSizeAndFormatLoader,
 )
 from ..product.types import DigitalContentUrl, ProductVariant
-from ..shipping.dataloaders import (
-    ShippingMethodChannelListingByChannelSlugLoader,
-)
-from ..shipping.types import ShippingMethod
 from .dataloaders import (
     AllocationsByOrderLineIdLoader,
     FulfillmentLinesByFulfillmentIdLoader,
@@ -1197,17 +1193,6 @@ class Order(ModelObjectType[models.Order]):
         ),
         required=True,
     )
-    available_shipping_methods = NonNullList(
-        ShippingMethod,
-        description="Shipping methods that can be used with this order.",
-        required=False,
-        deprecation_reason="Use `shippingMethods`, this field will be removed in 4.0",
-    )
-    shipping_methods = NonNullList(
-        ShippingMethod,
-        description="Shipping methods related to this order.",
-        required=True,
-    )
     number = graphene.String(
         description="User-friendly number of an order.", required=True
     )
@@ -1254,11 +1239,6 @@ class Order(ModelObjectType[models.Order]):
     )
     undiscounted_total = graphene.Field(
         TaxedMoney, description="Undiscounted total amount of the order.", required=True
-    )
-    shipping_method = graphene.Field(
-        ShippingMethod,
-        description="Shipping method for this order.",
-        deprecation_reason=(f"{DEPRECATED_IN_3X_FIELD} Use `deliveryMethod` instead."),
     )
     undiscounted_shipping_price = graphene.Field(
         Money,
@@ -2010,35 +1990,6 @@ class Order(ModelObjectType[models.Order]):
         if root.shipping_method_id or get_external_shipping_id(root):
             return cls.resolve_shipping_method(root, info)
         return None
-
-    @classmethod
-    @traced_resolver
-    @prevent_sync_event_circular_query
-    # TODO: We should optimize it in/after PR#5819
-    def resolve_shipping_methods(cls, root: models.Order, info):
-        def with_channel(data):
-            channel, manager = data
-            database_connection_name = get_database_connection_name(info.context)
-
-            @allow_writer_in_context(info.context)
-            def with_listings(channel_listings):
-                return get_valid_shipping_methods_for_order(
-                    root,
-                    channel_listings,
-                    manager,
-                    database_connection_name=database_connection_name,
-                )
-
-            return (
-                ShippingMethodChannelListingByChannelSlugLoader(info.context)
-                .load(channel.slug)
-                .then(with_listings)
-            )
-
-        channel = ChannelByIdLoader(info.context).load(root.channel_id)
-        manager = get_plugin_manager_promise(info.context)
-
-        return Promise.all([channel, manager]).then(with_channel)
 
     @classmethod
     @traced_resolver

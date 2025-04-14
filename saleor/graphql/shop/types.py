@@ -48,7 +48,6 @@ from ..core.utils import str_to_enum
 from ..meta.types import ObjectWithMetadata
 from ..payment.types import PaymentGateway
 from ..plugins.dataloaders import plugin_manager_promise_callback
-from ..shipping.types import ShippingMethod
 from ..site.dataloaders import get_site_promise, load_site_callback
 from ..translations.fields import TranslationField
 from ..translations.resolvers import resolve_translation
@@ -166,23 +165,6 @@ class Shop(graphene.ObjectType):
         ExternalAuthentication,
         description="List of available external authentications.",
         required=True,
-    )
-    available_shipping_methods = NonNullList(
-        ShippingMethod,
-        channel=graphene.Argument(
-            graphene.String,
-            description="Slug of a channel for which the data should be returned.",
-            required=True,
-        ),
-        address=graphene.Argument(
-            AddressInput,
-            description=(
-                "Address for which available shipping methods should be returned."
-            ),
-            required=False,
-        ),
-        required=False,
-        description="Shipping methods that are available for the shop.",
     )
     channel_currencies = PermissionsField(
         NonNullList(graphene.String),

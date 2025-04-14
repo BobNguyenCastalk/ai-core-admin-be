@@ -56,7 +56,6 @@ from .mutations.order_note_add import OrderAddNote, OrderNoteAdd
 from .mutations.order_note_update import OrderNoteUpdate
 from .mutations.order_refund import OrderRefund
 from .mutations.order_update import OrderUpdate
-from .mutations.order_update_shipping import OrderUpdateShipping
 from .mutations.order_void import OrderVoid
 from .resolvers import (
     resolve_draft_orders,
@@ -280,7 +279,6 @@ class OrderMutations(graphene.ObjectType):
     order_mark_as_paid = OrderMarkAsPaid.Field()
     order_refund = OrderRefund.Field()
     order_update = OrderUpdate.Field()
-    order_update_shipping = OrderUpdateShipping.Field()
     order_void = OrderVoid.Field()
     order_bulk_cancel = OrderBulkCancel.Field()
     order_bulk_create = OrderBulkCreate.Field()

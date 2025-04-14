@@ -7,8 +7,8 @@ from ...core import ResolveInfo
 from ...core.descriptions import RICH_CONTENT
 from ...core.enums import LanguageCodeEnum
 from ...core.fields import JSONString
-from ...core.types import TranslationError
-from ...shipping.types import ShippingMethodType
+from ...core.types import (TranslationError, BaseObjectType)
+
 from .utils import BaseTranslateMutation, NameTranslationInput
 
 
@@ -37,7 +37,7 @@ class ShippingPriceTranslate(BaseTranslateMutation):
     class Meta:
         description = "Creates/updates translations for a shipping method."
         model = shipping_models.ShippingMethod
-        object_type = ShippingMethodType
+        object_type = BaseObjectType
         error_type_class = TranslationError
         error_type_field = "translation_errors"
         permissions = (SitePermissions.MANAGE_TRANSLATIONS,)
@@ -62,8 +62,6 @@ class ShippingPriceTranslate(BaseTranslateMutation):
         only_type=None,
         code="not_found",
     ):
-        if only_type is ShippingMethodType:
-            only_type = None
         return super().get_node_or_error(
             info,
             node_id,
