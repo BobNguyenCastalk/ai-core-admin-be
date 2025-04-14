@@ -5,7 +5,6 @@ from ...discount import models as discount_models
 from ...menu import models as menu_models
 from ...page import models as page_models
 from ...product import models as product_models
-from ...shipping import models as shipping_models
 from ...site import models as site_models
 from ..core.dataloaders import DataLoader
 
@@ -103,15 +102,6 @@ class ProductVariantTranslationByIdAndLanguageCodeLoader(
     context_key = "product_variant_translation_by_id_and_language_code"
     model = product_models.ProductVariantTranslation
     relation_name = "product_variant_id"
-
-
-class ShippingMethodTranslationByIdAndLanguageCodeLoader(
-    BaseTranslationByIdAndLanguageCodeLoader
-):
-    context_key = "shipping_method_translation_by_id_and_language_code"
-    model = shipping_models.ShippingMethodTranslation
-    relation_name = "shipping_method_id"
-
 
 class SiteSettingsTranslationByIdAndLanguageCodeLoader(
     BaseTranslationByIdAndLanguageCodeLoader

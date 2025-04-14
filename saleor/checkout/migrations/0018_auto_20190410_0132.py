@@ -9,7 +9,6 @@ class Migration(migrations.Migration):
     dependencies = [
         ("product", "0091_auto_20190402_0853"),
         ("payment", "0010_auto_20190220_2001"),
-        ("shipping", "0015_auto_20190305_0640"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("checkout", "0017_auto_20190130_0207"),
         ("account", "0026_user_avatar"),

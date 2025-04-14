@@ -42,9 +42,6 @@ from ..discount.utils.voucher import (
 from ..payment.models import Payment
 from ..plugins.manager import PluginsManager
 from ..product import models as product_models
-from ..shipping.interface import ShippingMethodData
-from ..shipping.models import ShippingMethod, ShippingMethodChannelListing
-from ..shipping.utils import convert_to_shipping_method_data
 from ..warehouse.availability import check_stock_and_preorder_quantity
 from ..warehouse.models import Warehouse
 from ..warehouse.reservations import reserve_stocks_and_preorders
@@ -477,7 +474,7 @@ def change_shipping_address_in_checkout(
     address: "Address",
     lines: Iterable["CheckoutLineInfo"],
     manager: "PluginsManager",
-    shipping_channel_listings: Iterable["ShippingMethodChannelListing"],
+    shipping_channel_listings: Iterable,
 ):
     """Save shipping address in checkout if changed.
 
@@ -911,44 +908,6 @@ def remove_voucher_from_checkout(checkout: Checkout):
     )
 
 
-def get_valid_internal_shipping_methods_for_checkout(
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-    subtotal: "Money",
-    shipping_channel_listings: Iterable["ShippingMethodChannelListing"],
-    country_code: Optional[str] = None,
-    database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
-) -> list[ShippingMethodData]:
-    if not is_shipping_required(lines):
-        return []
-    if not checkout_info.shipping_address:
-        return []
-
-    shipping_methods = ShippingMethod.objects.using(
-        database_connection_name
-    ).applicable_shipping_methods_for_instance(
-        checkout_info.checkout,
-        channel_id=checkout_info.checkout.channel_id,
-        price=subtotal,
-        shipping_address=checkout_info.shipping_address,
-        country_code=country_code,
-        lines=lines,
-    )
-
-    channel_listings_map = {
-        listing.shipping_method_id: listing for listing in shipping_channel_listings
-    }
-
-    internal_methods: list[ShippingMethodData] = []
-    for method in shipping_methods:
-        listing = channel_listings_map.get(method.pk)
-        if listing:
-            shipping_method_data = convert_to_shipping_method_data(method, listing)
-            internal_methods.append(shipping_method_data)
-
-    return internal_methods
-
-
 def get_valid_collection_points_for_checkout(
     lines: Iterable["CheckoutLineInfo"],
     channel_id: int,
@@ -1079,7 +1038,7 @@ def validate_variants_in_checkout_lines(lines: Iterable["CheckoutLineInfo"]):
 
 
 def set_external_shipping(
-    checkout: Checkout, external_shipping_method_data: ShippingMethodData
+    checkout: Checkout, external_shipping_method_data
 ):
     checkout.external_shipping_method_id = external_shipping_method_data.id
     checkout.shipping_method_name = external_shipping_method_data.name

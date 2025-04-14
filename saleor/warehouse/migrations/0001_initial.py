@@ -73,7 +73,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("account", "0037_auto_20191219_0944"),
-        ("shipping", "0017_django_price_2"),
         ("product", "0110_auto_20191108_0340"),
         ("site", "0025_auto_20191024_0552"),
     ]

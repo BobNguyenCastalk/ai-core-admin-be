@@ -33,7 +33,6 @@ from ..payment.interface import RefundData
 from ..payment.models import Payment, Transaction, TransactionItem
 from ..payment.utils import create_payment, create_transaction_for_order
 from ..plugins.manager import PluginsManager
-from ..shipping.models import ShippingMethodChannelListing
 from ..warehouse.management import (
     deallocate_stock,
     deallocate_stock_for_order,
@@ -176,9 +175,7 @@ def _trigger_order_sync_webhooks(
             database_connection_name=database_connection_name,
         )
     if webhook_event_map.get(WebhookEventSyncType.ORDER_FILTER_SHIPPING_METHODS):
-        shipping_listings = ShippingMethodChannelListing.objects.filter(
-            channel_id=order.channel_id
-        )
+        shipping_listings = []
         get_valid_shipping_methods_for_order(
             order,
             shipping_listings,

@@ -14,8 +14,6 @@ from ...page import models as page_models
 from ...payment import models as payment_models
 from ...permission.utils import one_of_permissions_or_auth_filter_required
 from ...product import models as product_models
-from ...shipping import models as shipping_models
-from ...shipping.interface import ShippingMethodData
 from ...site import models as site_models
 from ...warehouse import models as warehouse_models
 from ..core import ResolveInfo
@@ -70,8 +68,6 @@ def resolve_object_with_metadata_type(instance):
             product_models.ProductMedia: product_types.ProductMedia,
             product_models.ProductType: product_types.ProductType,
             product_models.ProductVariant: product_types.ProductVariant,
-            shipping_models.ShippingMethod: shipping_types.ShippingMethodType,
-            shipping_models.ShippingZone: shipping_types.ShippingZone,
             site_models.SiteSettings: shop_types.Shop,
             warehouse_models.Warehouse: warehouse_types.Warehouse,
         }
@@ -81,9 +77,6 @@ def resolve_object_with_metadata_type(instance):
             return discount_types.Sale, instance.pk
         return MODEL_TO_TYPE_MAP.get(instance.__class__, None), instance.pk
 
-    elif dataclasses.is_dataclass(instance):
-        DATACLASS_TO_TYPE_MAP = {ShippingMethodData: shipping_types.ShippingMethod}
-        return DATACLASS_TO_TYPE_MAP.get(instance.__class__, None), instance.id
     raise ValueError(f"Unknown type: {instance.__class__}")
 
 

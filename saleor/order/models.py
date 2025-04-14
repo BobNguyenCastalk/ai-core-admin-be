@@ -30,7 +30,6 @@ from ..payment import ChargeStatus, TransactionKind
 from ..payment.model_helpers import get_subtotal
 from ..payment.models import Payment
 from ..permission.enums import OrderPermissions
-from ..shipping.models import ShippingMethod
 from . import (
     FulfillmentStatus,
     OrderAuthorizeStatus,
@@ -164,13 +163,6 @@ class Order(ModelWithMetadata, ModelWithExternalReference):
         max_length=settings.DEFAULT_CURRENCY_CODE_LENGTH,
     )
 
-    shipping_method = models.ForeignKey(
-        ShippingMethod,
-        blank=True,
-        null=True,
-        related_name="orders",
-        on_delete=models.SET_NULL,
-    )
     collection_point = models.ForeignKey(
         "warehouse.Warehouse",
         blank=True,

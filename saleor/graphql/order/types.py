@@ -1996,9 +1996,7 @@ class Order(ModelObjectType[models.Order]):
     @prevent_sync_event_circular_query
     # TODO: We should optimize it in/after PR#5819
     def resolve_available_shipping_methods(cls, root: models.Order, info):
-        return cls.resolve_shipping_methods(root, info).then(
-            lambda methods: [method for method in methods if method.active]
-        )
+        return []
 
     @classmethod
     @traced_resolver

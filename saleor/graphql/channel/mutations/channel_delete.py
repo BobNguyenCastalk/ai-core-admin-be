@@ -17,7 +17,6 @@ from ...core.types import BaseInputObjectType, ChannelError
 from ...core.utils import WebhookEventInfo
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ..types import Channel
-from ..utils import delete_invalid_warehouse_to_shipping_zone_relations
 
 
 class ChannelDeleteInput(BaseInputObjectType):
@@ -132,10 +131,4 @@ class ChannelDelete(ModelDeleteMutation):
             cls.perform_delete_with_order_migration(origin_channel, target_channel)
         else:
             cls.perform_delete_channel_without_order(origin_channel)
-        with traced_atomic_transaction():
-            delete_invalid_warehouse_to_shipping_zone_relations(
-                origin_channel,
-                origin_channel.warehouses.values("id"),
-                channel_deletion=True,
-            )
         return super().perform_mutation(root, info, id=id)

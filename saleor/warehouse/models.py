@@ -19,7 +19,6 @@ from ..checkout.models import CheckoutLine
 from ..core.models import ModelWithExternalReference, ModelWithMetadata, SortableModel
 from ..order.models import OrderLine
 from ..product.models import Product, ProductVariant, ProductVariantChannelListing
-from ..shipping.models import ShippingZone
 from . import WarehouseClickAndCollectOption
 
 if TYPE_CHECKING:
@@ -54,25 +53,13 @@ class WarehouseQueryset(models.QuerySet["Warehouse"]):
     def for_channel_with_active_shipping_zone_or_cc(self, channel_slug: str):
         WarehouseChannel = Channel.warehouses.through
         ShippingZoneChannel = Channel.shipping_zones.through
-        WarehouseShippingZone = ShippingZone.warehouses.through
 
         channel = Channel.objects.filter(slug=channel_slug).values("pk")
         warehouse_channels = WarehouseChannel.objects.filter(
             Exists(channel.filter(pk=OuterRef("channel_id")))
         ).values("warehouse_id")
 
-        shipping_zone_channels = ShippingZoneChannel.objects.filter(
-            Exists(channel.filter(pk=OuterRef("channel_id")))
-        ).values("shippingzone_id")
-
-        warehouse_shipping_zones = WarehouseShippingZone.objects.filter(
-            Exists(warehouse_channels.filter(warehouse_id=OuterRef("warehouse_id"))),
-            Exists(
-                shipping_zone_channels.filter(
-                    shippingzone_id=OuterRef("shippingzone_id")
-                )
-            ),
-        ).values("warehouse_id")
+        warehouse_shipping_zones = []
         return self.filter(
             Q(
                 Exists(warehouse_channels.filter(warehouse_id=OuterRef("id"))),
@@ -85,30 +72,10 @@ class WarehouseQueryset(models.QuerySet["Warehouse"]):
         )
 
     def for_country_and_channel(self, country: str, channel_id: int):
-        ShippingZoneChannel = Channel.shipping_zones.through
-        WarehouseShippingZone = ShippingZone.warehouses.through
-        WarehouseChannel = Channel.warehouses.through
+        shipping_zones = []
 
-        shipping_zones = ShippingZone.objects.filter(
-            countries__contains=country
-        ).values("pk")
-        shipping_zone_channels = ShippingZoneChannel.objects.filter(
-            Exists(shipping_zones.filter(pk=OuterRef("shippingzone_id"))),
-            channel_id=channel_id,
-        )
 
-        warehouse_shipping_zones = WarehouseShippingZone.objects.filter(
-            Exists(
-                shipping_zone_channels.filter(
-                    shippingzone_id=OuterRef("shippingzone_id")
-                )
-            ),
-            Exists(
-                WarehouseChannel.objects.filter(
-                    channel_id=channel_id, warehouse_id=OuterRef("warehouse_id")
-                )
-            ),
-        ).values("warehouse_id")
+        warehouse_shipping_zones = []
         return self.filter(
             Exists(warehouse_shipping_zones.filter(warehouse_id=OuterRef("pk")))
         ).order_by("pk")
@@ -288,9 +255,6 @@ class Warehouse(ModelWithMetadata, ModelWithExternalReference):
     channels = models.ManyToManyField(
         Channel, related_name="warehouses", through=ChannelWarehouse
     )
-    shipping_zones = models.ManyToManyField(
-        ShippingZone, blank=True, related_name="warehouses"
-    )
     address = models.ForeignKey(Address, on_delete=models.PROTECT)
     email = models.EmailField(blank=True, default="")
     click_and_collect_option = models.CharField(
@@ -389,7 +353,6 @@ class StockQuerySet(models.QuerySet["Stock"]):
         returned.
         """
         ShippingZoneChannel = Channel.shipping_zones.through
-        WarehouseShippingZone = ShippingZone.warehouses.through
         WarehouseChannel = Channel.warehouses.through
 
         channels = Channel.objects.filter(slug=channel_slug).values("pk")
@@ -403,9 +366,7 @@ class StockQuerySet(models.QuerySet["Stock"]):
 
         cc_warehouses = Warehouse.objects.none()
         if country_code:
-            shipping_zones = ShippingZone.objects.filter(
-                countries__contains=country_code
-            ).values("pk")
+            shipping_zones = []
             shipping_zone_channels = shipping_zone_channels.filter(
                 Exists(shipping_zones.filter(pk=OuterRef("shippingzone_id")))
             )
@@ -422,14 +383,7 @@ class StockQuerySet(models.QuerySet["Stock"]):
 
         shipping_zone_channels.values("shippingzone_id")
 
-        warehouse_shipping_zones = WarehouseShippingZone.objects.filter(
-            Exists(
-                shipping_zone_channels.filter(
-                    shippingzone_id=OuterRef("shippingzone_id")
-                )
-            ),
-            Exists(warehouse_channels.filter(warehouse_id=OuterRef("warehouse_id"))),
-        ).values("warehouse_id")
+        warehouse_shipping_zones = []
         return self.select_related("product_variant").filter(
             Exists(
                 warehouse_shipping_zones.filter(warehouse_id=OuterRef("warehouse_id"))

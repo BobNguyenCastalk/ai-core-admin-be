@@ -3,8 +3,6 @@ from ...discount import models as discount_models
 from ...menu import models as menu_models
 from ...page import models as page_models
 from ...product import models as product_models
-from ...shipping import interface as shipping_interface
-from ...shipping import models as shipping_models
 from ...site import models as site_models
 from ..core import ResolveInfo
 from ..core.context import get_database_connection_name
@@ -27,12 +25,6 @@ TYPE_TO_TRANSLATION_LOADER_MAP = {
     product_models.ProductVariant: (
         dataloaders.ProductVariantTranslationByIdAndLanguageCodeLoader
     ),
-    shipping_models.ShippingMethod: (
-        dataloaders.ShippingMethodTranslationByIdAndLanguageCodeLoader
-    ),
-    shipping_interface.ShippingMethodData: (
-        dataloaders.ShippingMethodTranslationByIdAndLanguageCodeLoader
-    ),
     site_models.SiteSettings: (
         dataloaders.SiteSettingsTranslationByIdAndLanguageCodeLoader
     ),
@@ -53,12 +45,6 @@ def resolve_translation(instance, info: ResolveInfo, *, language_code):
     if loader:
         return loader(info.context).load((instance.id, language_code))
     raise TypeError(f"No dataloader found to {type(instance)}")
-
-
-def resolve_shipping_methods(info):
-    return shipping_models.ShippingMethod.objects.using(
-        get_database_connection_name(info.context)
-    ).all()
 
 
 def resolve_attribute_values(info):

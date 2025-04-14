@@ -13,7 +13,6 @@ from ....discount import models as discount_models
 from ....menu import models as menu_models
 from ....page import models as page_models
 from ....product import models as product_models
-from ....shipping import models as shipping_models
 from ....webhook.event_types import WebhookEventAsyncType
 from ....webhook.utils import get_webhooks_for_event
 from ...core import ResolveInfo
@@ -47,9 +46,6 @@ TRANSLATABLE_CONTENT_TO_MODEL = {
     ): product_models.ProductVariant._meta.object_name,
     # Page Translation mutation reverses model and TranslatableContent
     page_models.Page._meta.object_name: str(translation_types.PageTranslatableContent),
-    str(
-        translation_types.ShippingMethodTranslatableContent
-    ): shipping_models.ShippingMethod._meta.object_name,
     str(
         translation_types.SaleTranslatableContent
     ): discount_models.Promotion._meta.object_name,

@@ -14,7 +14,7 @@ def replace_removed_vocucher_type(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [("discount", "0017_django_price_2")]
+    dependencies = []
 
     operations = [
         migrations.RunPython(replace_removed_vocucher_type),

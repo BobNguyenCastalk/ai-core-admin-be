@@ -81,7 +81,6 @@ class Migration(migrations.Migration):
         ("discount", "0019_auto_20200217_0350"),
         ("order", "0084_auto_20200522_0522"),
         ("product", "0118_populate_product_variant_price"),
-        ("shipping", "0018_default_zones_countries"),
     ]
 
     operations = [

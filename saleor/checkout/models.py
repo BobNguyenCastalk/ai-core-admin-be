@@ -19,7 +19,6 @@ from ..channel.models import Channel
 from ..core.models import ModelWithMetadata
 from ..core.taxes import zero_money
 from ..permission.enums import CheckoutPermissions
-from ..shipping.models import ShippingMethod
 from . import CheckoutAuthorizeStatus, CheckoutChargeStatus
 
 if TYPE_CHECKING:
@@ -69,13 +68,6 @@ class Checkout(models.Model):
         related_name="+",
         editable=False,
         null=True,
-        on_delete=models.SET_NULL,
-    )
-    shipping_method = models.ForeignKey(
-        ShippingMethod,
-        blank=True,
-        null=True,
-        related_name="checkouts",
         on_delete=models.SET_NULL,
     )
 

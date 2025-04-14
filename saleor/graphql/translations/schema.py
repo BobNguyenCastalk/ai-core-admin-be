@@ -6,7 +6,6 @@ from ...menu.models import MenuItem
 from ...page.models import Page
 from ...permission.enums import SitePermissions
 from ...product.models import Category, Collection, Product, ProductVariant
-from ...shipping.models import ShippingMethod
 from ..attribute.resolvers import resolve_attributes
 from ..core import ResolveInfo
 from ..core.connection import CountableConnection, create_connection_slice
@@ -24,7 +23,6 @@ from .resolvers import (
     resolve_promotion_rules,
     resolve_promotions,
     resolve_sales,
-    resolve_shipping_methods,
     resolve_vouchers,
 )
 
@@ -36,7 +34,6 @@ TYPES_TRANSLATIONS_MAP = {
     AttributeValue: translation_types.AttributeValueTranslatableContent,
     ProductVariant: translation_types.ProductVariantTranslatableContent,
     Page: translation_types.PageTranslatableContent,
-    ShippingMethod: translation_types.ShippingMethodTranslatableContent,
     Voucher: translation_types.VoucherTranslatableContent,
     MenuItem: translation_types.MenuItemTranslatableContent,
     Promotion: translation_types.PromotionTranslatableContent,
@@ -118,8 +115,6 @@ class TranslationQueries(graphene.ObjectType):
             qs = resolve_collections(info)
         elif kind == TranslatableKinds.CATEGORY:
             qs = resolve_categories(info)
-        elif kind == TranslatableKinds.SHIPPING_METHOD:
-            qs = resolve_shipping_methods(info)
         elif kind == TranslatableKinds.VOUCHER:
             qs = resolve_vouchers(info)
         elif kind == TranslatableKinds.ATTRIBUTE:
@@ -152,7 +147,6 @@ class TranslationQueries(graphene.ObjectType):
             TranslatableKinds.ATTRIBUTE_VALUE.value: AttributeValue,  # type: ignore[attr-defined] # noqa: E501
             TranslatableKinds.VARIANT.value: ProductVariant,  # type: ignore[attr-defined] # noqa: E501
             TranslatableKinds.PAGE.value: Page,  # type: ignore[attr-defined]
-            TranslatableKinds.SHIPPING_METHOD.value: ShippingMethod,  # type: ignore[attr-defined] # noqa: E501
             TranslatableKinds.VOUCHER.value: Voucher,  # type: ignore[attr-defined]
             TranslatableKinds.MENU_ITEM.value: MenuItem,  # type: ignore[attr-defined]
             TranslatableKinds.PROMOTION.value: Promotion,  # type: ignore[attr-defined]

@@ -15,12 +15,6 @@ from ..core.pricing.interface import LineInfo
 from ..core.taxes import zero_money
 from ..discount import VoucherType
 from ..discount.interface import fetch_variant_rules_info, fetch_voucher_info
-from ..shipping.interface import ShippingMethodData
-from ..shipping.models import ShippingMethod, ShippingMethodChannelListing
-from ..shipping.utils import (
-    convert_to_shipping_method_data,
-    initialize_shipping_method_active_status,
-)
 from ..warehouse import WarehouseClickAndCollectOption
 from ..warehouse.models import Warehouse
 
@@ -121,33 +115,13 @@ class CheckoutInfo:
     shipping_address: Optional["Address"]
     discounts: list["CheckoutDiscount"]
     lines: Iterable[CheckoutLineInfo]
-    shipping_channel_listings: list["ShippingMethodChannelListing"]
-    shipping_method: Optional["ShippingMethod"] = None
+    shipping_channel_listings: list
+    shipping_method = None
     collection_point: Optional["Warehouse"] = None
     voucher: Optional["Voucher"] = None
     voucher_code: Optional["VoucherCode"] = None
     database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME
     pregenerated_payloads_for_excluded_shipping_method: Optional[dict] = None
-
-    @cached_property
-    def all_shipping_methods(self) -> list["ShippingMethodData"]:
-        all_methods = get_all_shipping_methods_list(
-            self,
-            self.shipping_address,
-            self.lines,
-            self.shipping_channel_listings,
-            self.manager,
-            self.database_connection_name,
-        )
-        # Filter shipping methods using sync webhooks
-        excluded_methods = self.manager.excluded_shipping_methods_for_checkout(
-            self.checkout,
-            self.channel,
-            all_methods,
-            self.pregenerated_payloads_for_excluded_shipping_method,
-        )
-        initialize_shipping_method_active_status(all_methods, excluded_methods)
-        return all_methods
 
     @cached_property
     def valid_pick_up_points(self) -> Iterable["Warehouse"]:
@@ -164,7 +138,7 @@ class CheckoutInfo:
         from ..webhook.transport.shipping import convert_to_app_id_with_identifier
         from .utils import get_external_shipping_id
 
-        delivery_method: Optional[Union[ShippingMethodData, Warehouse, Callable]] = None
+        delivery_method: Optional[Union[Warehouse, Callable]] = None
 
         if self.shipping_method:
             # Find listing for the currently selected shipping method
@@ -173,11 +147,6 @@ class CheckoutInfo:
                 if listing.shipping_method_id == self.shipping_method.id:
                     shipping_channel_listing = listing
                     break
-
-            if shipping_channel_listing:
-                delivery_method = convert_to_shipping_method_data(
-                    self.shipping_method, shipping_channel_listing
-                )
 
         elif external_shipping_method_id := get_external_shipping_id(self.checkout):
 
@@ -197,21 +166,6 @@ class CheckoutInfo:
 
         return get_delivery_method_info(delivery_method, self.shipping_address)
 
-    @property
-    def valid_shipping_methods(self) -> list["ShippingMethodData"]:
-        return [method for method in self.all_shipping_methods if method.active]
-
-    @property
-    def valid_delivery_methods(
-        self,
-    ) -> list[Union["ShippingMethodData", "Warehouse"]]:
-        return list(
-            itertools.chain(
-                self.valid_shipping_methods,
-                self.valid_pick_up_points,
-            )
-        )
-
     def get_country(self) -> str:
         address = self.shipping_address or self.billing_address
         if address is None or not address.country:
@@ -224,7 +178,7 @@ class CheckoutInfo:
 
 @dataclass(frozen=True)
 class DeliveryMethodBase:
-    delivery_method: Optional[Union["ShippingMethodData", "Warehouse"]] = None
+    delivery_method: Optional[Union["Warehouse"]] = None
     shipping_address: Optional["Address"] = None
     store_as_customer_address: bool = False
 
@@ -256,7 +210,6 @@ class DeliveryMethodBase:
 
 @dataclass(frozen=True)
 class ShippingMethodInfo(DeliveryMethodBase):
-    delivery_method: "ShippingMethodData"
     shipping_address: Optional["Address"]
     store_as_customer_address: bool = True
 
@@ -326,15 +279,13 @@ class CollectionPointInfo(DeliveryMethodBase):
 
 @singledispatch
 def get_delivery_method_info(
-    delivery_method: Optional[Union["ShippingMethodData", "Warehouse", Callable]],
+    delivery_method: Optional[Union["Warehouse", Callable]],
     address: Optional["Address"] = None,
 ) -> DeliveryMethodBase:
     if callable(delivery_method):
         delivery_method = delivery_method()
     if delivery_method is None:
         return DeliveryMethodBase()
-    if isinstance(delivery_method, ShippingMethodData):
-        return ShippingMethodInfo(delivery_method, address)
     if isinstance(delivery_method, Warehouse):
         # TODO: Workaround for lack of using in tests.
         # The warehouse address should be loaded when CheckoutInfo is created.
@@ -518,7 +469,7 @@ def fetch_checkout_info(
     lines: Iterable[CheckoutLineInfo],
     manager: "PluginsManager",
     shipping_channel_listings: Optional[
-        Iterable["ShippingMethodChannelListing"]
+        Iterable
     ] = None,
     voucher: Optional["Voucher"] = None,
     voucher_code: Optional["VoucherCode"] = None,
@@ -564,11 +515,10 @@ def get_valid_internal_shipping_method_list_for_checkout_info(
     checkout_info: "CheckoutInfo",
     shipping_address: Optional["Address"],
     lines: Iterable[CheckoutLineInfo],
-    shipping_channel_listings: Iterable[ShippingMethodChannelListing],
+    shipping_channel_listings: Iterable,
     database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
-) -> list["ShippingMethodData"]:
+) -> list:
     from . import base_calculations
-    from .utils import get_valid_internal_shipping_methods_for_checkout
 
     country_code = shipping_address.country.code if shipping_address else None
 
@@ -593,14 +543,7 @@ def get_valid_internal_shipping_method_list_for_checkout_info(
     if not is_shipping_voucher and not is_voucher_for_specific_product:
         subtotal -= checkout_info.checkout.discount
 
-    valid_shipping_methods = get_valid_internal_shipping_methods_for_checkout(
-        checkout_info,
-        lines,
-        subtotal,
-        shipping_channel_listings,
-        country_code=country_code,
-        database_connection_name=database_connection_name,
-    )
+    valid_shipping_methods = []
 
     return valid_shipping_methods
 
@@ -631,11 +574,11 @@ def get_all_shipping_methods_list(
 
 def update_delivery_method_lists_for_checkout_info(
     checkout_info: "CheckoutInfo",
-    shipping_method: Optional["ShippingMethod"],
+    shipping_method,
     collection_point: Optional["Warehouse"],
     shipping_address: Optional["Address"],
     lines: Iterable[CheckoutLineInfo],
-    shipping_channel_listings: Iterable[ShippingMethodChannelListing],
+    shipping_channel_listings: Iterable,
     database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
 ):
     # Update checkout info fields with new data

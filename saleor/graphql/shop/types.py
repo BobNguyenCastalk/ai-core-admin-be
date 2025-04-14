@@ -54,7 +54,7 @@ from ..translations.resolvers import resolve_translation
 from ..translations.types import ShopTranslation
 from ..utils import format_permissions_for_display
 from .filters import CountryFilterInput
-from .resolvers import resolve_available_shipping_methods, resolve_countries
+from .resolvers import resolve_countries
 
 # The "Shop" type always have the same ID since there is a single instance of it.
 # Some mutations, such as generic metadata API, require an ID. To make it work we
@@ -407,9 +407,7 @@ class Shop(graphene.ObjectType):
 
     @staticmethod
     def resolve_available_shipping_methods(_, info, *, channel, address=None):
-        return resolve_available_shipping_methods(
-            info, channel_slug=channel, address=address
-        )
+        return []
 
     @staticmethod
     def resolve_channel_currencies(_, info):

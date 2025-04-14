@@ -11,7 +11,6 @@ from ..discount import DiscountType, DiscountValueType
 from ..discount.models import OrderDiscount
 from ..discount.utils.manual_discount import apply_discount_to_value
 from ..discount.utils.voucher import is_order_level_voucher, is_shipping_voucher
-from ..shipping.models import ShippingMethodChannelListing
 from .interface import OrderTaxedPricesData
 
 if TYPE_CHECKING:
@@ -341,19 +340,6 @@ def undiscounted_order_shipping(
     # TODO: add undiscounted_shipping_price field to order model.
     # https://github.com/saleor/saleor/issues/14915
 
-    with allow_writer():
-        # TODO: load shipping_method with dataloader and pass as an argument
-        shipping_method = order.shipping_method
-
-    if shipping_method:
-        if (
-            listing := ShippingMethodChannelListing.objects.using(
-                database_connection_name
-            )
-            .filter(channel=order.channel, shipping_method=shipping_method)
-            .first()
-        ):
-            return Money(listing.price_amount, order.currency)
     return zero_money(order.currency)
 
 

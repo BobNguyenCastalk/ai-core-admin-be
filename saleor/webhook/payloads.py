@@ -42,7 +42,6 @@ from ..payment import ChargeStatus
 from ..payment.models import Payment, TransactionItem
 from ..product import ProductMediaTypes
 from ..product.models import Collection, Product, ProductMedia, ProductVariant
-from ..shipping.interface import ShippingMethodData
 from ..thumbnail.models import Thumbnail
 from ..warehouse.models import Stock, Warehouse
 from . import traced_payload_generator
@@ -1173,7 +1172,7 @@ def generate_translation_payload(
     return json.dumps(translation_data)
 
 
-def _generate_payload_for_shipping_method(method: ShippingMethodData):
+def _generate_payload_for_shipping_method(method):
     payload = {
         "id": method.graphql_id,
         "price": method.price.amount,
@@ -1191,7 +1190,7 @@ def _generate_payload_for_shipping_method(method: ShippingMethodData):
 @traced_payload_generator
 def generate_excluded_shipping_methods_for_order_payload(
     order: "Order",
-    available_shipping_methods: list[ShippingMethodData],
+    available_shipping_methods,
 ):
     order_data = json.loads(generate_order_payload(order))[0]
     payload = {
@@ -1208,7 +1207,7 @@ def generate_excluded_shipping_methods_for_order_payload(
 @traced_payload_generator
 def generate_excluded_shipping_methods_for_checkout_payload(
     checkout: "Checkout",
-    available_shipping_methods: list[ShippingMethodData],
+    available_shipping_methods,
 ):
     checkout_data = json.loads(generate_checkout_payload(checkout))[0]
     payload = {

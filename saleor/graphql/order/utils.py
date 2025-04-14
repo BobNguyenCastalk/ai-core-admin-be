@@ -19,8 +19,6 @@ from ...order.utils import (
 )
 from ...plugins.manager import PluginsManager
 from ...product.models import Product, ProductChannelListing, ProductVariant
-from ...shipping.interface import ShippingMethodData
-from ...shipping.utils import convert_to_shipping_method_data
 from ...warehouse.availability import check_stock_and_preorder_quantity
 from ..core.validators import validate_variants_available_in_channel
 
@@ -56,7 +54,7 @@ def validate_total_quantity(lines: Iterable["OrderLine"], errors: T_ERRORS):
 
 def get_shipping_method_availability_error(
     order: "Order",
-    method: Optional["ShippingMethodData"],
+    method,
     manager: "PluginsManager",
     database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
 ):
@@ -116,13 +114,6 @@ def validate_shipping_method(
             error = ValidationError(
                 "Shipping method not available in given channel.",
                 code=OrderErrorCode.SHIPPING_METHOD_NOT_APPLICABLE.value,
-            )
-        else:
-            error = get_shipping_method_availability_error(
-                order,
-                convert_to_shipping_method_data(order.shipping_method, listing),
-                manager,
-                database_connection_name=database_connection_name,
             )
 
     if error:

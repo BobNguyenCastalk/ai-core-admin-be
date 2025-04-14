@@ -9,12 +9,10 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import QuerySet, Sum
 from django.template.defaultfilters import pluralize
-from django.utils import timezone
 from prices import Money, TaxedMoney
 
 from ..account.models import User
 from ..core.prices import quantize_price
-from ..core.taxes import zero_money
 from ..core.tracing import traced_atomic_transaction
 from ..core.utils.country import get_active_country
 from ..core.utils.translations import get_translation
@@ -31,12 +29,6 @@ from ..discount.utils.promotion import (
 from ..payment import TransactionEventType
 from ..payment.model_helpers import get_total_authorized
 from ..product.utils.digital_products import get_default_digital_content_settings
-from ..shipping.interface import ShippingMethodData
-from ..shipping.models import ShippingMethod, ShippingMethodChannelListing
-from ..shipping.utils import (
-    convert_to_shipping_method_data,
-    initialize_shipping_method_active_status,
-)
 from ..warehouse.management import (
     decrease_allocations,
     get_order_lines_with_track_inventory,
@@ -58,9 +50,7 @@ from .fetch import OrderLineInfo, fetch_draft_order_lines_info
 from .models import Order, OrderGrantedRefund, OrderLine
 
 if TYPE_CHECKING:
-    from ..app.models import App
     from ..channel.models import Channel
-    from ..checkout.fetch import CheckoutInfo
     from ..discount.interface import VariantPromotionRuleInfo
     from ..payment.models import Payment, TransactionItem
     from ..plugins.manager import PluginsManager
@@ -590,63 +580,16 @@ def sum_order_totals(qs, currency_code):
         Money(totals["gross"] or 0, currency=currency_code),
     )
 
-
-def get_all_shipping_methods_for_order(
-    order: Order,
-    shipping_channel_listings: Iterable["ShippingMethodChannelListing"],
-    database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
-) -> list[ShippingMethodData]:
-    if not order.is_shipping_required():
-        return []
-
-    shipping_address = order.shipping_address
-    if not shipping_address:
-        return []
-
-    all_methods = []
-
-    shipping_methods = (
-        ShippingMethod.objects.using(database_connection_name)
-        .applicable_shipping_methods_for_instance(
-            order,
-            channel_id=order.channel_id,
-            price=order.subtotal.gross,
-            shipping_address=shipping_address,
-            country_code=shipping_address.country.code,
-        )
-        .prefetch_related("channel_listings")
-    )
-
-    listing_map = {
-        listing.shipping_method_id: listing for listing in shipping_channel_listings
-    }
-
-    for method in shipping_methods:
-        listing = listing_map.get(method.id)
-        if listing:
-            shipping_method_data = convert_to_shipping_method_data(method, listing)
-            all_methods.append(shipping_method_data)
-    return all_methods
-
-
 def get_valid_shipping_methods_for_order(
     order: Order,
-    shipping_channel_listings: Iterable["ShippingMethodChannelListing"],
+    shipping_channel_listings,
     manager: "PluginsManager",
     database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
-) -> list[ShippingMethodData]:
+):
     """Return a list of shipping methods according to Saleor's own business logic."""
-    valid_methods = get_all_shipping_methods_for_order(
-        order, shipping_channel_listings, database_connection_name
-    )
+    valid_methods = []
     if not valid_methods:
         return []
-
-    if order.status in ORDER_EDITABLE_STATUS:
-        excluded_methods = manager.excluded_shipping_methods_for_order(
-            order, valid_methods
-        )
-        initialize_shipping_method_active_status(valid_methods, excluded_methods)
 
     return valid_methods
 

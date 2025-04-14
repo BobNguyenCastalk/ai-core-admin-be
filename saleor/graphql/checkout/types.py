@@ -19,7 +19,6 @@ from ...permission.enums import (
     DiscountPermissions,
     PaymentPermissions,
 )
-from ...shipping.interface import ShippingMethodData
 from ...warehouse.reservations import is_reservation_enabled
 from ...webhook.event_types import WebhookEventSyncType
 from ..account.dataloaders import AddressByIdLoader, UserByUserIdLoader
@@ -780,22 +779,6 @@ class Checkout(ModelObjectType[models.Checkout]):
     @staticmethod
     def resolve_email(root: models.Checkout, _info: ResolveInfo):
         return root.get_customer_email()
-
-    @staticmethod
-    def resolve_shipping_method(root: models.Checkout, info):
-        def with_checkout_info(checkout_info):
-            delivery_method = checkout_info.delivery_method_info.delivery_method
-            if not delivery_method or not isinstance(
-                delivery_method, ShippingMethodData
-            ):
-                return
-            return delivery_method
-
-        return (
-            CheckoutInfoByCheckoutTokenLoader(info.context)
-            .load(root.token)
-            .then(with_checkout_info)
-        )
 
     @staticmethod
     @traced_resolver

@@ -15,7 +15,6 @@ from ...discount.models import (
 )
 from ...graphql.shop.types import Shop
 from ...menu.models import MenuItemTranslation
-from ...order.utils import get_all_shipping_methods_for_order
 from ...page.models import PageTranslation
 from ...payment.interface import (
     ListStoredPaymentMethodsRequestData,
@@ -32,7 +31,6 @@ from ...product.models import (
     ProductTranslation,
     ProductVariantTranslation,
 )
-from ...shipping.models import ShippingMethodTranslation
 from ...thumbnail.views import TYPE_TO_MODEL_DATA_MAPPING
 from ...webhook.const import MAX_FILTERABLE_CHANNEL_SLUGS_LIMIT
 from ...webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
@@ -93,7 +91,6 @@ TRANSLATIONS_TYPES_MAP = {
     AttributeValueTranslation: translation_types.AttributeValueTranslation,
     ProductVariantTranslation: translation_types.ProductVariantTranslation,
     PageTranslation: translation_types.PageTranslation,
-    ShippingMethodTranslation: translation_types.ShippingMethodTranslation,
     VoucherTranslation: translation_types.VoucherTranslation,
     MenuItemTranslation: translation_types.MenuItemTranslation,
     PromotionTranslation: translation_types.PromotionTranslation,

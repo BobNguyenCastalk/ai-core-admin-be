@@ -14,11 +14,7 @@ from ....order.error_codes import OrderErrorCode
 from ....order.utils import invalidate_order_prices
 from ....payment import PaymentError
 from ....payment import models as payment_models
-from ....plugins.manager import PluginsManager
 from ....product import models as product_models
-from ....shipping.interface import ShippingMethodData
-from ....shipping.models import ShippingMethodChannelListing
-from ....shipping.utils import convert_to_shipping_method_data
 from ....webhook.event_types import WebhookEventAsyncType
 from ..utils import get_shipping_method_availability_error
 
@@ -86,21 +82,6 @@ class ShippingMethodUpdateMixin:
             order.shipping_tax_class_metadata = tax_class.metadata
         invalidate_order_prices(order)
 
-    @classmethod
-    def _validate_shipping_channel_listing(cls, method, order):
-        shipping_channel_listing = ShippingMethodChannelListing.objects.filter(
-            shipping_method=method, channel=order.channel
-        ).first()
-        if not shipping_channel_listing:
-            raise ValidationError(
-                {
-                    "shipping_method": ValidationError(
-                        "Shipping method not available in the given channel.",
-                        code=OrderErrorCode.SHIPPING_METHOD_NOT_APPLICABLE.value,
-                    )
-                }
-            )
-        return shipping_channel_listing
 
     @classmethod
     def _update_shipping_price(
@@ -123,38 +104,6 @@ class ShippingMethodUpdateMixin:
         else:
             order.base_shipping_price = zero_money(order.currency)
             order.undiscounted_base_shipping_price = zero_money(order.currency)
-
-    @classmethod
-    def process_shipping_method(cls, order, method, manager):
-        shipping_channel_listing = cls._validate_shipping_channel_listing(method, order)
-        shipping_method_data = convert_to_shipping_method_data(
-            method,
-            shipping_channel_listing,
-        )
-        if order.status != OrderStatus.DRAFT:
-            clean_order_update_shipping(order, shipping_method_data, manager)
-
-        cls._update_shipping_method(order, method, shipping_method_data)
-        cls._update_shipping_price(order, shipping_channel_listing)
-
-
-def clean_order_update_shipping(
-    order, method: ShippingMethodData, manager: "PluginsManager"
-):
-    if not order.shipping_address:
-        raise ValidationError(
-            {
-                "order": ValidationError(
-                    "Cannot choose a shipping method for an order without "
-                    "the shipping address.",
-                    code=OrderErrorCode.ORDER_NO_SHIPPING_ADDRESS.value,
-                )
-            }
-        )
-
-    error = get_shipping_method_availability_error(order, method, manager)
-    if error:
-        raise ValidationError({"shipping_method": error})
 
 
 def call_event_by_order_status(order, manager):

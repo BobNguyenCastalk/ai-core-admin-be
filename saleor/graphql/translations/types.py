@@ -13,10 +13,8 @@ from ...page import models as page_models
 from ...permission.enums import (
     DiscountPermissions,
     ProductPermissions,
-    ShippingPermissions,
 )
 from ...product import models as product_models
-from ...shipping import models as shipping_models
 from ...site import models as site_models
 from ..attribute.dataloaders import AttributesByAttributeId, AttributeValueByIdLoader
 from ..channel import ChannelContext
@@ -881,65 +879,6 @@ class MenuItemTranslatableContent(ModelObjectType[menu_models.MenuItem]):
     @staticmethod
     def resolve_menu_item_id(root: menu_models.MenuItem, _info):
         return graphene.Node.to_global_id("MenuItem", root.id)
-
-
-class ShippingMethodTranslation(
-    BaseTranslationType[shipping_models.ShippingMethodTranslation]
-):
-    id = graphene.GlobalID(
-        required=True, description="The ID of the shipping method translation."
-    )
-    name = graphene.String(description="Translated shipping method name.")
-    description = JSONString(
-        description="Translated description of the shipping method." + RICH_CONTENT
-    )
-    translatable_content = graphene.Field(
-        "saleor.graphql.translations.types.ShippingMethodTranslatableContent",
-        description="Represents the shipping method fields to translate."
-        + ADDED_IN_314,
-    )
-
-    class Meta:
-        model = shipping_models.ShippingMethodTranslation
-        interfaces = [graphene.relay.Node]
-        description = "Represents shipping method translations."
-
-
-class ShippingMethodTranslatableContent(
-    ModelObjectType[shipping_models.ShippingMethod]
-):
-    id = graphene.GlobalID(
-        required=True, description="The ID of the shipping method translatable content."
-    )
-    shipping_method_id = graphene.ID(
-        required=True,
-        description="The ID of the shipping method to translate." + ADDED_IN_314,
-    )
-    name = graphene.String(
-        required=True, description="Shipping method name to translate."
-    )
-    description = JSONString(
-        description="Shipping method description to translate." + RICH_CONTENT
-    )
-    translation = TranslationField(
-        ShippingMethodTranslation, type_name="shipping method"
-    )
-
-    class Meta:
-        model = shipping_models.ShippingMethod
-        interfaces = [graphene.relay.Node]
-        description = (
-            "Represents shipping method's original translatable fields "
-            "and related translations."
-        )
-
-    @staticmethod
-    def resolve_shipping_method(root: shipping_models.ShippingMethod, _info):
-        return ChannelContext(node=root, channel_slug=None)
-
-    @staticmethod
-    def resolve_shipping_method_id(root: shipping_models.ShippingMethod, _info):
-        return graphene.Node.to_global_id("ShippingMethodType", root.id)
 
 
 class PromotionTranslation(BaseTranslationType[discount_models.PromotionTranslation]):

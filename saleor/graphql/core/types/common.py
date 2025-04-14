@@ -19,7 +19,6 @@ from ...core.doc_category import (
     DOC_CATEGORY_PAGES,
     DOC_CATEGORY_PAYMENTS,
     DOC_CATEGORY_PRODUCTS,
-    DOC_CATEGORY_SHIPPING,
     DOC_CATEGORY_SHOP,
     DOC_CATEGORY_TAXES,
     DOC_CATEGORY_USERS,
@@ -73,7 +72,6 @@ from ..enums import (
     ProductVariantBulkErrorCode,
     ProductVariantTranslateErrorCode,
     SendConfirmationEmailErrorCode,
-    ShippingErrorCode,
     ShopErrorCode,
     StockBulkUpdateErrorCode,
     StockErrorCode,
@@ -562,24 +560,6 @@ class ShopError(Error):
 
     class Meta:
         doc_category = DOC_CATEGORY_SHOP
-
-
-class ShippingError(Error):
-    code = ShippingErrorCode(description="The error code.", required=True)
-    warehouses = NonNullList(
-        graphene.ID,
-        description="List of warehouse IDs which causes the error.",
-        required=False,
-    )
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channels IDs which causes the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_SHIPPING
-
 
 class PageError(Error):
     code = PageErrorCode(description="The error code.", required=True)

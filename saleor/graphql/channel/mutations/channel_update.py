@@ -15,9 +15,6 @@ from ....permission.enums import (
     OrderPermissions,
     PaymentPermissions,
 )
-from ....shipping.tasks import (
-    drop_invalid_shipping_methods_relations_for_given_channels,
-)
 from ....webhook.event_types import WebhookEventAsyncType
 from ...account.enums import CountryCodeEnum
 from ...core import ResolveInfo
@@ -29,7 +26,6 @@ from ...core.utils import WebhookEventInfo
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ...utils.validators import check_for_duplicates
 from ..types import Channel
-from ..utils import delete_invalid_warehouse_to_shipping_zone_relations
 from .channel_create import ChannelInput
 from .utils import (
     clean_input_checkout_settings,
@@ -178,21 +174,6 @@ class ChannelUpdate(ModelMutation):
             super()._save_m2m(info, instance, cleaned_data)
             cls._update_shipping_zones(instance, cleaned_data)
             cls._update_warehouses(instance, cleaned_data)
-            if (
-                "remove_shipping_zones" in cleaned_data
-                or "remove_warehouses" in cleaned_data
-            ):
-                warehouse_ids = [
-                    warehouse.id
-                    for warehouse in cleaned_data.get("remove_warehouses", [])
-                ]
-                shipping_zone_ids = [
-                    warehouse.id
-                    for warehouse in cleaned_data.get("remove_shipping_zones", [])
-                ]
-                delete_invalid_warehouse_to_shipping_zone_relations(
-                    instance, warehouse_ids, shipping_zone_ids
-                )
 
     @classmethod
     def _update_shipping_zones(cls, instance, cleaned_data):
@@ -209,9 +190,6 @@ class ChannelUpdate(ModelMutation):
                 shipping_channel_listings.values_list("shipping_method_id", flat=True)
             )
             shipping_channel_listings.delete()
-            drop_invalid_shipping_methods_relations_for_given_channels.delay(
-                shipping_method_ids, [instance.id]
-            )
 
     @classmethod
     def _update_warehouses(cls, instance, cleaned_data):

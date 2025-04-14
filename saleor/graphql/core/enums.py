@@ -23,7 +23,6 @@ from ...payment import error_codes as payment_error_codes
 from ...permission.enums import get_permissions_enum_list
 from ...plugins import error_codes as plugin_error_codes
 from ...product import error_codes as product_error_codes
-from ...shipping import error_codes as shipping_error_codes
 from ...site import error_codes as site_error_codes
 from ...thumbnail import IconThumbnailFormat, ThumbnailFormat
 from ...translations import error_codes as translatable_error_codes
@@ -337,9 +336,6 @@ SendConfirmationEmailErrorCode = graphene.Enum.from_enum(
 SendConfirmationEmailErrorCode.doc_category = DOC_CATEGORY_USERS
 
 ShopErrorCode = graphene.Enum.from_enum(core_error_codes.ShopErrorCode)
-
-ShippingErrorCode = graphene.Enum.from_enum(shipping_error_codes.ShippingErrorCode)
-ShippingErrorCode.doc_category = DOC_CATEGORY_SHIPPING
 
 StockErrorCode = graphene.Enum.from_enum(warehouse_error_codes.StockErrorCode)
 StockErrorCode.doc_category = DOC_CATEGORY_PRODUCTS

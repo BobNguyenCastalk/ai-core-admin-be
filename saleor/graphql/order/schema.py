@@ -27,7 +27,6 @@ from ..core.validators import validate_one_of_args_is_in_query
 from ..utils import get_user_or_app_from_context
 from .bulk_mutations.draft_orders import DraftOrderBulkDelete, DraftOrderLinesBulkDelete
 from .bulk_mutations.order_bulk_cancel import OrderBulkCancel
-from .bulk_mutations.order_bulk_create import OrderBulkCreate
 from .filters import DraftOrderFilter, OrderFilter
 from .mutations.draft_order_complete import DraftOrderComplete
 from .mutations.draft_order_create import DraftOrderCreate
@@ -281,4 +280,3 @@ class OrderMutations(graphene.ObjectType):
     order_update = OrderUpdate.Field()
     order_void = OrderVoid.Field()
     order_bulk_cancel = OrderBulkCancel.Field()
-    order_bulk_create = OrderBulkCreate.Field()
