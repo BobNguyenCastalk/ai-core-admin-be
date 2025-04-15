@@ -21,7 +21,6 @@ from ...core.scalars import Decimal
 from ...core.types import BaseInputObjectType
 from ...core.types.common import Error, NonNullList
 from ...core.utils import from_global_id_or_error
-from ...payment.types import TransactionItem
 from ..enums import OrderGrantRefundUpdateErrorCode, OrderGrantRefundUpdateLineErrorCode
 from ..types import Order, OrderGrantedRefund
 from .order_grant_refund_utils import (
@@ -315,10 +314,6 @@ class OrderGrantRefundUpdate(BaseMutation):
             )
 
         transaction_item = granted_refund.transaction_item
-        if transaction_id is not None:
-            transaction_item = cls.get_node_or_error(
-                info, transaction_id, only_type=TransactionItem
-            )
 
         amount_not_changed = (
             not add_lines

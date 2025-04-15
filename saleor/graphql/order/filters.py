@@ -23,7 +23,6 @@ from ..core.filters import (
 from ..core.scalars import UUID as UUIDScalar
 from ..core.types import DateRangeInput, DateTimeRangeInput
 from ..core.utils import from_global_id_or_error
-from ..payment.enums import PaymentChargeStatusEnum
 from ..utils import resolve_global_ids_to_primary_keys
 from ..utils.filters import filter_range_field
 from .enums import OrderAuthorizeStatusEnum, OrderChargeStatusEnum, OrderStatusFilter
@@ -211,9 +210,6 @@ class DraftOrderFilter(MetadataFilterBase):
 
 
 class OrderFilter(DraftOrderFilter):
-    payment_status = ListObjectTypeFilter(
-        input_class=PaymentChargeStatusEnum, method=filter_payment_status
-    )
     authorize_status = ListObjectTypeFilter(
         input_class=OrderAuthorizeStatusEnum, method=filter_authorize_status
     )
@@ -243,7 +239,7 @@ class OrderFilter(DraftOrderFilter):
 
     class Meta:
         model = Order
-        fields = ["payment_status", "status", "customer", "created", "search"]
+        fields = ["status", "customer", "created", "search"]
 
     def is_valid(self):
         if "ids" in self.data and "numbers" in self.data:

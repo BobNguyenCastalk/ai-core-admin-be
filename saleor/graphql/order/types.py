@@ -94,20 +94,8 @@ from ..core.utils import str_to_enum
 from ..decorators import one_of_permissions_required
 from ..meta.resolvers import check_private_metadata_privilege, resolve_metadata
 from ..meta.types import MetadataItem, ObjectWithMetadata
-from ..payment.dataloaders import (
-    TransactionByPaymentIdLoader,
-    TransactionItemByIDLoader,
-)
-from ..payment.enums import OrderAction
-from ..payment.types import (
-    Payment,
-    PaymentChargeStatusEnum,
-    TransactionEvent,
-    TransactionItem,
-)
 from ..plugins.dataloaders import (
     get_plugin_manager_promise,
-    plugin_manager_promise_callback,
 )
 from ..product.dataloaders import (
     ImagesByProductIdLoader,
@@ -251,17 +239,6 @@ class OrderGrantedRefund(ModelObjectType[models.OrderGrantedRefund]):
             "to granted refund." + ADDED_IN_320
         ),
     )
-    transaction_events = NonNullList(
-        TransactionEvent,
-        description=(
-            "List of refund events associated with the granted refund." + ADDED_IN_320
-        ),
-    )
-
-    transaction = graphene.Field(
-        TransactionItem,
-        description="The transaction assigned to the granted refund." + ADDED_IN_320,
-    )
 
     class Meta:
         description = "The details of granted refund." + ADDED_IN_313 + PREVIEW_FEATURE
@@ -310,9 +287,7 @@ class OrderGrantedRefund(ModelObjectType[models.OrderGrantedRefund]):
         [OrderPermissions.MANAGE_ORDERS, PaymentPermissions.HANDLE_PAYMENTS]
     )
     def resolve_transaction(root: models.OrderGrantedRefund, info):
-        if not root.transaction_item_id:
-            return None
-        return TransactionItemByIDLoader(info.context).load(root.transaction_item_id)
+        return None
 
 
 class OrderDiscount(BaseObjectType):
@@ -1062,13 +1037,6 @@ class Order(ModelObjectType[models.Order]):
     lines = NonNullList(
         lambda: OrderLine, required=True, description="List of order lines."
     )
-    actions = NonNullList(
-        OrderAction,
-        description=(
-            "List of actions that can be performed in the current state of an order."
-        ),
-        required=True,
-    )
     number = graphene.String(
         description="User-friendly number of an order.", required=True
     )
@@ -1078,9 +1046,6 @@ class Order(ModelObjectType[models.Order]):
     origin = OrderOriginEnum(description="The order origin.", required=True)
     is_paid = graphene.Boolean(
         description="Informs if an order is fully paid.", required=True
-    )
-    payment_status = PaymentChargeStatusEnum(
-        description="Internal payment status.", required=True
     )
     payment_status_display = graphene.String(
         description="User-friendly payment status.", required=True
@@ -1098,17 +1063,6 @@ class Order(ModelObjectType[models.Order]):
             "Returns True if order has to be exempt from taxes." + ADDED_IN_38
         ),
         required=True,
-    )
-    transactions = NonNullList(
-        TransactionItem,
-        description=(
-            "List of transactions for the order. Requires one of the "
-            "following permissions: MANAGE_ORDERS, HANDLE_PAYMENTS." + ADDED_IN_34
-        ),
-        required=True,
-    )
-    payments = NonNullList(
-        Payment, description="List of payments for the order.", required=True
     )
     total = graphene.Field(
         TaxedMoney, description="Total amount of the order.", required=True
@@ -1422,15 +1376,6 @@ class Order(ModelObjectType[models.Order]):
     def resolve_actions(root: models.Order, info):
         def _resolve_actions(payments):
             actions = []
-            payment = get_last_payment(payments)
-            if root.can_capture(payment):
-                actions.append(OrderAction.CAPTURE)
-            if root.can_mark_as_paid(payments):
-                actions.append(OrderAction.MARK_AS_PAID)
-            if root.can_refund(payment):
-                actions.append(OrderAction.REFUND)
-            if root.can_void(payment):
-                actions.append(OrderAction.VOID)
             return actions
 
         return (
@@ -1809,13 +1754,6 @@ class Order(ModelObjectType[models.Order]):
 
         def _resolve_total_refund(data):
             payments, transactions = data
-            last_payment = get_last_payment(payments)
-            if last_payment and last_payment.is_active:
-                return (
-                    TransactionByPaymentIdLoader(info.context)
-                    .load(last_payment.id)
-                    .then(_resolve_total_refunded_for_payment)
-                )
             return _resolve_total_refunded_for_transactions(transactions)
 
         payments = PaymentsByOrderIdLoader(info.context).load(root.id)
@@ -1937,13 +1875,6 @@ class Order(ModelObjectType[models.Order]):
                     total_granted_refund.amount - total_refund_amount, root.currency
                 )
 
-            last_payment = get_last_payment(payments)
-            if last_payment and last_payment.is_active:
-                return (
-                    TransactionByPaymentIdLoader(info.context)
-                    .load(last_payment.id)
-                    .then(_resolve_total_remaining_grant_for_payment)
-                )
             return _resolve_total_remaining_grant_for_transactions(
                 transactions, total_granted_refund
             )

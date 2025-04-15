@@ -59,8 +59,6 @@ from ..core.fields import BaseField
 from ..core.scalars import JSON, DateTime, PositiveDecimal
 from ..core.types import NonNullList, SubscriptionObjectType
 from ..order.types import Order, OrderGrantedRefund
-from ..payment.enums import TokenizedPaymentFlowEnum, TransactionActionEnum
-from ..payment.types import TransactionItem
 from ..translations import types as translation_types
 
 TRANSLATIONS_TYPES_MAP = {
@@ -1128,11 +1126,6 @@ class StaffSetPasswordRequested(SubscriptionObjectType, AccountOperationBase):
 
 
 class TransactionAction(SubscriptionObjectType, AbstractType):
-    action_type = graphene.Field(
-        TransactionActionEnum,
-        required=True,
-        description="Determines the action type.",
-    )
     amount = PositiveDecimal(
         description="Transaction request amount. Null when action type is VOID.",
     )
@@ -1156,10 +1149,6 @@ class TransactionAction(SubscriptionObjectType, AbstractType):
 
 
 class TransactionActionBase(AbstractType):
-    transaction = graphene.Field(
-        TransactionItem,
-        description="Look up a transaction.",
-    )
     action = graphene.Field(
         TransactionAction,
         required=True,
@@ -1283,9 +1272,6 @@ class TransactionProcessAction(SubscriptionObjectType, AbstractType):
 
 
 class TransactionSessionBase(SubscriptionObjectType, AbstractType):
-    transaction = graphene.Field(
-        TransactionItem, description="Look up a transaction.", required=True
-    )
     data = graphene.Field(
         JSON,
         description="Payment gateway data in JSON format, received from storefront.",
@@ -1433,10 +1419,6 @@ class ListStoredPaymentMethods(SubscriptionObjectType):
 
 
 class TransactionItemMetadataUpdated(SubscriptionObjectType):
-    transaction = graphene.Field(
-        TransactionItem,
-        description="Look up a transaction.",
-    )
 
     class Meta:
         root_type = "TransactionItem"
@@ -1571,12 +1553,6 @@ class PaymentGatewayInitializeTokenizationSession(
 class PaymentMethodInitializeTokenizationSession(
     SubscriptionObjectType, PaymentMethodTokenizationBase
 ):
-    payment_flow_to_support = TokenizedPaymentFlowEnum(
-        description=(
-            "The payment flow that the tokenized payment method should support."
-        ),
-        required=True,
-    )
 
     class Meta:
         root_type = None
@@ -1631,10 +1607,6 @@ class PaymentMethodProcessTokenizationSession(
         return payment_method_data.id
 
 class PaymentBase(AbstractType):
-    payment = graphene.Field(
-        "saleor.graphql.payment.types.Payment",
-        description="Look up a payment.",
-    )
 
     @staticmethod
     def resolve_payment(root, _info: ResolveInfo):

@@ -60,7 +60,6 @@ from ..core.types import (
 from ..core.utils import from_global_id_or_error, str_to_enum, to_global_id_or_none
 from ..meta.types import ObjectWithMetadata
 from ..order.dataloaders import OrderLineByIdLoader, OrdersByUserLoader
-from ..payment.types import StoredPaymentMethod
 from ..plugins.dataloaders import get_plugin_manager_promise
 from ..utils import format_permissions_for_display, get_user_or_app_from_context
 from .dataloaders import (
@@ -396,16 +395,6 @@ class User(ModelObjectType[models.User]):
         description="List of events associated with the user.",
         permissions=[AccountPermissions.MANAGE_USERS, AccountPermissions.MANAGE_STAFF],
     )
-    stored_payment_sources = NonNullList(
-        "saleor.graphql.payment.types.PaymentSource",
-        description=(
-            "List of stored payment sources. The field returns a list of payment "
-            "sources stored for payment plugins."
-        ),
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-    )
     language_code = graphene.Field(
         LanguageCodeEnum, description="User language code.", required=True
     )
@@ -428,19 +417,6 @@ class User(ModelObjectType[models.User]):
     updated_at = DateTime(
         required=True,
         description="The data when the user last update the account information.",
-    )
-    stored_payment_methods = NonNullList(
-        StoredPaymentMethod,
-        description=(
-            "Returns a list of user's stored payment methods that can be used in "
-            "provided channel. The field returns a list of stored payment methods by "
-            "payment apps. When `amount` is not provided, 0 will be used as default "
-            "value." + ADDED_IN_315 + PREVIEW_FEATURE
-        ),
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned.",
-            required=True,
-        ),
     )
 
     class Meta:

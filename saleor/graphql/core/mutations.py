@@ -37,7 +37,6 @@ from ..app.dataloaders import get_app_promise
 from ..core.doc_category import DOC_CATEGORY_MAP
 from ..core.validators import validate_one_of_args_is_in_mutation
 from ..meta.permissions import PRIVATE_META_PERMISSION_MAP, PUBLIC_META_PERMISSION_MAP
-from ..payment.utils import metadata_contains_empty_key
 from ..plugins.dataloaders import get_plugin_manager_promise
 from ..utils import get_nodes, resolve_global_ids_to_primary_keys
 from . import ResolveInfo
@@ -567,26 +566,12 @@ class BaseMutation(graphene.Mutation):
             )
 
     @classmethod
-    def validate_metadata_keys(cls, metadata_list: list[dict]):
-        if metadata_contains_empty_key(metadata_list):
-            raise ValidationError(
-                {
-                    "input": ValidationError(
-                        "Metadata key cannot be empty.",
-                        code=MetadataErrorCode.REQUIRED.value,
-                    )
-                }
-            )
-
-    @classmethod
     def validate_and_update_metadata(
         cls, instance, metadata_list, private_metadata_list
     ):
         if cls._meta.support_meta_field and metadata_list is not None:
-            cls.validate_metadata_keys(metadata_list)
             cls.update_metadata(instance, metadata_list)
         if cls._meta.support_private_meta_field and private_metadata_list is not None:
-            cls.validate_metadata_keys(private_metadata_list)
             cls.update_metadata(instance, private_metadata_list, is_private=True)
 
     @classmethod

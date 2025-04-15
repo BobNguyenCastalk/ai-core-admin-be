@@ -25,7 +25,6 @@ from .core.federation.schema import build_federated_schema
 from .core.schema import CoreMutations, CoreQueries
 from .menu.schema import MenuMutations, MenuQueries
 from .order.schema import OrderMutations, OrderQueries
-from .payment.schema import PaymentMutations, PaymentQueries
 from .plugins.schema import PluginsMutations, PluginsQueries
 from .product.schema import ProductMutations, ProductQueries
 from .translations.schema import TranslationQueries
@@ -44,7 +43,6 @@ class Query(
     PluginsQueries,
     MenuQueries,
     OrderQueries,
-    PaymentQueries,
     ProductQueries,
     TranslationQueries,
     WebhookQueries,
@@ -60,7 +58,6 @@ class Mutation(
     PluginsMutations,
     MenuMutations,
     OrderMutations,
-    PaymentMutations,
     ProductMutations,
     WebhookMutations,
 ):
