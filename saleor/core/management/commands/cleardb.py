@@ -11,7 +11,6 @@ from django.db.models import Q
 
 from ....account.models import User
 from ....attribute.models import Attribute
-from ....checkout.models import Checkout
 from ....order.models import Order
 from ....page.models import Page, PageType
 from ....payment.models import Payment, Transaction, TransactionItem
@@ -38,9 +37,6 @@ class Command(BaseCommand):
         force = options.get("force", False)
         if not settings.DEBUG and not force:
             raise CommandError("Cannot clear the database in DEBUG=False mode.")
-
-        Checkout.objects.all().delete()
-        self.stdout.write("Removed checkouts")
 
         TransactionItem.objects.all().delete()
         self.stdout.write("Removed transaction items")

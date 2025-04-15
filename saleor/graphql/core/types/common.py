@@ -42,7 +42,6 @@ from ..enums import (
     AttributeTranslateErrorCode,
     AttributeValueTranslateErrorCode,
     ChannelErrorCode,
-    CheckoutErrorCode,
     CollectionErrorCode,
     ExternalNotificationTriggerErrorCode,
     GiftCardSettingsErrorCode,
@@ -243,25 +242,6 @@ class ChannelError(Error):
     class Meta:
         doc_category = DOC_CATEGORY_CHANNELS
 
-
-class CheckoutError(Error):
-    code = CheckoutErrorCode(description="The error code.", required=True)
-    variants = NonNullList(
-        graphene.ID,
-        description="List of variant IDs which causes the error.",
-        required=False,
-    )
-    lines = NonNullList(
-        graphene.ID,
-        description="List of line Ids which cause the error.",
-        required=False,
-    )
-    address_type = AddressTypeEnum(  # type: ignore[has-type]
-        description="A type of address that causes the error.", required=False
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_CHECKOUT
 
 class ProductWithoutVariantError(Error):
     products = NonNullList(

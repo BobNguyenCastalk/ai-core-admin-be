@@ -5,7 +5,6 @@ import graphene
 from django.core.exceptions import ValidationError
 
 from ....account.models import User
-from ....checkout import AddressType
 from ....core.postgres import FlatConcatSearchVector
 from ....core.tracing import traced_atomic_transaction
 from ....order import OrderStatus, models
@@ -125,20 +124,6 @@ class OrderUpdate(AddressMetadataMixin, ModelWithExtRefMutation, I18nMixin):
             except User.DoesNotExist:
                 if instance.user_id:
                     cleaned_input["user"] = None
-
-        if shipping_address_data:
-            cleaned_input["shipping_address"] = cls.validate_address(
-                shipping_address_data,
-                address_type=AddressType.SHIPPING,
-                info=info,
-            )
-
-        if billing_address_data:
-            cleaned_input["billing_address"] = cls.validate_address(
-                billing_address_data,
-                address_type=AddressType.BILLING,
-                info=info,
-            )
 
         return cleaned_input
 

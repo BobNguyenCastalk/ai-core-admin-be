@@ -5,11 +5,9 @@ from typing import TYPE_CHECKING
 from faker import Faker
 
 from ...account.models import Address, User
-from ...checkout.utils import get_or_create_checkout_metadata
 from .random_data import create_address, create_fake_user
 
 if TYPE_CHECKING:
-    from ...checkout.models import Checkout
     from ...order.models import Order
 
 logger = logging.getLogger(__name__)
@@ -65,23 +63,3 @@ def anonymize_order(order: "Order") -> "Order":
     anonymized_order.metadata = generate_fake_metadata()
     anonymized_order.private_metadata = generate_fake_metadata()
     return anonymized_order
-
-
-def anonymize_checkout(checkout: "Checkout") -> "Checkout":
-    """Generate an anonymized version of the provided checkout.
-
-    The instance cannot be saved
-    """
-    anonymized_checkout = copy.deepcopy(checkout)
-    # Prevent accidental saving of the instance
-    anonymized_checkout.save = _fake_save  # type: ignore[method-assign]
-    fake_user = generate_fake_user()
-    anonymized_checkout.user = fake_user
-    anonymized_checkout.email = fake_user.email
-    anonymized_checkout.shipping_address = generate_fake_address()
-    anonymized_checkout.billing_address = generate_fake_address()
-    anonymized_checkout.note = fake.paragraph()
-    anonymized_checkout_metadata = get_or_create_checkout_metadata(anonymized_checkout)
-    anonymized_checkout_metadata.metadata = generate_fake_metadata()
-    anonymized_checkout_metadata.private_metadata = generate_fake_metadata()
-    return anonymized_checkout

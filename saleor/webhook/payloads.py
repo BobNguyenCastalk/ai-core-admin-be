@@ -18,15 +18,10 @@ from graphene.utils.str_converters import to_camel_case
 from .. import __version__
 from ..account.models import User
 from ..attribute.models import AttributeValueTranslation
-from ..checkout import base_calculations
-from ..checkout.fetch import CheckoutInfo, CheckoutLineInfo
-from ..checkout.models import Checkout
-from ..checkout.utils import get_checkout_metadata
 from ..core.db.connection import allow_writer
 from ..core.prices import quantize_price, quantize_price_fields
 from ..core.utils import build_absolute_uri
 from ..core.utils.anonymization import (
-    anonymize_checkout,
     anonymize_order,
     generate_fake_user,
 )
@@ -139,10 +134,8 @@ def generate_metadata_updated_payload(
 ):
     serializer = PayloadSerializer()
 
-    if isinstance(instance, Checkout) or isinstance(instance, TransactionItem):
-        pk_field_name = "token"
-    else:
-        pk_field_name = "id"
+
+    pk_field_name = "id"
     return serializer.serialize(
         [instance],
         fields=[],
@@ -455,7 +448,7 @@ def generate_sale_toggle_payload(
 @allow_writer()
 @traced_payload_generator
 def generate_checkout_payload(
-    checkout: "Checkout", requestor: Optional["RequestorOrLazyObject"] = None
+    checkout, requestor: Optional["RequestorOrLazyObject"] = None
 ):
     serializer = PayloadSerializer()
     checkout_fields = (
@@ -500,19 +493,6 @@ def generate_checkout_payload(
             "lines": list(lines_dict_data),
             "meta": generate_meta(requestor_data=generate_requestor(requestor)),
             "created": checkout.created_at,
-            # We add token as a graphql ID as it worked in that way since we introduce
-            # a checkout payload
-            "token": graphene.Node.to_global_id("Checkout", checkout.token),
-            "metadata": (
-                lambda c=checkout: get_checkout_metadata(c).metadata
-                if hasattr(c, "metadata_storage")
-                else {}
-            ),
-            "private_metadata": (
-                lambda c=checkout: get_checkout_metadata(c).private_metadata
-                if hasattr(c, "metadata_storage")
-                else {}
-            ),
         },
     )
     return checkout_data
@@ -977,7 +957,7 @@ def generate_payment_payload(
 @allow_writer()
 @traced_payload_generator
 def generate_list_gateways_payload(
-    currency: Optional[str], checkout: Optional["Checkout"]
+    currency: Optional[str], checkout
 ):
     if checkout:
         # Deserialize checkout payload to dict and generate a new payload including
@@ -993,12 +973,6 @@ def _get_sample_object(qs: QuerySet):
     """Return random object from query."""
     random_object = qs.order_by("?").first()
     return random_object
-
-
-def _remove_token_from_checkout(checkout):
-    checkout_data = json.loads(checkout)
-    checkout_data[0]["token"] = str(uuid.UUID(int=1))
-    return json.dumps(checkout_data)
 
 
 def _generate_sample_order_payload(event_name):
@@ -1052,14 +1026,6 @@ def generate_sample_payload(event_name: str) -> Optional[dict]:
     elif event_name == WebhookEventAsyncType.PRODUCT_CREATED:
         product = _get_sample_object(Product.objects.all())
         payload = generate_product_payload(product) if product else None
-    elif event_name in checkout_events:
-        checkout = _get_sample_object(
-            Checkout.objects.prefetch_related("lines__variant__product")
-        )
-        if checkout:
-            anonymized_checkout = anonymize_checkout(checkout)
-            checkout_payload = generate_checkout_payload(anonymized_checkout)
-            payload = _remove_token_from_checkout(checkout_payload)
     elif event_name in pages_events:
         page = _get_sample_object(Page.objects.all())
         if page:
@@ -1155,7 +1121,7 @@ def generate_excluded_shipping_methods_for_order_payload(
 @allow_writer()
 @traced_payload_generator
 def generate_excluded_shipping_methods_for_checkout_payload(
-    checkout: "Checkout",
+    checkout,
     available_shipping_methods,
 ):
     checkout_data = json.loads(generate_checkout_payload(checkout))[0]
@@ -1167,92 +1133,6 @@ def generate_excluded_shipping_methods_for_checkout_payload(
         ],
     }
     return json.dumps(payload, cls=CustomJsonEncoder)
-
-
-@allow_writer()
-@traced_payload_generator
-def generate_checkout_payload_for_tax_calculation(
-    checkout_info: "CheckoutInfo",
-    lines: Iterable["CheckoutLineInfo"],
-):
-    checkout = checkout_info.checkout
-    tax_configuration = checkout_info.tax_configuration
-    prices_entered_with_tax = tax_configuration.prices_entered_with_tax
-
-    serializer = PayloadSerializer()
-
-    checkout_fields = ("currency",)
-
-    # Prepare checkout data
-    address = checkout_info.shipping_address or checkout_info.billing_address
-
-    total_amount = quantize_price(
-        base_calculations.base_checkout_total(checkout_info, lines).amount,
-        checkout.currency,
-    )
-
-    # Prepare user data
-    user = checkout_info.user
-    user_id = None
-    user_public_metadata = {}
-    if user:
-        user_id = graphene.Node.to_global_id("User", user.id)
-        user_public_metadata = user.metadata
-
-    # order promotion discount and entire_order voucher discount with
-    # apply_once_per_order set to False is not already included in the total price
-    discounted_object_promotion = bool(checkout_info.discounts)
-    discount_not_included = discounted_object_promotion
-    if not checkout.discount_amount:
-        discounts = []
-    else:
-        discount_amount = quantize_price(checkout.discount_amount, checkout.currency)
-        discount_name = checkout.discount_name
-        discounts = (
-            [{"name": discount_name, "amount": discount_amount}]
-            if discount_amount and discount_not_included
-            else []
-        )
-
-    # Prepare shipping data
-    shipping_method = checkout.shipping_method
-    shipping_method_name = None
-    if shipping_method:
-        shipping_method_name = shipping_method.name
-    shipping_method_amount = quantize_price(
-        base_calculations.base_checkout_delivery_price(checkout_info, lines).amount,
-        checkout.currency,
-    )
-
-    # Prepare line data
-    lines_dict_data = []
-
-    checkout_data = serializer.serialize(
-        [checkout],
-        fields=checkout_fields,
-        pk_field_name="token",
-        additional_fields={
-            "channel": (lambda c: c.channel, CHANNEL_FIELDS),
-            "address": (lambda _: address, ADDRESS_FIELDS),
-        },
-        extra_dict_data={
-            "user_id": user_id,
-            "user_public_metadata": user_public_metadata,
-            "included_taxes_in_prices": prices_entered_with_tax,
-            "total_amount": total_amount,
-            "shipping_amount": shipping_method_amount,
-            "shipping_name": shipping_method_name,
-            "discounts": discounts,
-            "lines": lines_dict_data,
-            "metadata": (
-                lambda c=checkout: get_checkout_metadata(c).metadata
-                if hasattr(c, "metadata_storage")
-                else {}
-            ),
-        },
-    )
-    return checkout_data
-
 
 def _generate_order_lines_payload_for_tax_calculation(lines: QuerySet[OrderLine]):
     serializer = PayloadSerializer()
@@ -1362,11 +1242,6 @@ def generate_transaction_action_request_payload(
         graphene.Node.to_global_id("Order", order_id) if order_id else None
     )
 
-    checkout_id = transaction.checkout_id
-    graphql_checkout_id = (
-        graphene.Node.to_global_id("Checkout", checkout_id) if checkout_id else None
-    )
-
     payload = {
         "action": {
             "type": transaction_data.action_type,
@@ -1394,7 +1269,6 @@ def generate_transaction_action_request_payload(
                 transaction.canceled_value, transaction.currency
             ),
             "order_id": graphql_order_id,
-            "checkout_id": graphql_checkout_id,
             "created_at": transaction.created_at,
             "modified_at": transaction.modified_at,
         },
@@ -1407,7 +1281,7 @@ def generate_transaction_action_request_payload(
 def generate_transaction_session_payload(
     transaction_process_action: "TransactionProcessActionData",
     transaction: "TransactionItem",
-    transaction_object: Union["Order", "Checkout"],
+    transaction_object: Union["Order"],
     payment_gateway: "PaymentGatewayData",
 ):
     transaction_object_id = graphene.Node.to_global_id(

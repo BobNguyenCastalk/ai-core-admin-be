@@ -26,7 +26,6 @@ from .mutations.account import (
     AccountDelete,
     AccountRegister,
     AccountRequestDeletion,
-    AccountSetDefaultAddress,
     AccountUpdate,
     ConfirmAccount,
     ConfirmEmailChange,
@@ -55,7 +54,6 @@ from .mutations.permission_group import (
 from .mutations.staff import (
     AddressCreate,
     AddressDelete,
-    AddressSetDefault,
     AddressUpdate,
     CustomerCreate,
     CustomerDelete,
@@ -284,7 +282,6 @@ class AccountMutations(graphene.ObjectType):
     account_address_create = AccountAddressCreate.Field()
     account_address_update = AccountAddressUpdate.Field()
     account_address_delete = AccountAddressDelete.Field()
-    account_set_default_address = AccountSetDefaultAddress.Field()
 
     account_register = AccountRegister.Field()
     account_update = AccountUpdate.Field()
@@ -295,7 +292,6 @@ class AccountMutations(graphene.ObjectType):
     address_create = AddressCreate.Field()
     address_update = AddressUpdate.Field()
     address_delete = AddressDelete.Field()
-    address_set_default = AddressSetDefault.Field()
 
     customer_create = CustomerCreate.Field()
     customer_update = CustomerUpdate.Field()

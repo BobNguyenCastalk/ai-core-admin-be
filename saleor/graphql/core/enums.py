@@ -5,7 +5,6 @@ from ...account import error_codes as account_error_codes
 from ...app import error_codes as app_error_codes
 from ...attribute import error_codes as attribute_error_codes
 from ...channel import error_codes as channel_error_codes
-from ...checkout import error_codes as checkout_error_codes
 from ...core import JobStatus, TimePeriodType
 from ...core import error_codes as core_error_codes
 from ...core.units import (
@@ -180,9 +179,6 @@ AttributeValueTranslateErrorCode.doc_category = DOC_CATEGORY_ATTRIBUTES
 
 ChannelErrorCode = graphene.Enum.from_enum(channel_error_codes.ChannelErrorCode)
 ChannelErrorCode.doc_category = DOC_CATEGORY_CHANNELS
-
-CheckoutErrorCode = graphene.Enum.from_enum(checkout_error_codes.CheckoutErrorCode)
-CheckoutErrorCode.doc_category = DOC_CATEGORY_CHECKOUT
 
 CustomerBulkUpdateErrorCode = graphene.Enum.from_enum(
     account_error_codes.CustomerBulkUpdateErrorCode

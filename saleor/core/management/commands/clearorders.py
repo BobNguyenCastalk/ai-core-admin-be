@@ -8,7 +8,6 @@ configuration, such as: warehouses, shipping zones, staff accounts, plugin confi
 from django.core.management.base import BaseCommand
 
 from ....account.models import Address, CustomerEvent, CustomerNote, User
-from ....checkout.models import Checkout, CheckoutLine, CheckoutMetadata
 from ....order.models import (
     Fulfillment,
     FulfillmentLine,
@@ -19,12 +18,6 @@ from ....order.models import (
     OrderLine,
 )
 from ....payment.models import Payment, Transaction, TransactionEvent, TransactionItem
-from ....warehouse.models import (
-    Allocation,
-    PreorderAllocation,
-    PreorderReservation,
-    Reservation,
-)
 
 
 class Command(BaseCommand):
@@ -39,10 +32,6 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         self.delete_payments()
-        self.delete_allocations()
-        self.delete_reservations()
-        self.delete_checkouts()
-        self.delete_gift_cards()
         self.delete_orders()
         self.delete_unassigned_addresses()
 
@@ -50,34 +39,6 @@ class Command(BaseCommand):
         if should_delete_customers:
             self.delete_customers()
 
-    def delete_allocations(self):
-        allocations = Allocation.objects.all()
-        allocations._raw_delete(allocations.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-
-        preorder_allocations = PreorderAllocation.objects.all()
-        preorder_allocations._raw_delete(preorder_allocations.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-
-        self.stdout.write("Removed allocations")
-
-    def delete_reservations(self):
-        reservations = Reservation.objects.all()
-        reservations._raw_delete(reservations.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-
-        preorder_reservations = PreorderReservation.objects.all()
-        preorder_reservations._raw_delete(preorder_reservations.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-
-        self.stdout.write("Removed reservations")
-
-    def delete_checkouts(self):
-        metadata = CheckoutMetadata.objects.all()
-        metadata._raw_delete(metadata.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-
-        checkout_lines = CheckoutLine.objects.all()
-        checkout_lines._raw_delete(checkout_lines.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-
-        checkout = Checkout.objects.all()
-        checkout._raw_delete(checkout.db)  # type: ignore[attr-defined] # raw access # noqa: E501
-        self.stdout.write("Removed checkouts")
 
     def delete_payments(self):
         order_granted_refund_lines = OrderGrantedRefundLine.objects.all()

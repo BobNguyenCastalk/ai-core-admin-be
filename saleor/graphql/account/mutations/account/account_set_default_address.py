@@ -3,9 +3,8 @@ from typing import cast
 import graphene
 from django.core.exceptions import ValidationError
 
-from .....account import models, utils
+from .....account import models
 from .....account.error_codes import AccountErrorCode
-from .....checkout import AddressType
 from .....permission.auth_filters import AuthorizationFilters
 from .....webhook.event_types import WebhookEventAsyncType
 from ....core import ResolveInfo
@@ -58,11 +57,7 @@ class AccountSetDefaultAddress(BaseMutation):
                 }
             )
 
-        if type == AddressTypeEnum.BILLING.value:
-            address_type = AddressType.BILLING
-        else:
-            address_type = AddressType.SHIPPING
+
         manager = get_plugin_manager_promise(info.context).get()
-        utils.change_user_default_address(user, address, address_type, manager)
         cls.call_event(manager.customer_updated, user)
         return cls(user=user)

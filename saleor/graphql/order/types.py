@@ -11,7 +11,6 @@ from promise import Promise
 
 from ...account.models import Address
 from ...account.models import User as UserModel
-from ...checkout.utils import get_external_shipping_id
 from ...core.anonymize import obfuscate_address, obfuscate_email
 from ...core.db.connection import allow_writer_in_context
 from ...core.prices import quantize_price
@@ -1649,12 +1648,6 @@ class Order(ModelObjectType[models.Order]):
             return None
 
         return UserByUserIdLoader(info.context).load(root.user_id).then(_resolve_user)
-
-    @classmethod
-    def resolve_delivery_method(cls, root: models.Order, info):
-        if root.shipping_method_id or get_external_shipping_id(root):
-            return cls.resolve_shipping_method(root, info)
-        return None
 
     @classmethod
     @traced_resolver

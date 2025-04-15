@@ -343,61 +343,6 @@ class BasePlugin:
 
     authorize_payment: Callable[["PaymentData", Any], GatewayResponse]
 
-    # Calculate checkout line total.
-    #
-    # Overwrite this method if you need to apply specific logic for the calculation
-    # of a checkout line total. Return TaxedMoney.
-    calculate_checkout_line_total: Callable[
-        [
-            "CheckoutInfo",
-            list["CheckoutLineInfo"],
-            "CheckoutLineInfo",
-            Union["Address", None],
-            TaxedMoney,
-        ],
-        TaxedMoney,
-    ]
-
-    # Calculate checkout line unit price.
-    calculate_checkout_line_unit_price: Callable[
-        [
-            "CheckoutInfo",
-            list["CheckoutLineInfo"],
-            "CheckoutLineInfo",
-            Union["Address", None],
-            Any,
-        ],
-        TaxedMoney,
-    ]
-
-    # Calculate the shipping costs for checkout.
-    #
-    # Overwrite this method if you need to apply specific logic for the calculation
-    # of shipping costs. Return TaxedMoney.
-    calculate_checkout_shipping: Callable[
-        [
-            "CheckoutInfo",
-            list["CheckoutLineInfo"],
-            Union["Address", None],
-            TaxedMoney,
-        ],
-        TaxedMoney,
-    ]
-
-    # Calculate the total for checkout.
-    #
-    # Overwrite this method if you need to apply specific logic for the calculation
-    # of a checkout total. Return TaxedMoney.
-    calculate_checkout_total: Callable[
-        [
-            "CheckoutInfo",
-            list["CheckoutLineInfo"],
-            Union["Address", None],
-            TaxedMoney,
-        ],
-        TaxedMoney,
-    ]
-
     # Calculate the subtotal for checkout.
     #
     # Overwrite this method if you need to apply specific logic for the calculation

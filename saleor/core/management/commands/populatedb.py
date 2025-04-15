@@ -8,11 +8,7 @@ from django.db import connection
 
 from ....account.utils import create_superuser
 from ...utils.random_data import (
-    add_address_to_admin,
     create_channels,
-    create_checkout_with_custom_prices,
-    create_checkout_with_preorders,
-    create_checkout_with_same_variant_in_multiple_lines,
     create_menus,
     create_orders,
     create_page_type,
@@ -100,12 +96,6 @@ class Command(BaseCommand):
             self.stdout.write(msg)
         for msg in create_menus():
             self.stdout.write(msg)
-        for msg in create_checkout_with_preorders():
-            self.stdout.write(msg)
-        for msg in create_checkout_with_custom_prices():
-            self.stdout.write(msg)
-        for msg in create_checkout_with_same_variant_in_multiple_lines():
-            self.stdout.write(msg)
 
         if options["createsuperuser"]:
             credentials = {
@@ -114,7 +104,6 @@ class Command(BaseCommand):
             }
             msg = create_superuser(credentials)
             self.stdout.write(msg)
-            add_address_to_admin(credentials["email"])
         if not options["skipsequencereset"]:
             self.sequence_reset()
 

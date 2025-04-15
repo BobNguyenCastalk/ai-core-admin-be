@@ -8,18 +8,15 @@ from graphene import relay
 from promise import Promise
 
 from ...account import models
-from ...checkout.utils import get_user_checkout
 from ...core.exceptions import PermissionDenied
 from ...graphql.meta.inputs import MetadataInput
 from ...order import OrderStatus
-from ...payment.interface import ListStoredPaymentMethodsRequestData
 from ...permission.auth_filters import AuthorizationFilters
 from ...permission.enums import (
     AccountPermissions,
     AppPermission,
     OrderPermissions,
 )
-from ...plugins.manager import PluginsManager
 from ...thumbnail.utils import (
     get_image_or_proxy_url,
     get_thumbnail_format,
@@ -430,13 +427,6 @@ class User(ModelObjectType[models.User]):
         return root.addresses.annotate_default(root).all()
 
     @staticmethod
-    def resolve_checkout(root: models.User, info: ResolveInfo):
-        database_connection_name = get_database_connection_name(info.context)
-        return get_user_checkout(
-            root, database_connection_name=database_connection_name
-        )
-
-    @staticmethod
     def resolve_user_permissions(root: models.User, info: ResolveInfo):
         from .resolvers import resolve_permissions
 
@@ -597,20 +587,12 @@ class User(ModelObjectType[models.User]):
         if not requestor or requestor.id != root.id:
             return []
 
-        def get_stored_payment_methods(data: tuple[Channel, "PluginsManager"]):
-            channel_obj, manager = data
-            request_data = ListStoredPaymentMethodsRequestData(
-                user=root,
-                channel=channel_obj,
-            )
-            return manager.list_stored_payment_methods(request_data)
-
         return Promise.all(
             [
                 ChannelBySlugLoader(info.context).load(channel),
                 get_plugin_manager_promise(info.context),
             ]
-        ).then(get_stored_payment_methods)
+        )
 
     @staticmethod
     def resolve_default_billing_address(root: models.User, info: ResolveInfo):

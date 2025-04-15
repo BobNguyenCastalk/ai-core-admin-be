@@ -7,7 +7,6 @@ import graphene
 from prices import Money
 
 from ..attribute import AttributeEntityType, AttributeInputType
-from ..checkout.fetch import fetch_checkout_lines
 from ..core.prices import quantize_price
 from ..product.models import Product
 
@@ -22,7 +21,7 @@ def serialize_checkout_lines(checkout: "Checkout") -> list[dict]:
     data = []
     channel = checkout.channel
     currency = channel.currency_code
-    lines, _ = fetch_checkout_lines(checkout, prefetch_variant_attributes=True)
+    lines, _ = [], []
     for line_info in lines:
         variant = line_info.variant
         product = variant.product

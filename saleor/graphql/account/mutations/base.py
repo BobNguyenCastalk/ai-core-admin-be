@@ -11,7 +11,6 @@ from ....account import models as account_models
 from ....account.error_codes import AccountErrorCode
 from ....account.notifications import send_set_password_notification
 from ....account.search import prepare_user_search_document_value
-from ....checkout import AddressType
 from ....core.exceptions import PermissionDenied
 from ....core.tracing import traced_atomic_transaction
 from ....core.utils.url import prepare_url, validate_storefront_url
@@ -265,31 +264,7 @@ class BaseCustomerCreate(ModelMutation, I18nMixin):
 
     @classmethod
     def clean_input(cls, info: ResolveInfo, instance, data, **kwargs):
-        shipping_address_data = data.pop(SHIPPING_ADDRESS_FIELD, None)
-        billing_address_data = data.pop(BILLING_ADDRESS_FIELD, None)
         cleaned_input = super().clean_input(info, instance, data, **kwargs)
-
-        if shipping_address_data:
-            address_metadata = shipping_address_data.pop("metadata", list())
-            shipping_address = cls.validate_address(
-                shipping_address_data,
-                address_type=AddressType.SHIPPING,
-                instance=getattr(instance, SHIPPING_ADDRESS_FIELD),
-                info=info,
-            )
-            cls.update_metadata(shipping_address, address_metadata)
-            cleaned_input[SHIPPING_ADDRESS_FIELD] = shipping_address
-
-        if billing_address_data:
-            address_metadata = billing_address_data.pop("metadata", list())
-            billing_address = cls.validate_address(
-                billing_address_data,
-                address_type=AddressType.BILLING,
-                instance=getattr(instance, BILLING_ADDRESS_FIELD),
-                info=info,
-            )
-            cls.update_metadata(billing_address, address_metadata)
-            cleaned_input[BILLING_ADDRESS_FIELD] = billing_address
 
         if cleaned_input.get("redirect_url"):
             try:

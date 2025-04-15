@@ -1,14 +1,8 @@
-from functools import partial
 from typing import Union
 
 import graphene
-from prices import Money
-from promise import Promise
 
-from ....checkout import base_calculations
-from ....checkout.models import Checkout, CheckoutLine
-from ....core.prices import quantize_price
-from ....order.models import Order, OrderLine
+from ....order.models import Order
 from ...account.dataloaders import AddressByIdLoader
 from ...channel.dataloaders import ChannelByIdLoader
 from ...channel.types import Channel
@@ -43,46 +37,24 @@ class TaxableObject(BaseObjectType):
         doc_category = DOC_CATEGORY_TAXES
 
     @staticmethod
-    def resolve_channel(root: Union[Checkout, Order], info: ResolveInfo):
+    def resolve_channel(root: Union[ Order], info: ResolveInfo):
         return ChannelByIdLoader(info.context).load(root.channel_id)
 
     @staticmethod
-    def resolve_address(root: Union[Checkout, Order], info: ResolveInfo):
+    def resolve_address(root: Union[Order], info: ResolveInfo):
         address_id = root.shipping_address_id or root.billing_address_id
         if not address_id:
             return None
         return AddressByIdLoader(info.context).load(address_id)
 
     @staticmethod
-    def resolve_source_object(root: Union[Checkout, Order], _info: ResolveInfo):
+    def resolve_source_object(root: Union[Order], _info: ResolveInfo):
         return root
 
     @staticmethod
-    def resolve_currency(root: Union[Checkout, Order], _info: ResolveInfo):
+    def resolve_currency(root: Union[Order], _info: ResolveInfo):
         return root.currency
 
     @staticmethod
-    def resolve_shipping_price(root: Union[Checkout, Order], info: ResolveInfo):
-        if isinstance(root, Checkout):
-
-            def calculate_shipping_price(data):
-                checkout_info, lines = data
-                price = base_calculations.base_checkout_delivery_price(
-                    checkout_info, lines
-                )
-
-                return quantize_price(
-                    price,
-                    checkout_info.checkout.currency,
-                )
-
-            return Promise.all(
-                [
-                ]
-            ).then(calculate_shipping_price)
-
-        return root.base_shipping_price
-
-    @staticmethod
-    def resolve_lines(root: Union[Checkout, Order], info: ResolveInfo):
+    def resolve_lines(root: Union[Order], info: ResolveInfo):
         return OrderLinesByOrderIdLoader(info.context).load(root.id)

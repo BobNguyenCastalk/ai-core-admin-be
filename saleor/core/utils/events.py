@@ -1,7 +1,5 @@
 from django.db import transaction
 
-from ...checkout.fetch import CheckoutInfo
-from ...checkout.models import Checkout
 from ...order.fetch import OrderInfo
 from ...order.models import Order
 from ...webhook.event_types import WebhookEventAsyncType
@@ -130,7 +128,7 @@ def call_event(func_obj, *func_args, **func_kwargs):
     """
     is_protected_instance = any(
         [
-            isinstance(arg, (Checkout, CheckoutInfo, Order, OrderInfo))
+            isinstance(arg, (Order, OrderInfo))
             for arg in func_args
         ]
     )

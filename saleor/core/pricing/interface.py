@@ -4,8 +4,6 @@ from typing import TYPE_CHECKING, Optional, Union
 
 if TYPE_CHECKING:
     from ...channel.models import Channel
-    from ...checkout.models import CheckoutLine
-    from ...order.models import OrderLine
     from ...product.models import (
         Collection,
         Product,
@@ -17,7 +15,6 @@ if TYPE_CHECKING:
 
 @dataclass
 class LineInfo:
-    line: Union["OrderLine", "CheckoutLine"]
     variant: Optional["ProductVariant"]
     product: Optional["Product"]
     product_type: Optional["ProductType"]

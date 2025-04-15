@@ -1,6 +1,5 @@
 from .address_create import AddressCreate
 from .address_delete import AddressDelete
-from .address_set_default import AddressSetDefault
 from .address_update import AddressUpdate
 from .customer_create import CustomerCreate
 from .customer_delete import CustomerDelete
@@ -14,7 +13,6 @@ from .user_avatar_update import UserAvatarUpdate
 __all__ = [
     "AddressCreate",
     "AddressDelete",
-    "AddressSetDefault",
     "AddressUpdate",
     "CustomerCreate",
     "CustomerDelete",

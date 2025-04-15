@@ -13,7 +13,6 @@ from django.utils import timezone
 from django_prices.models import MoneyField
 from prices import Money
 
-from ..checkout.models import Checkout
 from ..core.models import ModelWithMetadata
 from ..core.taxes import zero_money
 from ..permission.enums import PaymentPermissions
@@ -111,12 +110,6 @@ class TransactionItem(ModelWithMetadata):
 
     external_url = models.URLField(blank=True, null=True)
 
-    checkout = models.ForeignKey(
-        Checkout,
-        null=True,
-        related_name="payment_transactions",
-        on_delete=models.SET_NULL,
-    )
     order = models.ForeignKey(
         "order.Order",
         related_name="payment_transactions",
@@ -261,9 +254,6 @@ class Payment(ModelWithMetadata):
         max_length=settings.DEFAULT_CURRENCY_CODE_LENGTH
     )  # FIXME: add ISO4217 validator
 
-    checkout = models.ForeignKey(
-        Checkout, null=True, related_name="payments", on_delete=models.SET_NULL
-    )
     order = models.ForeignKey(
         "order.Order",
         related_name="payments",

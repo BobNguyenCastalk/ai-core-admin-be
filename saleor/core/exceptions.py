@@ -6,10 +6,8 @@ from uuid import UUID
 
 from graphql import GraphQLError
 
-from ..checkout.error_codes import CheckoutErrorCode
 
 if TYPE_CHECKING:
-    from ..checkout.models import CheckoutLine
     from ..order.models import OrderLine
     from ..product.models import ProductVariant
 
@@ -18,7 +16,6 @@ if TYPE_CHECKING:
 class InsufficientStockData:
     available_quantity: int
     variant: Optional["ProductVariant"] = None
-    checkout_line: Optional["CheckoutLine"] = None
     order_line: Optional["OrderLine"] = None
     warehouse_pk: Union[UUID, None] = None
 
@@ -34,7 +31,6 @@ class InsufficientStock(Exception):
         details = [str(item.variant or item.order_line) for item in items]
         super().__init__(f"Insufficient stock for {', '.join(details)}")
         self.items = items
-        self.code = CheckoutErrorCode.INSUFFICIENT_STOCK
 
 
 class AllocationError(Exception):
@@ -54,7 +50,6 @@ class ProductNotPublished(Exception):
     def __init__(self, context=None):
         super().__init__("Can't add unpublished product.")
         self.context = context
-        self.code = CheckoutErrorCode.PRODUCT_NOT_PUBLISHED
 
 
 class PermissionDenied(Exception):

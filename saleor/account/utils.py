@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 from django.conf import settings
 from django.db.models import Exists, OuterRef
 
-from ..checkout import AddressType
 from ..core.utils.events import call_event
 from ..permission.models import Permission
 from ..plugins.manager import get_plugins_manager
@@ -32,16 +31,6 @@ def store_user_address(
     address_data = address.as_data()
 
     address = user.addresses.filter(**address_data).first()
-    if address is None:
-        address = user.addresses.create(**address_data)
-
-    if address_type == AddressType.BILLING:
-        if not user.default_billing_address:
-            set_user_default_billing_address(user, address)
-    elif address_type == AddressType.SHIPPING:
-        if not user.default_shipping_address:
-            set_user_default_shipping_address(user, address)
-
 
 def is_user_address_limit_reached(user: "User"):
     """Return True if user cannot have more addresses."""
@@ -80,14 +69,6 @@ def change_user_default_address(
     user: User, address: "Address", address_type: str, manager: "PluginsManager"
 ):
     address = manager.change_user_address(address, address_type, user)
-    if address_type == AddressType.BILLING:
-        if user.default_billing_address:
-            user.addresses.add(user.default_billing_address)
-        set_user_default_billing_address(user, address)
-    elif address_type == AddressType.SHIPPING:
-        if user.default_shipping_address:
-            user.addresses.add(user.default_shipping_address)
-        set_user_default_shipping_address(user, address)
 
 
 def create_superuser(credentials):

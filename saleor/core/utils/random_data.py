@@ -39,10 +39,6 @@ from ...attribute.models import (
     AttributeVariant,
 )
 from ...channel.models import Channel
-from ...checkout import AddressType
-from ...checkout.fetch import fetch_checkout_info
-from ...checkout.models import Checkout
-from ...checkout.utils import add_variant_to_checkout
 from ...core.weight import zero_weight
 from ...menu.models import Menu, MenuItem
 from ...order import OrderStatus
@@ -817,14 +813,6 @@ def create_channels():
         country="PL",
     )
 
-def add_address_to_admin(email):
-    address = create_address()
-    user = User.objects.get(email=email)
-    manager = get_plugins_manager(allow_replica=False)
-    store_user_address(user, address, AddressType.BILLING, manager)
-    store_user_address(user, address, AddressType.SHIPPING, manager)
-
-
 def create_page_type():
     types = get_sample_data()
 
@@ -884,58 +872,3 @@ def get_product_list_images_dir(placeholder_dir):
 def get_image(image_dir, image_name):
     img_path = os.path.join(image_dir, image_name)
     return File(open(img_path, "rb"), name=image_name)
-
-
-def prepare_checkout_info():
-    channel = Channel.objects.get(slug=settings.DEFAULT_CHANNEL_SLUG)
-    checkout = Checkout.objects.create(currency=channel.currency_code, channel=channel)
-    checkout.set_country(channel.default_country, commit=True)
-    checkout_info = fetch_checkout_info(
-        checkout, [], get_plugins_manager(allow_replica=False)
-    )
-    return checkout_info
-
-
-def create_checkout_with_preorders():
-    checkout_info = prepare_checkout_info()
-    for product_variant in ProductVariant.objects.all()[:2]:
-        product_variant.is_preorder = True
-        product_variant.preorder_global_threshold = 10
-        product_variant.preorder_end_date = timezone.now() + datetime.timedelta(days=10)
-        product_variant.save(
-            update_fields=[
-                "is_preorder",
-                "preorder_global_threshold",
-                "preorder_end_date",
-                "updated_at",
-            ]
-        )
-        add_variant_to_checkout(checkout_info, product_variant, 2)
-    yield (
-        "Created checkout with two preorders. Checkout token: "
-        f"{checkout_info.checkout.token}"
-    )
-
-
-def create_checkout_with_custom_prices():
-    checkout_info = prepare_checkout_info()
-    for product_variant in ProductVariant.objects.all()[:2]:
-        add_variant_to_checkout(
-            checkout_info, product_variant, 2, price_override=Decimal("20.0")
-        )
-    yield (
-        "Created checkout with two lines and custom prices. "
-        f"Checkout token: {checkout_info.checkout.token}."
-    )
-
-
-def create_checkout_with_same_variant_in_multiple_lines():
-    checkout_info = prepare_checkout_info()
-    for product_variant in ProductVariant.objects.all()[:2]:
-        add_variant_to_checkout(checkout_info, product_variant, 2)
-        add_variant_to_checkout(checkout_info, product_variant, 2, force_new_line=True)
-
-    yield (
-        "Created checkout with four lines and same variant in multiple lines "
-        f"Checkout token: {checkout_info.checkout.token}."
-    )

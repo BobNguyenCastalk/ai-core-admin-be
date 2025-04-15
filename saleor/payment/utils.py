@@ -17,13 +17,6 @@ from django.utils import timezone
 from ..account.models import User
 from ..app.models import App
 from ..channel import TransactionFlowStrategy
-from ..checkout.actions import (
-    transaction_amounts_for_checkout_updated,
-    update_last_transaction_modified_at_for_checkout,
-)
-from ..checkout.fetch import fetch_checkout_info, fetch_checkout_lines
-from ..checkout.models import Checkout
-from ..checkout.payment_utils import update_refundable_for_checkout
 from ..core.db.connection import allow_writer
 from ..core.prices import quantize_price
 from ..core.tracing import traced_atomic_transaction
@@ -135,20 +128,14 @@ def recalculate_refundable_for_checkout(
     if last_refund_success_changed:
         transaction_item.save(update_fields=["last_refund_success"])
 
-    if transaction_item.checkout_id:
-        update_refundable_for_checkout(transaction_item.checkout_id)
-
 
 def create_payment_lines_information(
     payment: Payment,
     manager: PluginsManager,
 ) -> PaymentLinesData:
-    checkout = payment.checkout
     order = payment.order
 
-    if checkout:
-        return create_checkout_payment_lines_information(checkout, manager)
-    elif order:
+    if order:
         return create_order_payment_lines_information(order)
 
     return PaymentLinesData(
@@ -156,51 +143,6 @@ def create_payment_lines_information(
         voucher_amount=Decimal("0.00"),
         lines=[],
     )
-
-
-def create_checkout_payment_lines_information(
-    checkout: Checkout, manager: PluginsManager
-) -> PaymentLinesData:
-    line_items = []
-    lines, _ = fetch_checkout_lines(checkout)
-    checkout_info = fetch_checkout_info(checkout, lines, manager)
-    address = checkout_info.shipping_address or checkout_info.billing_address
-
-    for line_info in lines:
-        unit_price = manager.calculate_checkout_line_unit_price(
-            checkout_info,
-            lines,
-            line_info,
-            address,
-        )
-        unit_gross = unit_price.gross.amount
-
-        quantity = line_info.line.quantity
-        product_name = f"{line_info.variant.product.name}, {line_info.variant.name}"
-        product_sku = line_info.variant.sku
-        line_items.append(
-            PaymentLineData(
-                quantity=quantity,
-                product_name=product_name,
-                product_sku=product_sku,
-                variant_id=line_info.variant.id,
-                amount=unit_gross,
-            )
-        )
-    shipping_amount = manager.calculate_checkout_shipping(
-        checkout_info=checkout_info,
-        lines=lines,
-        address=address,
-    ).gross.amount
-
-    voucher_amount = -checkout.discount_amount
-
-    return PaymentLinesData(
-        shipping_amount=shipping_amount,
-        voucher_amount=voucher_amount,
-        lines=line_items,
-    )
-
 
 def create_order_payment_lines_information(order: Order) -> PaymentLinesData:
     line_items = []
@@ -268,9 +210,7 @@ def create_payment_information(
         email = cast(str, checkout.get_customer_email())
         user_id = checkout.user_id
         checkout_token = str(checkout.token)
-        from ..checkout.utils import get_checkout_metadata
 
-        checkout_metadata = get_checkout_metadata(checkout).metadata
     elif order := payment.order:
         billing = order.billing_address
         shipping = order.shipping_address
@@ -338,7 +278,7 @@ def create_payment(
     customer_ip_address: Optional[str] = None,
     payment_token: Optional[str] = None,
     extra_data: Optional[dict] = None,
-    checkout: Optional[Checkout] = None,
+    checkout = None,
     order: Optional[Order] = None,
     return_url: Optional[str] = None,
     external_reference: Optional[str] = None,
@@ -361,10 +301,7 @@ def create_payment(
         "token": payment_token or "",
     }
 
-    if checkout:
-        data["checkout"] = checkout
-        billing_address = checkout.billing_address
-    elif order:
+    if order:
         data["order"] = order
         billing_address = order.billing_address
     else:
@@ -1318,16 +1255,9 @@ def create_transaction_event_for_transaction_session(
                 previous_charged_value=previous_charged_value,
                 previous_refunded_value=previous_refunded_value,
             )
-        elif transaction_item.checkout_id:
-            transaction_amounts_for_checkout_updated(
-                transaction_item, manager, app=app, user=None
-            )
     elif event.psp_reference and transaction_item.psp_reference != event.psp_reference:
         transaction_item.psp_reference = event.psp_reference
         transaction_item.save(update_fields=["psp_reference", "modified_at"])
-        if transaction_item.checkout_id:
-            checkout = cast(Checkout, transaction_item.checkout)
-            update_last_transaction_modified_at_for_checkout(checkout, transaction_item)
 
     return event
 
@@ -1426,12 +1356,6 @@ def create_transaction_event_from_request_and_webhook_response(
             )
             calculate_order_granted_refund_status(granted_refund)
 
-    elif transaction_item.checkout_id:
-        manager = get_plugins_manager(allow_replica=True)
-        recalculate_refundable_for_checkout(transaction_item, request_event, event)
-        transaction_amounts_for_checkout_updated(
-            transaction_item, manager, app=app, user=None
-        )
     return event
 
 
@@ -1552,7 +1476,7 @@ def create_manual_adjustment_events(
 
 
 def get_transaction_item_params(
-    source_object: Union[Checkout, Order],
+    source_object: Union[Order],
     user: Optional[User],
     app: Optional[App],
     psp_reference: Optional[str],
@@ -1561,10 +1485,8 @@ def get_transaction_item_params(
 ):
     return {
         "name": name,
-        "checkout_id": source_object.pk
-        if isinstance(source_object, Checkout)
-        else None,
-        "order_id": source_object.pk if isinstance(source_object, Order) else None,
+        "checkout_id": None,
+        "order_id": None,
         "currency": source_object.currency,
         "app": app,
         "app_identifier": app.identifier if app else None,
@@ -1605,7 +1527,7 @@ def create_transaction_for_order(
 
 @allow_writer()
 def handle_transaction_initialize_session(
-    source_object: Union[Checkout, Order],
+    source_object: Union[Order],
     payment_gateway_data: PaymentGatewayData,
     amount: Decimal,
     action: str,
@@ -1677,7 +1599,7 @@ def handle_transaction_initialize_session(
 
 def handle_transaction_process_session(
     transaction_item: TransactionItem,
-    source_object: Union[Checkout, Order],
+    source_object: Union[Order],
     payment_gateway_data: PaymentGatewayData,
     action: str,
     app: App,
