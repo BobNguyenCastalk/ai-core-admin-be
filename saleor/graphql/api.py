@@ -20,7 +20,6 @@ from .account.schema import AccountMutations, AccountQueries
 from .app.schema import AppQueries
 from .attribute.schema import AttributeMutations, AttributeQueries
 from .channel.schema import ChannelMutations, ChannelQueries
-from .checkout.schema import CheckoutMutations, CheckoutQueries
 from .core.enums import unit_enums
 from .core.federation.schema import build_federated_schema
 from .core.schema import CoreMutations, CoreQueries
@@ -41,7 +40,6 @@ class Query(
     AppQueries,
     AttributeQueries,
     ChannelQueries,
-    CheckoutQueries,
     CoreQueries,
     PluginsQueries,
     MenuQueries,
@@ -58,7 +56,6 @@ class Mutation(
     AccountMutations,
     AttributeMutations,
     ChannelMutations,
-    CheckoutMutations,
     CoreMutations,
     PluginsMutations,
     MenuMutations,

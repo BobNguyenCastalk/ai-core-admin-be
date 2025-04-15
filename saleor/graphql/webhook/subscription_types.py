@@ -31,7 +31,6 @@ from ...webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
 from ..account.types import User as UserType
 from ..app.types import App as AppType
 from ..channel import ChannelContext
-from ..channel.dataloaders import ChannelByIdLoader
 from ..channel.enums import TransactionFlowStrategyEnum
 from ..core import ResolveInfo
 from ..core.context import get_database_connection_name
@@ -59,8 +58,6 @@ from ..core.doc_category import (
 from ..core.fields import BaseField
 from ..core.scalars import JSON, DateTime, PositiveDecimal
 from ..core.types import NonNullList, SubscriptionObjectType
-from ..core.types.order_or_checkout import OrderOrCheckout
-from ..order.dataloaders import OrderByIdLoader
 from ..order.types import Order, OrderGrantedRefund
 from ..payment.enums import TokenizedPaymentFlowEnum, TransactionActionEnum
 from ..payment.types import TransactionItem
@@ -1059,55 +1056,6 @@ class CollectionMetadataUpdated(SubscriptionObjectType, CollectionBase):
         description = "Event sent when collection metadata is updated." + ADDED_IN_38
 
 
-class CheckoutBase(AbstractType):
-    checkout = graphene.Field(
-        "saleor.graphql.checkout.types.Checkout",
-        description="The checkout the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_checkout(root, _info: ResolveInfo):
-        _, checkout = root
-        return checkout
-
-
-class CheckoutCreated(SubscriptionObjectType, CheckoutBase):
-    class Meta:
-        root_type = "Checkout"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new checkout is created." + ADDED_IN_32
-
-
-class CheckoutUpdated(SubscriptionObjectType, CheckoutBase):
-    class Meta:
-        root_type = "Checkout"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when checkout is updated." + ADDED_IN_32
-
-
-class CheckoutFullyPaid(SubscriptionObjectType, CheckoutBase):
-    class Meta:
-        root_type = "Checkout"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = (
-            "Event sent when checkout is fully paid with transactions."
-            " The checkout is considered as fully paid when the checkout "
-            "`charge_status` is `FULL` or `OVERCHARGED`. "
-            "The event is not sent when the checkout authorization flow strategy "
-            "is used." + ADDED_IN_313 + PREVIEW_FEATURE
-        )
-
-
-class CheckoutMetadataUpdated(SubscriptionObjectType, CheckoutBase):
-    class Meta:
-        root_type = "Checkout"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when checkout metadata is updated." + ADDED_IN_38
-
 class PermissionGroupBase(AbstractType):
     permission_group = graphene.Field(
         "saleor.graphql.account.types.Group",
@@ -1284,9 +1232,6 @@ class TransactionCancelationRequested(TransactionActionBase, SubscriptionObjectT
 
 
 class PaymentGatewayInitializeSession(SubscriptionObjectType):
-    source_object = graphene.Field(
-        OrderOrCheckout, description="Checkout or order", required=True
-    )
     data = graphene.Field(
         JSON,
         description="Payment gateway data in JSON format, received from storefront.",
@@ -1340,9 +1285,6 @@ class TransactionProcessAction(SubscriptionObjectType, AbstractType):
 class TransactionSessionBase(SubscriptionObjectType, AbstractType):
     transaction = graphene.Field(
         TransactionItem, description="Look up a transaction.", required=True
-    )
-    source_object = graphene.Field(
-        OrderOrCheckout, description="Checkout or order", required=True
     )
     data = graphene.Field(
         JSON,
@@ -1754,15 +1696,6 @@ class PaymentProcessEvent(SubscriptionObjectType, PaymentBase):
         doc_category = DOC_CATEGORY_PAYMENTS
 
 
-class PaymentListGateways(SubscriptionObjectType, CheckoutBase):
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = "List payment gateways." + ADDED_IN_36
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
 class CalculateTaxes(SubscriptionObjectType):
     tax_base = graphene.Field(
         "saleor.graphql.core.types.taxes.TaxableObject", required=True
@@ -2018,7 +1951,6 @@ SYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventSyncType.PAYMENT_VOID: PaymentVoidEvent,
     WebhookEventSyncType.PAYMENT_CONFIRM: PaymentConfirmEvent,
     WebhookEventSyncType.PAYMENT_PROCESS: PaymentProcessEvent,
-    WebhookEventSyncType.PAYMENT_LIST_GATEWAYS: PaymentListGateways,
     WebhookEventSyncType.TRANSACTION_CANCELATION_REQUESTED: (
         TransactionCancelationRequested
     ),
@@ -2122,10 +2054,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.COLLECTION_UPDATED: CollectionUpdated,
     WebhookEventAsyncType.COLLECTION_DELETED: CollectionDeleted,
     WebhookEventAsyncType.COLLECTION_METADATA_UPDATED: CollectionMetadataUpdated,
-    WebhookEventAsyncType.CHECKOUT_CREATED: CheckoutCreated,
-    WebhookEventAsyncType.CHECKOUT_UPDATED: CheckoutUpdated,
-    WebhookEventAsyncType.CHECKOUT_FULLY_PAID: CheckoutFullyPaid,
-    WebhookEventAsyncType.CHECKOUT_METADATA_UPDATED: CheckoutMetadataUpdated,
     WebhookEventAsyncType.PERMISSION_GROUP_CREATED: PermissionGroupCreated,
     WebhookEventAsyncType.PERMISSION_GROUP_UPDATED: PermissionGroupUpdated,
     WebhookEventAsyncType.PERMISSION_GROUP_DELETED: PermissionGroupDeleted,

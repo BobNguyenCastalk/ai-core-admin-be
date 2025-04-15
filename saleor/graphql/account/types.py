@@ -30,13 +30,10 @@ from ..app.dataloaders import AppByIdLoader, get_app_promise
 from ..app.types import App
 from ..channel.dataloaders import ChannelBySlugLoader
 from ..channel.types import Channel
-from ..checkout.dataloaders import CheckoutByUserAndChannelLoader, CheckoutByUserLoader
-from ..checkout.types import Checkout, CheckoutCountableConnection
 from ..core import ResolveInfo
 from ..core.connection import CountableConnection, create_connection_slice
 from ..core.context import get_database_connection_name
 from ..core.descriptions import (
-    ADDED_IN_38,
     ADDED_IN_310,
     ADDED_IN_314,
     ADDED_IN_315,
@@ -337,14 +334,6 @@ class User(ModelObjectType[models.User]):
     addresses = NonNullList(
         Address, description="List of all user's addresses.", required=True
     )
-    checkout = graphene.Field(
-        Checkout,
-        description="Returns the last open checkout of this user.",
-        deprecation_reason=(
-            f"{DEPRECATED_IN_3X_FIELD} "
-            "Use the `checkoutTokens` field to fetch the user checkouts."
-        ),
-    )
     checkout_tokens = NonNullList(
         UUID,
         description="Returns the checkout UUID's assigned to this user.",
@@ -356,13 +345,6 @@ class User(ModelObjectType[models.User]):
     checkout_ids = NonNullList(
         graphene.ID,
         description="Returns the checkout ID's assigned to this user.",
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-    )
-    checkouts = ConnectionField(
-        CheckoutCountableConnection,
-        description="Returns checkouts assigned to this user." + ADDED_IN_38,
         channel=graphene.String(
             description="Slug of a channel for which the data should be returned."
         ),
@@ -477,67 +459,6 @@ class User(ModelObjectType[models.User]):
         return get_user_checkout(
             root, database_connection_name=database_connection_name
         )
-
-    @staticmethod
-    @traced_resolver
-    def resolve_checkout_tokens(root: models.User, info: ResolveInfo, channel=None):
-        def return_checkout_tokens(checkouts):
-            if not checkouts:
-                return []
-            checkout_global_ids = []
-            for checkout in checkouts:
-                checkout_global_ids.append(checkout.token)
-            return checkout_global_ids
-
-        if not channel:
-            return (
-                CheckoutByUserLoader(info.context)
-                .load(root.id)
-                .then(return_checkout_tokens)
-            )
-        return (
-            CheckoutByUserAndChannelLoader(info.context)
-            .load((root.id, channel))
-            .then(return_checkout_tokens)
-        )
-
-    @staticmethod
-    @traced_resolver
-    def resolve_checkout_ids(root: models.User, info: ResolveInfo, channel=None):
-        def return_checkout_ids(checkouts):
-            if not checkouts:
-                return []
-            checkout_global_ids = []
-            for checkout in checkouts:
-                checkout_global_ids.append(to_global_id_or_none(checkout))
-            return checkout_global_ids
-
-        if not channel:
-            return (
-                CheckoutByUserLoader(info.context)
-                .load(root.id)
-                .then(return_checkout_ids)
-            )
-        return (
-            CheckoutByUserAndChannelLoader(info.context)
-            .load((root.id, channel))
-            .then(return_checkout_ids)
-        )
-
-    @staticmethod
-    def resolve_checkouts(root: models.User, info: ResolveInfo, **kwargs):
-        def _resolve_checkouts(checkouts):
-            return create_connection_slice(
-                checkouts, info, kwargs, CheckoutCountableConnection
-            )
-
-        if channel := kwargs.get("channel"):
-            return (
-                CheckoutByUserAndChannelLoader(info.context)
-                .load((root.id, channel))
-                .then(_resolve_checkouts)
-            )
-        return CheckoutByUserLoader(info.context).load(root.id).then(_resolve_checkouts)
 
     @staticmethod
     def resolve_user_permissions(root: models.User, info: ResolveInfo):

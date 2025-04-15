@@ -16,7 +16,6 @@ from ...core.anonymize import obfuscate_address, obfuscate_email
 from ...core.db.connection import allow_writer_in_context
 from ...core.prices import quantize_price
 from ...core.taxes import zero_money
-from ...graphql.checkout.types import DeliveryMethod
 from ...graphql.core.context import get_database_connection_name
 from ...graphql.core.federation.entities import federated_entity
 from ...graphql.core.federation.resolvers import resolve_federation_references
@@ -57,7 +56,6 @@ from ..app.types import App
 from ..channel import ChannelContext
 from ..channel.dataloaders import ChannelByIdLoader, ChannelByOrderIdLoader
 from ..channel.types import Channel
-from ..checkout.utils import prevent_sync_event_circular_query
 from ..core.connection import CountableConnection
 from ..core.descriptions import (
     ADDED_IN_31,
@@ -70,7 +68,6 @@ from ..core.descriptions import (
     ADDED_IN_313,
     ADDED_IN_314,
     ADDED_IN_315,
-    ADDED_IN_318,
     ADDED_IN_319,
     ADDED_IN_320,
     DEPRECATED_IN_3X_FIELD,
@@ -895,52 +892,8 @@ class OrderLine(ModelObjectType[models.OrderLine]):
         return Promise.all([variants_product, variant_medias]).then(_resolve_thumbnail)
 
     @staticmethod
-    @traced_resolver
-    @prevent_sync_event_circular_query
-    def resolve_unit_price(root: models.OrderLine, info):
-        @allow_writer_in_context(info.context)
-        def _resolve_unit_price(data):
-            order, lines, manager = data
-            database_connection_name = get_database_connection_name(info.context)
-            return calculations.order_line_unit(
-                order,
-                root,
-                manager,
-                lines,
-                database_connection_name=database_connection_name,
-            ).price_with_discounts
-
-        order = OrderByIdLoader(info.context).load(root.order_id)
-        lines = OrderLinesByOrderIdLoader(info.context).load(root.order_id)
-        manager = get_plugin_manager_promise(info.context)
-        return Promise.all([order, lines, manager]).then(_resolve_unit_price)
-
-    @staticmethod
     def resolve_quantity_to_fulfill(root: models.OrderLine, info):
         return root.quantity_unfulfilled
-
-    @staticmethod
-    @traced_resolver
-    @prevent_sync_event_circular_query
-    def resolve_undiscounted_unit_price(root: models.OrderLine, info):
-        @allow_writer_in_context(info.context)
-        def _resolve_undiscounted_unit_price(data):
-            order, lines, manager = data
-            database_connection_name = get_database_connection_name(info.context)
-            return calculations.order_line_unit(
-                order,
-                root,
-                manager,
-                lines,
-                database_connection_name=database_connection_name,
-            ).undiscounted_price
-
-        order = OrderByIdLoader(info.context).load(root.order_id)
-        lines = OrderLinesByOrderIdLoader(info.context).load(root.order_id)
-        manager = get_plugin_manager_promise(info.context)
-        return Promise.all([order, lines, manager]).then(
-            _resolve_undiscounted_unit_price
-        )
 
     @staticmethod
     def resolve_unit_discount_type(root: models.OrderLine, info):
@@ -998,50 +951,6 @@ class OrderLine(ModelObjectType[models.OrderLine]):
         lines = OrderLinesByOrderIdLoader(info.context).load(root.order_id)
         manager = get_plugin_manager_promise(info.context)
         return Promise.all([order, lines, manager]).then(_resolve_tax_rate)
-
-    @staticmethod
-    @traced_resolver
-    @prevent_sync_event_circular_query
-    def resolve_total_price(root: models.OrderLine, info):
-        @allow_writer_in_context(info.context)
-        def _resolve_total_price(data):
-            order, lines, manager = data
-            database_connection_name = get_database_connection_name(info.context)
-            return calculations.order_line_total(
-                order,
-                root,
-                manager,
-                lines,
-                database_connection_name=database_connection_name,
-            ).price_with_discounts
-
-        order = OrderByIdLoader(info.context).load(root.order_id)
-        lines = OrderLinesByOrderIdLoader(info.context).load(root.order_id)
-        manager = get_plugin_manager_promise(info.context)
-        return Promise.all([order, lines, manager]).then(_resolve_total_price)
-
-    @staticmethod
-    @traced_resolver
-    @prevent_sync_event_circular_query
-    def resolve_undiscounted_total_price(root: models.OrderLine, info):
-        @allow_writer_in_context(info.context)
-        def _resolve_undiscounted_total_price(data):
-            order, lines, manager = data
-            database_connection_name = get_database_connection_name(info.context)
-            return calculations.order_line_total(
-                order,
-                root,
-                manager,
-                lines,
-                database_connection_name=database_connection_name,
-            ).undiscounted_price
-
-        order = OrderByIdLoader(info.context).load(root.order_id)
-        lines = OrderLinesByOrderIdLoader(info.context).load(root.order_id)
-        manager = get_plugin_manager_promise(info.context)
-        return Promise.all([order, lines, manager]).then(
-            _resolve_undiscounted_total_price
-        )
 
     @staticmethod
     def resolve_translated_product_name(root: models.OrderLine, _info):
@@ -1311,10 +1220,6 @@ class Order(ModelObjectType[models.Order]):
     is_shipping_required = graphene.Boolean(
         description="Returns True, if order requires shipping.", required=True
     )
-    delivery_method = graphene.Field(
-        DeliveryMethod,
-        description=("The delivery method selected for this order." + ADDED_IN_31),
-    )
     language_code = graphene.String(
         deprecation_reason=(
             f"{DEPRECATED_IN_3X_FIELD} "
@@ -1514,54 +1419,6 @@ class Order(ModelObjectType[models.Order]):
         )
 
     @staticmethod
-    @traced_resolver
-    @prevent_sync_event_circular_query
-    def resolve_undiscounted_shipping_price(root: models.Order, info):
-        @allow_writer_in_context(info.context)
-        def _resolve_undiscounted_shipping_price(data):
-            lines, manager = data
-            database_connection_name = get_database_connection_name(info.context)
-            return calculations.order_undiscounted_shipping(
-                root, manager, lines, database_connection_name=database_connection_name
-            )
-
-        lines = OrderLinesByOrderIdLoader(info.context).load(root.id)
-        manager = get_plugin_manager_promise(info.context)
-        return Promise.all([lines, manager]).then(_resolve_undiscounted_shipping_price)
-
-    @staticmethod
-    @traced_resolver
-    @prevent_sync_event_circular_query
-    def resolve_shipping_price(root: models.Order, info):
-        @allow_writer_in_context(info.context)
-        def _resolve_shipping_price(data):
-            lines, manager = data
-            database_connection_name = get_database_connection_name(info.context)
-            return calculations.order_shipping(
-                root, manager, lines, database_connection_name=database_connection_name
-            )
-
-        lines = OrderLinesByOrderIdLoader(info.context).load(root.id)
-        manager = get_plugin_manager_promise(info.context)
-        return Promise.all([lines, manager]).then(_resolve_shipping_price)
-
-    @staticmethod
-    @traced_resolver
-    @prevent_sync_event_circular_query
-    def resolve_shipping_tax_rate(root: models.Order, info):
-        @allow_writer_in_context(info.context)
-        def _resolve_shipping_tax_rate(data):
-            lines, manager = data
-            database_connection_name = get_database_connection_name(info.context)
-            return calculations.order_shipping_tax_rate(
-                root, manager, lines, database_connection_name=database_connection_name
-            ) or Decimal(0)
-
-        lines = OrderLinesByOrderIdLoader(info.context).load(root.id)
-        manager = get_plugin_manager_promise(info.context)
-        return Promise.all([lines, manager]).then(_resolve_shipping_tax_rate)
-
-    @staticmethod
     def resolve_actions(root: models.Order, info):
         def _resolve_actions(payments):
             actions = []
@@ -1598,38 +1455,6 @@ class Order(ModelObjectType[models.Order]):
         manager = get_plugin_manager_promise(info.context)
 
         return Promise.all([order_lines, manager]).then(_resolve_subtotal)
-
-    @staticmethod
-    @traced_resolver
-    @prevent_sync_event_circular_query
-    @plugin_manager_promise_callback
-    def resolve_total(root: models.Order, info, manager):
-        @allow_writer_in_context(info.context)
-        def _resolve_total(lines):
-            database_connection_name = get_database_connection_name(info.context)
-            return calculations.order_total(
-                root, manager, lines, database_connection_name=database_connection_name
-            )
-
-        return (
-            OrderLinesByOrderIdLoader(info.context).load(root.id).then(_resolve_total)
-        )
-
-    @staticmethod
-    @traced_resolver
-    @prevent_sync_event_circular_query
-    def resolve_undiscounted_total(root: models.Order, info):
-        @allow_writer_in_context(info.context)
-        def _resolve_undiscounted_total(lines_and_manager):
-            lines, manager = lines_and_manager
-            database_connection_name = get_database_connection_name(info.context)
-            return calculations.order_undiscounted_total(
-                root, manager, lines, database_connection_name=database_connection_name
-            )
-
-        lines = OrderLinesByOrderIdLoader(info.context).load(root.id)
-        manager = get_plugin_manager_promise(info.context)
-        return Promise.all([lines, manager]).then(_resolve_undiscounted_total)
 
     @staticmethod
     def resolve_total_authorized(root: models.Order, info):
@@ -1885,13 +1710,6 @@ class Order(ModelObjectType[models.Order]):
         if root.shipping_method_id or get_external_shipping_id(root):
             return cls.resolve_shipping_method(root, info)
         return None
-
-    @classmethod
-    @traced_resolver
-    @prevent_sync_event_circular_query
-    # TODO: We should optimize it in/after PR#5819
-    def resolve_available_shipping_methods(cls, root: models.Order, info):
-        return []
 
     @classmethod
     @traced_resolver

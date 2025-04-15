@@ -25,12 +25,9 @@ from ..core.taxes import TaxDataError, TaxError, zero_taxed_money
 from ..core.tracing import traced_atomic_transaction
 from ..core.transactions import transaction_with_commit_on_errors
 from ..core.utils.url import validate_storefront_url
-from ..graphql.checkout.utils import (
-    prepare_insufficient_stock_checkout_validation_error,
-)
 from ..order import OrderOrigin, OrderStatus
 from ..order.actions import mark_order_as_paid_with_payment, order_created
-from ..order.fetch import OrderInfo, OrderLineInfo
+from ..order.fetch import OrderInfo, OrderLineInfo 
 from ..order.models import Order, OrderLine
 from ..order.notifications import send_order_confirmation
 from ..order.search import prepare_order_search_vector_value
@@ -730,21 +727,12 @@ def _get_order_data(
     """Prepare data that will be converted to order and its lines."""
     tax_configuration = checkout_info.tax_configuration
     prices_entered_with_tax = tax_configuration.prices_entered_with_tax
-    try:
-        order_data = _prepare_order_data(
-            manager=manager,
-            checkout_info=checkout_info,
-            lines=lines,
-            prices_entered_with_tax=prices_entered_with_tax,
-        )
-    except InsufficientStock as e:
-        error = prepare_insufficient_stock_checkout_validation_error(e)
-        raise error
-    except TaxError as tax_error:
-        raise ValidationError(
-            f"Unable to calculate taxes - {str(tax_error)}",
-            code=CheckoutErrorCode.TAX_ERROR.value,
-        )
+    order_data = _prepare_order_data(
+        manager=manager,
+        checkout_info=checkout_info,
+        lines=lines,
+        prices_entered_with_tax=prices_entered_with_tax,
+    )
     return order_data
 
 
@@ -859,32 +847,21 @@ def complete_checkout_post_payment_part(
 
     order = None
     if not action_required and not _is_refund_ongoing(payment):
-        try:
-            order = _create_order(
-                checkout_info=checkout_info,
-                checkout_lines=lines,
-                order_data=order_data,
-                user=user,
-                app=app,
-                manager=manager,
-                site_settings=site_settings,
-                metadata_list=metadata_list,
-                private_metadata_list=private_metadata_list,
-                is_automatic_completion=is_automatic_completion,
-            )
-            # remove checkout after order is successfully created
-            delete_checkouts([checkout_info.checkout.pk])
-            checkout_info.checkout.pk = None
-        except InsufficientStock as e:
-            _complete_checkout_fail_handler(
-                checkout_info,
-                manager,
-                voucher_code=checkout_info.voucher_code,
-                voucher=checkout_info.voucher,
-                payment=payment,
-            )
-            error = prepare_insufficient_stock_checkout_validation_error(e)
-            raise error
+        order = _create_order(
+            checkout_info=checkout_info,
+            checkout_lines=lines,
+            order_data=order_data,
+            user=user,
+            app=app,
+            manager=manager,
+            site_settings=site_settings,
+            metadata_list=metadata_list,
+            private_metadata_list=private_metadata_list,
+            is_automatic_completion=is_automatic_completion,
+        )
+        # remove checkout after order is successfully created
+        delete_checkouts([checkout_info.checkout.pk])
+        checkout_info.checkout.pk = None
 
         # if the order total value is 0 it is paid from the definition
         if order.total.net.amount == 0:
@@ -1361,27 +1338,23 @@ def complete_checkout_with_transaction(
     private_metadata_list: Optional[list] = None,
     is_automatic_completion: bool = False,
 ) -> Optional[Order]:
-    try:
-        _prepare_checkout_with_transactions(
-            manager=manager,
-            checkout_info=checkout_info,
-            lines=lines,
-            redirect_url=redirect_url,
-        )
+    _prepare_checkout_with_transactions(
+        manager=manager,
+        checkout_info=checkout_info,
+        lines=lines,
+        redirect_url=redirect_url,
+    )
 
-        return create_order_from_checkout(
-            checkout_info=checkout_info,
-            manager=manager,
-            user=user,
-            app=app,
-            delete_checkout=True,
-            metadata_list=metadata_list,
-            private_metadata_list=private_metadata_list,
-            is_automatic_completion=is_automatic_completion,
-        )
-    except InsufficientStock as e:
-        error = prepare_insufficient_stock_checkout_validation_error(e)
-        raise error
+    return create_order_from_checkout(
+        checkout_info=checkout_info,
+        manager=manager,
+        user=user,
+        app=app,
+        delete_checkout=True,
+        metadata_list=metadata_list,
+        private_metadata_list=private_metadata_list,
+        is_automatic_completion=is_automatic_completion,
+    )
 
 
 def complete_checkout_with_payment(

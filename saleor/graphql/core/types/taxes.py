@@ -12,195 +12,14 @@ from ....order.models import Order, OrderLine
 from ...account.dataloaders import AddressByIdLoader
 from ...channel.dataloaders import ChannelByIdLoader
 from ...channel.types import Channel
-from ...checkout import types as checkout_types
-from ...checkout.dataloaders import (
-    CheckoutByTokenLoader,
-    CheckoutInfoByCheckoutTokenLoader,
-    CheckoutLinesByCheckoutTokenLoader,
-    CheckoutLinesInfoByCheckoutTokenLoader,
-)
 from ...core.doc_category import DOC_CATEGORY_TAXES
 from ...core.types import BaseObjectType
-from ...order import types as order_types
 from ...order.dataloaders import OrderLinesByOrderIdLoader
-from ...product.dataloaders.products import (
-    ProductByVariantIdLoader,
-    ProductVariantByIdLoader,
-)
 from .. import ResolveInfo
-from .common import NonNullList
 from .money import Money as MoneyType
-from .order_or_checkout import OrderOrCheckoutBase
-
-
-class TaxSourceObject(OrderOrCheckoutBase):
-    class Meta:
-        types = OrderOrCheckoutBase.get_types()
-
-
-class TaxSourceLine(graphene.Union):
-    class Meta:
-        types = (checkout_types.CheckoutLine, order_types.OrderLine)
-
-    @classmethod
-    def resolve_type(cls, instance, info: ResolveInfo):
-        if isinstance(instance, CheckoutLine):
-            return checkout_types.CheckoutLine
-        if isinstance(instance, OrderLine):
-            return order_types.OrderLine
-        return super().resolve_type(instance, info)
-
-
-class TaxableObjectLine(BaseObjectType):
-    source_line = graphene.Field(
-        TaxSourceLine,
-        required=True,
-        description="The source line related to this tax line.",
-    )
-    quantity = graphene.Int(required=True, description="Number of items.")
-    charge_taxes = graphene.Boolean(
-        required=True,
-        description="Determines if taxes are being charged for the product.",
-    )
-    product_name = graphene.String(description="The product name.", required=True)
-    variant_name = graphene.String(description="The variant name.", required=True)
-    product_sku = graphene.String(description="The product sku.")
-
-    unit_price = graphene.Field(
-        MoneyType,
-        description=(
-            "Price of the single item in the order line. "
-            "The price includes catalogue promotions, specific product "
-            "and applied once per order voucher discounts. "
-            "The price does not include the entire order discount."
-        ),
-        required=True,
-    )
-    total_price = graphene.Field(
-        MoneyType,
-        description=(
-            "Price of the order line. "
-            "The price includes catalogue promotions, specific product "
-            "and applied once per order voucher discounts. "
-            "The price does not include the entire order discount."
-        ),
-        required=True,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_TAXES
-
-    @staticmethod
-    def resolve_variant_name(root: Union[CheckoutLine, OrderLine], info: ResolveInfo):
-        if isinstance(root, CheckoutLine):
-
-            def get_name(variant):
-                return variant.name
-
-            if not root.variant_id:
-                return ""
-            return (
-                ProductVariantByIdLoader(info.context)
-                .load(root.variant_id)
-                .then(get_name)
-            )
-        return root.variant_name
-
-    @staticmethod
-    def resolve_product_name(root: Union[CheckoutLine, OrderLine], info: ResolveInfo):
-        if isinstance(root, CheckoutLine):
-
-            def get_name(product):
-                return product.name
-
-            if not root.variant_id:
-                return ""
-            return (
-                ProductByVariantIdLoader(info.context)
-                .load(root.variant_id)
-                .then(get_name)
-            )
-        return root.product_name
-
-    @staticmethod
-    def resolve_product_sku(root: Union[CheckoutLine, OrderLine], info: ResolveInfo):
-        if isinstance(root, CheckoutLine):
-            if not root.variant_id:
-                return None
-
-            def get_sku(variant):
-                return variant.sku
-
-            return (
-                ProductVariantByIdLoader(info.context)
-                .load(root.variant_id)
-                .then(get_sku)
-            )
-        return root.product_sku
-
-    @staticmethod
-    def resolve_source_line(root: Union[CheckoutLine, OrderLine], _info: ResolveInfo):
-        return root
-
-    @staticmethod
-    def resolve_unit_price(root: Union[CheckoutLine, OrderLine], info: ResolveInfo):
-        if isinstance(root, CheckoutLine):
-
-            def with_checkout(checkout):
-                lines = CheckoutLinesInfoByCheckoutTokenLoader(info.context).load(
-                    checkout.token
-                )
-
-                def calculate_line_unit_price(lines):
-                    for line_info in lines:
-                        if line_info.line.pk == root.pk:
-                            return base_calculations.calculate_base_line_unit_price(
-                                line_info=line_info,
-                            )
-                    return None
-
-                return lines.then(calculate_line_unit_price)
-
-            return (
-                CheckoutByTokenLoader(info.context)
-                .load(root.checkout_id)
-                .then(with_checkout)
-            )
-        return root.base_unit_price
-
-    @staticmethod
-    def resolve_total_price(root: Union[CheckoutLine, OrderLine], info: ResolveInfo):
-        if isinstance(root, CheckoutLine):
-
-            def with_checkout(checkout):
-                lines = CheckoutLinesInfoByCheckoutTokenLoader(info.context).load(
-                    checkout.token
-                )
-
-                def calculate_line_total_price(lines):
-                    for line_info in lines:
-                        if line_info.line.pk == root.pk:
-                            return base_calculations.calculate_base_line_total_price(
-                                line_info=line_info
-                            )
-                    return None
-
-                return lines.then(calculate_line_total_price)
-
-            return (
-                CheckoutByTokenLoader(info.context)
-                .load(root.checkout_id)
-                .then(with_checkout)
-            )
-        return root.base_unit_price * root.quantity
 
 
 class TaxableObject(BaseObjectType):
-    source_object = graphene.Field(
-        TaxSourceObject,
-        required=True,
-        description="The source object related to this tax object.",
-    )
     prices_entered_with_tax = graphene.Boolean(
         required=True, description="Determines if prices contain entered tax.."
     )
@@ -216,11 +35,6 @@ class TaxableObject(BaseObjectType):
     address = graphene.Field(
         "saleor.graphql.account.types.Address",
         description="The address data.",
-    )
-    lines = NonNullList(
-        TaxableObjectLine,
-        description="List of lines assigned to the object.",
-        required=True,
     )
     channel = graphene.Field(Channel, required=True)
 
@@ -262,16 +76,8 @@ class TaxableObject(BaseObjectType):
                     checkout_info.checkout.currency,
                 )
 
-            checkout_info = CheckoutInfoByCheckoutTokenLoader(info.context).load(
-                root.token
-            )
-            lines = CheckoutLinesInfoByCheckoutTokenLoader(info.context).load(
-                root.token
-            )
             return Promise.all(
                 [
-                    checkout_info,
-                    lines,
                 ]
             ).then(calculate_shipping_price)
 
@@ -279,6 +85,4 @@ class TaxableObject(BaseObjectType):
 
     @staticmethod
     def resolve_lines(root: Union[Checkout, Order], info: ResolveInfo):
-        if isinstance(root, Checkout):
-            return CheckoutLinesByCheckoutTokenLoader(info.context).load(root.token)
         return OrderLinesByOrderIdLoader(info.context).load(root.id)

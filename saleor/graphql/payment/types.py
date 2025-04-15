@@ -11,7 +11,6 @@ from ...payment.interface import PaymentMethodData
 from ...permission.enums import OrderPermissions
 from ..account.dataloaders import UserByUserIdLoader
 from ..app.dataloaders import ActiveAppsByAppIdentifierLoader, AppByIdLoader
-from ..checkout.dataloaders import CheckoutByTokenLoader
 from ..core import ResolveInfo
 from ..core.connection import CountableConnection
 from ..core.descriptions import (
@@ -149,10 +148,6 @@ class Payment(ModelObjectType[models.Payment]):
     token = graphene.String(
         required=True, description="Unique token associated with a payment."
     )
-    checkout = graphene.Field(
-        "saleor.graphql.checkout.types.Checkout",
-        description="Checkout associated with a payment.",
-    )
     order = graphene.Field(
         "saleor.graphql.order.types.Order",
         description="Order associated with a payment.",
@@ -283,11 +278,6 @@ class Payment(ModelObjectType[models.Payment]):
         if not requester or not requester.has_perms(permissions):
             raise PermissionDenied(permissions=permissions)
         return resolve_metadata(root.metadata)
-
-    def resolve_checkout(root: models.Payment, info):
-        if not root.checkout_id:
-            return None
-        return CheckoutByTokenLoader(info.context).load(root.checkout_id)
 
 
 class PaymentCountableConnection(CountableConnection):
@@ -488,10 +478,6 @@ class TransactionItem(ModelObjectType[models.TransactionItem]):
         "saleor.graphql.order.types.Order",
         description="The related order." + ADDED_IN_36,
     )
-    checkout = graphene.Field(
-        "saleor.graphql.checkout.types.Checkout",
-        description="The related checkout." + ADDED_IN_314,
-    )
     events = NonNullList(
         TransactionEvent, required=True, description="List of all transaction's events."
     )
@@ -560,11 +546,6 @@ class TransactionItem(ModelObjectType[models.TransactionItem]):
             return
         return OrderByIdLoader(info.context).load(root.order_id)
 
-    @staticmethod
-    def resolve_checkout(root: models.TransactionItem, info):
-        if not root.checkout_id:
-            return
-        return CheckoutByTokenLoader(info.context).load(root.checkout_id)
 
     @staticmethod
     def resolve_events(root: models.TransactionItem, info):
