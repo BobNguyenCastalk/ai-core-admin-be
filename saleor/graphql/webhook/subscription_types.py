@@ -8,7 +8,6 @@ from ...account.models import User
 from ...attribute.models import AttributeTranslation, AttributeValueTranslation
 from ...channel.models import Channel
 from ...core.prices import quantize_price
-from ...graphql.shop.types import Shop
 from ...menu.models import MenuItemTranslation
 from ...page.models import PageTranslation
 from ...payment.interface import (
@@ -144,7 +143,6 @@ class AccountOperationBase(AbstractType):
         description="The channel data.",
     )
     token = graphene.String(description="The token required to confirm request.")
-    shop = graphene.Field(Shop, description="Shop data.")
 
     @staticmethod
     def resolve_user(root, _info: ResolveInfo):
@@ -1690,20 +1688,6 @@ class PaymentMethodProcessTokenizationSession(
         _, payment_method_data = root
         return payment_method_data.id
 
-class ShopMetadataUpdated(SubscriptionObjectType, AbstractType):
-    shop = graphene.Field(Shop, description="Shop data.")
-
-    class Meta:
-        root_type = "Shop"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when shop metadata is updated." + ADDED_IN_315
-
-    @staticmethod
-    def resolve_shop(root, _info: ResolveInfo):
-        return Shop()
-
-
 class PaymentBase(AbstractType):
     payment = graphene.Field(
         "saleor.graphql.payment.types.Payment",
@@ -2145,7 +2129,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.PERMISSION_GROUP_CREATED: PermissionGroupCreated,
     WebhookEventAsyncType.PERMISSION_GROUP_UPDATED: PermissionGroupUpdated,
     WebhookEventAsyncType.PERMISSION_GROUP_DELETED: PermissionGroupDeleted,
-    WebhookEventAsyncType.SHOP_METADATA_UPDATED: ShopMetadataUpdated,
     WebhookEventAsyncType.STAFF_CREATED: StaffCreated,
     WebhookEventAsyncType.STAFF_UPDATED: StaffUpdated,
     WebhookEventAsyncType.STAFF_DELETED: StaffDeleted,

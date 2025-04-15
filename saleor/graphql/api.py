@@ -29,7 +29,6 @@ from .order.schema import OrderMutations, OrderQueries
 from .payment.schema import PaymentMutations, PaymentQueries
 from .plugins.schema import PluginsMutations, PluginsQueries
 from .product.schema import ProductMutations, ProductQueries
-from .shop.schema import ShopMutations, ShopQueries
 from .translations.schema import TranslationQueries
 from .webhook.schema import WebhookMutations, WebhookQueries
 from .webhook.subscription_types import WEBHOOK_TYPES_MAP, Subscription
@@ -49,7 +48,6 @@ class Query(
     OrderQueries,
     PaymentQueries,
     ProductQueries,
-    ShopQueries,
     TranslationQueries,
     WebhookQueries,
 ):
@@ -67,7 +65,6 @@ class Mutation(
     OrderMutations,
     PaymentMutations,
     ProductMutations,
-    ShopMutations,
     WebhookMutations,
 ):
     pass

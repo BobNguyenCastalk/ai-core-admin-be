@@ -27,14 +27,6 @@ from ..core.tracing import traced_resolver
 from ..core.types import NonNullList
 from ..core.utils import from_global_id_or_error
 from ..core.validators import validate_one_of_args_is_in_query
-from ..translations.mutations import (
-    CategoryTranslate,
-    CollectionTranslate,
-    ProductBulkTranslate,
-    ProductTranslate,
-    ProductVariantBulkTranslate,
-    ProductVariantTranslate,
-)
 from ..utils import get_user_or_app_from_context
 from .dataloaders.products import CategoryByIdLoader, CategoryBySlugLoader
 from .filters import (
@@ -556,12 +548,4 @@ class ProductQueries(graphene.ObjectType):
 
 
 class ProductMutations(graphene.ObjectType):
-
-    category_translate = CategoryTranslate.Field()
-    collection_translate = CollectionTranslate.Field()
-
-    product_bulk_translate = ProductBulkTranslate.Field()
-    product_translate = ProductTranslate.Field()
-
-    product_variant_translate = ProductVariantTranslate.Field()
-    product_variant_bulk_translate = ProductVariantBulkTranslate.Field()
+    pass

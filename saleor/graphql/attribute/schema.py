@@ -7,12 +7,6 @@ from ..core.descriptions import ADDED_IN_310, ADDED_IN_311, PREVIEW_FEATURE
 from ..core.doc_category import DOC_CATEGORY_ATTRIBUTES
 from ..core.fields import BaseField, FilterConnectionField
 from ..core.utils.resolvers import resolve_by_global_id_slug_or_ext_ref
-from ..translations.mutations import (
-    AttributeBulkTranslate,
-    AttributeTranslate,
-    AttributeValueBulkTranslate,
-    AttributeValueTranslate,
-)
 from .filters import AttributeFilterInput, AttributeWhereInput, filter_attribute_search
 from .resolvers import resolve_attributes
 from .sorters import AttributeSortingInput
@@ -65,10 +59,4 @@ class AttributeQueries(graphene.ObjectType):
 
 
 class AttributeMutations(graphene.ObjectType):
-    # attribute mutations
-    attribute_translate = AttributeTranslate.Field()
-    attribute_bulk_translate = AttributeBulkTranslate.Field()
-
-    # attribute value mutations
-    attribute_value_bulk_translate = AttributeValueBulkTranslate.Field()
-    attribute_value_translate = AttributeValueTranslate.Field()
+    pass
