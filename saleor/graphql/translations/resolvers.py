@@ -1,5 +1,4 @@
 from ...attribute import models as attribute_models
-from ...discount import models as discount_models
 from ...menu import models as menu_models
 from ...page import models as page_models
 from ...product import models as product_models
@@ -27,13 +26,6 @@ TYPE_TO_TRANSLATION_LOADER_MAP = {
     ),
     site_models.SiteSettings: (
         dataloaders.SiteSettingsTranslationByIdAndLanguageCodeLoader
-    ),
-    discount_models.Voucher: (dataloaders.VoucherTranslationByIdAndLanguageCodeLoader),
-    discount_models.Promotion: (
-        dataloaders.PromotionTranslationByIdAndLanguageCodeLoader
-    ),
-    discount_models.PromotionRule: (
-        dataloaders.PromotionRuleTranslationByIdAndLanguageCodeLoader
     ),
 }
 
@@ -65,31 +57,7 @@ def resolve_product_variants(info):
     ).all()
 
 
-def resolve_sales(info):
-    return discount_models.Promotion.objects.using(
-        get_database_connection_name(info.context)
-    ).all()
-
-
-def resolve_vouchers(info):
-    return discount_models.Voucher.objects.using(
-        get_database_connection_name(info.context)
-    ).all()
-
-
 def resolve_collections(info):
     return product_models.Collection.objects.using(
-        get_database_connection_name(info.context)
-    ).all()
-
-
-def resolve_promotions(info):
-    return discount_models.Promotion.objects.using(
-        get_database_connection_name(info.context)
-    ).all()
-
-
-def resolve_promotion_rules(info):
-    return discount_models.PromotionRule.objects.using(
         get_database_connection_name(info.context)
     ).all()

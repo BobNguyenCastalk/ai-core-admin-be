@@ -7,11 +7,9 @@ from django.db.models import Model
 from ...attribute import AttributeInputType
 from ...attribute import models as attribute_models
 from ...attribute.models import AttributeValue
-from ...discount import models as discount_models
 from ...menu import models as menu_models
 from ...page import models as page_models
 from ...permission.enums import (
-    DiscountPermissions,
     ProductPermissions,
 )
 from ...product import models as product_models
@@ -22,13 +20,11 @@ from ..core.context import get_database_connection_name
 from ..core.descriptions import (
     ADDED_IN_39,
     ADDED_IN_314,
-    ADDED_IN_317,
     DEPRECATED_IN_3X_FIELD,
-    DEPRECATED_IN_3X_TYPE,
     RICH_CONTENT,
 )
 from ..core.enums import LanguageCodeEnum
-from ..core.fields import JSONString, PermissionsField
+from ..core.fields import JSONString
 from ..core.tracing import traced_resolver
 from ..core.types import LanguageDisplay, ModelObjectType, NonNullList
 from ..core.utils import str_to_enum
@@ -678,98 +674,6 @@ class PageTranslatableContent(ModelObjectType[page_models.Page]):
     def resolve_page_id(root: page_models.Page, _info):
         return graphene.Node.to_global_id("Page", root.id)
 
-
-class VoucherTranslation(BaseTranslationType[discount_models.VoucherTranslation]):
-    id = graphene.GlobalID(
-        required=True, description="The ID of the voucher translation."
-    )
-    name = graphene.String(description="Translated voucher name.")
-    translatable_content = graphene.Field(
-        "saleor.graphql.translations.types.VoucherTranslatableContent",
-        description="Represents the voucher fields to translate." + ADDED_IN_314,
-    )
-
-    class Meta:
-        model = discount_models.VoucherTranslation
-        interfaces = [graphene.relay.Node]
-        description = "Represents voucher translations."
-
-
-class VoucherTranslatableContent(ModelObjectType[discount_models.Voucher]):
-    id = graphene.GlobalID(
-        required=True, description="The ID of the voucher translatable content."
-    )
-    voucher_id = graphene.ID(
-        required=True,
-        description="The ID of the voucher to translate." + ADDED_IN_314,
-    )
-    name = graphene.String(description="Voucher name to translate.")
-    translation = TranslationField(VoucherTranslation, type_name="voucher")
-
-    class Meta:
-        model = discount_models.Voucher
-        interfaces = [graphene.relay.Node]
-        description = (
-            "Represents voucher's original translatable fields "
-            "and related translations."
-        )
-
-    @staticmethod
-    def resolve_voucher(root: discount_models.Voucher, _info):
-        return ChannelContext(node=root, channel_slug=None)
-
-    @staticmethod
-    def resolve_voucher_id(root: discount_models.Voucher, _info):
-        return graphene.Node.to_global_id("Voucher", root.id)
-
-
-class SaleTranslation(BaseTranslationType[discount_models.PromotionTranslation]):
-    id = graphene.GlobalID(required=True, description="The ID of the sale translation.")
-    name = graphene.String(description="Translated name of sale.")
-    translatable_content = graphene.Field(
-        "saleor.graphql.translations.types.SaleTranslatableContent",
-        description="Represents the sale fields to translate." + ADDED_IN_314,
-    )
-
-    class Meta:
-        model = discount_models.PromotionTranslation
-        interfaces = [graphene.relay.Node]
-        description = (
-            "Represents sale translations."
-            + DEPRECATED_IN_3X_TYPE
-            + " Use `PromotionTranslation` instead."
-        )
-
-
-class SaleTranslatableContent(ModelObjectType[discount_models.Promotion]):
-    id = graphene.GlobalID(
-        required=True, description="The ID of the sale translatable content."
-    )
-    sale_id = graphene.ID(
-        required=True,
-        description="The ID of the sale to translate." + ADDED_IN_314,
-    )
-    name = graphene.String(required=True, description="Name of the sale to translate.")
-    translation = TranslationField(SaleTranslation, type_name="sale")
-
-    class Meta:
-        model = discount_models.Promotion
-        interfaces = [graphene.relay.Node]
-        description = (
-            "Represents sale's original translatable fields and related translations."
-            + DEPRECATED_IN_3X_TYPE
-            + " Use `PromotionTranslatableContent` instead."
-        )
-
-    @staticmethod
-    def resolve_sale(root: discount_models.Promotion, _info):
-        return ChannelContext(node=root, channel_slug=None)
-
-    @staticmethod
-    def resolve_sale_id(root: discount_models.Promotion, _info):
-        return graphene.Node.to_global_id("Sale", root.old_sale_id)
-
-
 class ShopTranslation(BaseTranslationType[site_models.SiteSettingsTranslation]):
     id = graphene.GlobalID(required=True, description="The ID of the shop translation.")
     header_text = graphene.String(
@@ -843,94 +747,3 @@ class MenuItemTranslatableContent(ModelObjectType[menu_models.MenuItem]):
     @staticmethod
     def resolve_menu_item_id(root: menu_models.MenuItem, _info):
         return graphene.Node.to_global_id("MenuItem", root.id)
-
-
-class PromotionTranslation(BaseTranslationType[discount_models.PromotionTranslation]):
-    id = graphene.GlobalID(
-        required=True, description="ID of the promotion translation."
-    )
-    name = graphene.String(description="Translated name of the promotion.")
-    description = JSONString(
-        description="Translated description of the promotion." + RICH_CONTENT
-    )
-    translatable_content = graphene.Field(
-        "saleor.graphql.translations.types.PromotionTranslatableContent",
-        description="Represents the promotion fields to translate." + ADDED_IN_314,
-    )
-
-    class Meta:
-        model = discount_models.Promotion
-        interfaces = [graphene.relay.Node]
-        description = "Represents promotion translations." + ADDED_IN_317
-
-
-class PromotionTranslatableContent(ModelObjectType[discount_models.Promotion]):
-    id = graphene.GlobalID(
-        required=True, description="ID of the promotion translatable content."
-    )
-    promotion_id = graphene.ID(
-        required=True, description="ID of the promotion to translate."
-    )
-    name = graphene.String(required=True, description="Name of the promotion.")
-    description = JSONString(description="Description of the promotion." + RICH_CONTENT)
-    translation = TranslationField(PromotionTranslation, type_name="promotion")
-
-    class Meta:
-        model = discount_models.Promotion
-        interfaces = [graphene.relay.Node]
-        description = (
-            "Represents promotion's original translatable fields "
-            "and related translations." + ADDED_IN_317
-        )
-
-    @staticmethod
-    def resolve_promotion_id(root: discount_models.Promotion, _info):
-        return graphene.Node.to_global_id("Promotion", root.id)
-
-
-class PromotionRuleTranslation(
-    BaseTranslationType[discount_models.PromotionTranslation]
-):
-    id = graphene.GlobalID(
-        required=True, description="ID of the promotion rule translation."
-    )
-    name = graphene.String(description="Translated name of the promotion rule.")
-    description = JSONString(
-        description="Translated description of the promotion rule." + RICH_CONTENT
-    )
-    translatable_content = graphene.Field(
-        "saleor.graphql.translations.types.PromotionRuleTranslatableContent",
-        description="Represents the promotion rule fields to translate." + ADDED_IN_314,
-    )
-
-    class Meta:
-        model = discount_models.PromotionRule
-        interfaces = [graphene.relay.Node]
-        description = "Represents promotion rule translations." + ADDED_IN_317
-
-
-class PromotionRuleTranslatableContent(ModelObjectType[discount_models.Promotion]):
-    id = graphene.GlobalID(
-        required=True, description="ID of the promotion rule translatable content."
-    )
-    promotion_rule_id = graphene.ID(
-        required=True,
-        description="ID of the promotion rule to translate." + ADDED_IN_314,
-    )
-    name = graphene.String(description="Name of the promotion rule.")
-    description = JSONString(
-        description="Description of the promotion rule." + RICH_CONTENT
-    )
-    translation = TranslationField(PromotionRuleTranslation, type_name="promotion rule")
-
-    class Meta:
-        model = discount_models.PromotionRule
-        interfaces = [graphene.relay.Node]
-        description = (
-            "Represents promotion rule's original translatable fields "
-            "and related translations." + ADDED_IN_317
-        )
-
-    @staticmethod
-    def resolve_promotion_rule_id(root: discount_models.PromotionRule, _info):
-        return graphene.Node.to_global_id("PromotionRule", root.id)

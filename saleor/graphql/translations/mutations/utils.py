@@ -9,7 +9,6 @@ from graphql import GraphQLError
 
 from ....attribute import models as attribute_models
 from ....core.tracing import traced_atomic_transaction
-from ....discount import models as discount_models
 from ....menu import models as menu_models
 from ....page import models as page_models
 from ....product import models as product_models
@@ -47,20 +46,8 @@ TRANSLATABLE_CONTENT_TO_MODEL = {
     # Page Translation mutation reverses model and TranslatableContent
     page_models.Page._meta.object_name: str(translation_types.PageTranslatableContent),
     str(
-        translation_types.SaleTranslatableContent
-    ): discount_models.Promotion._meta.object_name,
-    str(
-        translation_types.VoucherTranslatableContent
-    ): discount_models.Voucher._meta.object_name,
-    str(
         translation_types.MenuItemTranslatableContent
     ): menu_models.MenuItem._meta.object_name,
-    str(
-        translation_types.PromotionTranslatableContent
-    ): discount_models.Promotion._meta.object_name,
-    str(
-        translation_types.PromotionRuleTranslatableContent
-    ): discount_models.PromotionRule._meta.object_name,
 }
 
 

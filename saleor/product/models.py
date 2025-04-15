@@ -36,7 +36,6 @@ from ..core.utils import build_absolute_uri
 from ..core.utils.editorjs import clean_editor_js
 from ..core.utils.translations import Translation, get_translation
 from ..core.weight import zero_weight
-from ..discount.models import PromotionRule
 from ..permission.enums import (
     DiscountPermissions,
     OrderPermissions,
@@ -375,7 +374,7 @@ class ProductVariant(SortableModel, ModelWithMetadata, ModelWithExternalReferenc
         self,
         channel_listing: "ProductVariantChannelListing",
         price_override: Optional["Decimal"] = None,
-        promotion_rules: Optional[Iterable["PromotionRule"]] = None,
+        promotion_rules = None,
     ) -> "Money":
         """Return the variant discounted price with applied promotions.
 
@@ -509,12 +508,6 @@ class ProductVariantChannelListing(models.Model):
     discounted_price = MoneyField(
         amount_field="discounted_price_amount", currency_field="currency"
     )
-    promotion_rules = models.ManyToManyField(
-        PromotionRule,
-        help_text=("Promotion rules that were included in the discounted price."),
-        through="product.VariantChannelListingPromotionRule",
-        blank=True,
-    )
 
     preorder_quantity_threshold = models.IntegerField(blank=True, null=True)
 
@@ -534,11 +527,6 @@ class VariantChannelListingPromotionRule(models.Model):
         related_name="variantlistingpromotionrule",
         on_delete=models.CASCADE,
     )
-    promotion_rule = models.ForeignKey(
-        PromotionRule,
-        related_name="variantlistingpromotionrule",
-        on_delete=models.CASCADE,
-    )
     discount_amount = models.DecimalField(
         max_digits=settings.DEFAULT_MAX_DIGITS,
         decimal_places=settings.DEFAULT_DECIMAL_PLACES,
@@ -548,10 +536,7 @@ class VariantChannelListingPromotionRule(models.Model):
     currency = models.CharField(
         max_length=settings.DEFAULT_CURRENCY_CODE_LENGTH,
     )
-
-    class Meta:
-        unique_together = [["variant_channel_listing", "promotion_rule"]]
-
+        
 
 class DigitalContent(ModelWithMetadata):
     FILE = "file"

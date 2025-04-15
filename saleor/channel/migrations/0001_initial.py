@@ -78,7 +78,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("checkout", "0025_auto_20200221_0257"),
-        ("discount", "0019_auto_20200217_0350"),
         ("order", "0084_auto_20200522_0522"),
         ("product", "0118_populate_product_variant_price"),
     ]

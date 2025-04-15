@@ -10,16 +10,12 @@ from prices import  TaxedMoney
 
 from ..core.db.connection import allow_writer
 from ..core.prices import quantize_price
-from ..discount.utils.order import create_or_update_discount_objects_for_order
-from ..payment.model_helpers import get_subtotal
-from ..plugins import PLUGIN_IDENTIFIER_PREFIX
 from ..plugins.manager import PluginsManager
 from . import ORDER_EDITABLE_STATUS
-from .base_calculations import apply_order_discounts, base_order_line_total
+from .base_calculations import apply_order_discounts
 from .fetch import EditableOrderLineInfo, fetch_draft_order_lines_info
 from .interface import OrderTaxedPricesData
 from .models import Order, OrderLine
-from .utils import log_address_if_validation_skipped_for_order, order_info_for_logs
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +42,6 @@ def fetch_order_prices_if_expired(
 
     # handle promotions
     lines_info: list[EditableOrderLineInfo] = fetch_draft_order_lines_info(order, lines)
-    create_or_update_discount_objects_for_order(
-        order, lines_info, database_connection_name
-    )
     lines = [line_info.line for line_info in lines_info]
 
     _clear_prefetched_discounts(order, lines)

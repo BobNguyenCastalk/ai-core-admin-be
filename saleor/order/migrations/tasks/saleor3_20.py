@@ -4,7 +4,6 @@ from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Q, Sum
 
 from ....celeryconf import app
-from ....discount.models import OrderDiscount, Voucher
 from ...models import Order, OrderLine
 from ...utils import update_order_authorize_status, update_order_charge_status
 
@@ -33,33 +32,14 @@ def set_udniscounted_base_shipping_price_on_orders_task():
             Exists(orders_with_shipping_discount.filter(pk=OuterRef("pk")))
         )
 
-        if orders_no_shipping_discount:
-            _set_undiscounted_base_shipping_price(orders_no_shipping_discount)
-        if orders_with_shipping_discount:
-            _calculate_and_set_undiscounted_base_shipping_price(
-                orders_with_shipping_discount
-            )
-
         set_udniscounted_base_shipping_price_on_orders_task.delay()
 
 
 def _get_orders_with_shipping_discount(orders):
-    orders_with_shipping_voucher = _get_orders_with_shipping_voucher(orders)
     orders_with_shipping_voucher_no_voucher_instance = (
         _get_orders_with_shipping_voucher_no_voucher_instance(orders)
     )
-    return (
-        orders_with_shipping_voucher | orders_with_shipping_voucher_no_voucher_instance
-    )
-
-
-def _get_orders_with_shipping_voucher(orders):
-    shipping_vouchers = Voucher.objects.filter(type="shipping")
-    return orders.filter(
-        origin__in=["checkout"],
-        voucher_code__isnull=False,
-        voucher__isnull=False,
-    ).filter(Exists(shipping_vouchers.filter(pk=OuterRef("voucher_id"))))
+    return orders_with_shipping_voucher_no_voucher_instance
 
 
 def _get_orders_with_shipping_voucher_no_voucher_instance(orders):
@@ -83,9 +63,7 @@ def _get_orders_with_shipping_voucher_no_voucher_instance(orders):
     )
 
     # order discount must be present for such orders
-    order_discounts = OrderDiscount.objects.filter(
-        order_id__in=orders.values("pk"), type="voucher"
-    )
+    order_discounts = []
 
     # orders with voucher code, no voucher instance, without line vouchers
     # and not applicable order voucher
@@ -101,32 +79,6 @@ def _get_orders_with_shipping_voucher_no_voucher_instance(orders):
         )
         .filter(Exists(order_discounts.filter(order_id=OuterRef("pk"))))
     )
-
-
-def _calculate_and_set_undiscounted_base_shipping_price(orders):
-    order_discounts = OrderDiscount.objects.filter(
-        order_id__in=orders.values("pk"), type="voucher"
-    )
-    order_to_discount_amount = {
-        order_discount["order_id"]: order_discount["amount_value"]
-        for order_discount in order_discounts.values("order_id", "amount_value")
-    }
-    for order in orders:
-        order.undiscounted_base_shipping_price_amount = (
-            order.base_shipping_price_amount
-            + order_to_discount_amount.get(order.pk, Decimal("0.0"))
-        )
-    with transaction.atomic():
-        _orders = list(orders.select_for_update(of=(["self"])))
-        Order.objects.bulk_update(orders, ["undiscounted_base_shipping_price_amount"])
-
-
-def _set_undiscounted_base_shipping_price(orders):
-    with transaction.atomic():
-        _orders = list(orders.select_for_update(of=(["self"])))
-        orders.update(
-            undiscounted_base_shipping_price_amount=F("base_shipping_price_amount")
-        )
 
 
 def _set_subtotal_for_orders_created_from_bulk(order_ids: list[str]):

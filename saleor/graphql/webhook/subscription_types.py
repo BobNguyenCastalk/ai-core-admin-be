@@ -8,11 +8,6 @@ from ...account.models import User
 from ...attribute.models import AttributeTranslation, AttributeValueTranslation
 from ...channel.models import Channel
 from ...core.prices import quantize_price
-from ...discount.models import (
-    PromotionRuleTranslation,
-    PromotionTranslation,
-    VoucherTranslation,
-)
 from ...graphql.shop.types import Shop
 from ...menu.models import MenuItemTranslation
 from ...page.models import PageTranslation
@@ -48,28 +43,17 @@ from ..core.descriptions import (
     ADDED_IN_36,
     ADDED_IN_37,
     ADDED_IN_38,
-    ADDED_IN_310,
-    ADDED_IN_311,
-    ADDED_IN_312,
     ADDED_IN_313,
     ADDED_IN_314,
     ADDED_IN_315,
     ADDED_IN_316,
-    ADDED_IN_317,
-    ADDED_IN_318,
-    ADDED_IN_319,
     ADDED_IN_320,
-    DEPRECATED_IN_3X_EVENT,
     PREVIEW_FEATURE,
 )
 from ..core.doc_category import (
-    DOC_CATEGORY_CHECKOUT,
-    DOC_CATEGORY_DISCOUNTS,
     DOC_CATEGORY_MISC,
     DOC_CATEGORY_ORDERS,
     DOC_CATEGORY_PAYMENTS,
-    DOC_CATEGORY_PRODUCTS,
-    DOC_CATEGORY_SHIPPING,
     DOC_CATEGORY_TAXES,
     DOC_CATEGORY_USERS,
 )
@@ -91,10 +75,7 @@ TRANSLATIONS_TYPES_MAP = {
     AttributeValueTranslation: translation_types.AttributeValueTranslation,
     ProductVariantTranslation: translation_types.ProductVariantTranslation,
     PageTranslation: translation_types.PageTranslation,
-    VoucherTranslation: translation_types.VoucherTranslation,
     MenuItemTranslation: translation_types.MenuItemTranslation,
-    PromotionTranslation: translation_types.PromotionTranslation,
-    PromotionRuleTranslation: translation_types.PromotionRuleTranslation,
 }
 
 
@@ -822,7 +803,7 @@ class ProductMediaCreated(SubscriptionObjectType, ProductMediaBase):
         root_type = "ProductMedia"
         enable_dry_run = True
         interfaces = (Event,)
-        description = "Event sent when new product media is created." + ADDED_IN_312
+        description = "Event sent when new product media is created."
 
 
 class ProductMediaUpdated(SubscriptionObjectType, ProductMediaBase):
@@ -830,7 +811,7 @@ class ProductMediaUpdated(SubscriptionObjectType, ProductMediaBase):
         root_type = "ProductMedia"
         enable_dry_run = True
         interfaces = (Event,)
-        description = "Event sent when product media is updated." + ADDED_IN_312
+        description = "Event sent when product media is updated."
 
 
 class ProductMediaDeleted(SubscriptionObjectType, ProductMediaBase):
@@ -838,7 +819,7 @@ class ProductMediaDeleted(SubscriptionObjectType, ProductMediaBase):
         root_type = "ProductMedia"
         enable_dry_run = True
         interfaces = (Event,)
-        description = "Event sent when product media is deleted." + ADDED_IN_312
+        description = "Event sent when product media is deleted."
 
 
 class ProductVariantBase(AbstractType):
@@ -1709,53 +1690,6 @@ class PaymentMethodProcessTokenizationSession(
         _, payment_method_data = root
         return payment_method_data.id
 
-
-class TranslationTypes(Union):
-    class Meta:
-        types = tuple(TRANSLATIONS_TYPES_MAP.values()) + (
-            translation_types.SaleTranslation,
-        )
-
-    @classmethod
-    def resolve_type(cls, instance, info: ResolveInfo):
-        instance_type = type(instance)
-        if instance_type == PromotionTranslation and instance.promotion.old_sale_id:
-            return translation_types.SaleTranslation
-        if instance_type in TRANSLATIONS_TYPES_MAP:
-            return TRANSLATIONS_TYPES_MAP[instance_type]
-
-        return super().resolve_type(instance, info)
-
-
-class TranslationBase(AbstractType):
-    translation = graphene.Field(
-        TranslationTypes, description="The translation the event relates to."
-    )
-
-    @staticmethod
-    def resolve_translation(root, _info: ResolveInfo):
-        _, translation = root
-        return translation
-
-
-class TranslationCreated(SubscriptionObjectType, TranslationBase):
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = "Event sent when new translation is created." + ADDED_IN_32
-        doc_category = DOC_CATEGORY_MISC
-
-
-class TranslationUpdated(SubscriptionObjectType, TranslationBase):
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = "Event sent when translation is updated." + ADDED_IN_32
-        doc_category = DOC_CATEGORY_MISC
-
-
 class ShopMetadataUpdated(SubscriptionObjectType, AbstractType):
     shop = graphene.Field(Shop, description="Shop data.")
 
@@ -2054,18 +1988,18 @@ class Subscription(SubscriptionObjectType):
 
 
 class ThumbnailCreated(SubscriptionObjectType):
-    id = graphene.ID(description="Thumbnail id." + ADDED_IN_312)
-    url = graphene.String(description="Thumbnail url." + ADDED_IN_312)
+    id = graphene.ID(description="Thumbnail id.")
+    url = graphene.String(description="Thumbnail url.")
     object_id = graphene.ID(
-        description="Object the thumbnail refers to." + ADDED_IN_312
+        description="Object the thumbnail refers to."
     )
-    media_url = graphene.String(description="Original media url." + ADDED_IN_312)
+    media_url = graphene.String(description="Original media url.")
 
     class Meta:
         root_type = None
         enable_dry_run = False
         interfaces = (Event,)
-        description = "Event sent when thumbnail is created." + ADDED_IN_312
+        description = "Event sent when thumbnail is created."
         doc_category = DOC_CATEGORY_MISC
 
     @staticmethod
@@ -2219,8 +2153,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.TRANSACTION_ITEM_METADATA_UPDATED: (
         TransactionItemMetadataUpdated
     ),
-    WebhookEventAsyncType.TRANSLATION_CREATED: TranslationCreated,
-    WebhookEventAsyncType.TRANSLATION_UPDATED: TranslationUpdated,
     WebhookEventAsyncType.THUMBNAIL_CREATED: ThumbnailCreated,
 }
 

@@ -5,9 +5,7 @@ import graphene
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from ....checkout.fetch import get_variant_channel_listing
 from ....core.taxes import zero_money, zero_taxed_money
-from ....discount.interface import fetch_variant_rules_info
 from ....order import ORDER_EDITABLE_STATUS, OrderStatus, events, models
 from ....order.actions import call_order_event
 from ....order.error_codes import OrderErrorCode
@@ -16,7 +14,6 @@ from ....payment import PaymentError
 from ....payment import models as payment_models
 from ....product import models as product_models
 from ....webhook.event_types import WebhookEventAsyncType
-from ..utils import get_shipping_method_availability_error
 
 SHIPPING_METHOD_UPDATE_FIELDS = [
     "currency",
@@ -165,8 +162,7 @@ def get_variant_rule_info_map(
         "channel_listings__variantlistingpromotionrule__promotion_rule__translations",
     )
     for variant in variants:
-        variant_channel_listing = get_variant_channel_listing(variant, channel_id)
-        rules_info = fetch_variant_rules_info(variant_channel_listing, language_code)
+        rules_info = []
         variant_id_to_variant_and_rules_info_map[
             graphene.Node.to_global_id("ProductVariant", variant.pk)
         ] = VariantData(variant=variant, rules_info=rules_info)

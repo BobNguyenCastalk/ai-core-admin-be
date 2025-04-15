@@ -7,10 +7,6 @@ from ...product.dataloaders import (
     VariantChannelListingByVariantIdAndChannelIdLoader,
     VariantChannelListingPromotionRuleByListingIdLoader,
 )
-from ...translations.dataloaders import (
-    PromotionRuleTranslationByIdAndLanguageCodeLoader,
-    PromotionTranslationByIdAndLanguageCodeLoader,
-)
 from .models import CheckoutByTokenLoader, CheckoutLineByIdLoader
 
 
@@ -83,22 +79,12 @@ class VariantPromotionRuleInfoByCheckoutLineIdLoader(DataLoader):
                                         continue
                                 return [rules_info_map.get(key) for key in keys]
 
-                            return (
-                                PromotionTranslationByIdAndLanguageCodeLoader(
-                                    self.context
-                                )
-                                .load_many(promotion_ids_language_codes)
-                                .then(with_promotion_translations)
-                            )
+                            return []
 
                         promotion_rules = []
                         promotions = []
 
-                        rules_translations = (
-                            PromotionRuleTranslationByIdAndLanguageCodeLoader(
-                                self.context
-                            ).load_many(rule_ids_language_codes)
-                        )
+                        rules_translations = []
                         return Promise.all(
                             [promotion_rules, promotions, rules_translations]
                         ).then(with_promotion_rules)

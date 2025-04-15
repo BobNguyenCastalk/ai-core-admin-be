@@ -24,8 +24,6 @@ from ..core.models import ModelWithExternalReference, ModelWithMetadata
 from ..core.units import WeightUnits
 from ..core.utils.json_serializer import CustomJsonEncoder
 from ..core.weight import zero_weight
-from ..discount import DiscountValueType
-from ..discount.models import Voucher
 from ..payment import ChargeStatus, TransactionKind
 from ..payment.model_helpers import get_subtotal
 from ..payment.models import Payment
@@ -303,13 +301,6 @@ class Order(ModelWithMetadata, ModelWithExternalReference):
         gross_amount_field="subtotal_gross_amount",
     )
 
-    voucher = models.ForeignKey(
-        Voucher, blank=True, null=True, related_name="+", on_delete=models.SET_NULL
-    )
-
-    voucher_code = models.CharField(
-        max_length=255, null=True, blank=True, db_index=False
-    )
     display_gross_prices = models.BooleanField(default=True)
     customer_note = models.TextField(blank=True, default="")
     weight = MeasurementField(
@@ -352,7 +343,6 @@ class Order(ModelWithMetadata, ModelWithExternalReference):
                 opclasses=["gin_trgm_ops"],
             ),
             models.Index(fields=["created_at"], name="idx_order_created_at"),
-            GinIndex(fields=["voucher_code"], name="order_voucher_code_idx"),
             GinIndex(
                 fields=["user_email", "user_id"],
                 name="order_user_email_user_id_idx",
@@ -561,17 +551,6 @@ class OrderLine(ModelWithMetadata):
         decimal_places=settings.DEFAULT_DECIMAL_PLACES,
         default=Decimal("0.0"),
     )
-    unit_discount = MoneyField(
-        amount_field="unit_discount_amount", currency_field="currency"
-    )
-    unit_discount_type = models.CharField(
-        max_length=10,
-        choices=DiscountValueType.CHOICES,
-        null=True,
-        blank=True,
-    )
-    unit_discount_reason = models.TextField(blank=True, null=True)
-
     unit_price_net_amount = models.DecimalField(
         max_digits=settings.DEFAULT_MAX_DIGITS,
         decimal_places=settings.DEFAULT_DECIMAL_PLACES,
@@ -675,9 +654,6 @@ class OrderLine(ModelWithMetadata):
     )
 
     is_price_overridden = models.BooleanField(null=True, blank=True)
-
-    # Fulfilled when voucher code was used for product in the line
-    voucher_code = models.CharField(max_length=255, null=True, blank=True)
 
     # Fulfilled when sale was applied to product in the line
     sale_id = models.CharField(max_length=255, null=True, blank=True)

@@ -9,7 +9,6 @@ from ....app.models import App
 from ....core import EventDeliveryStatus
 from ....core import models as core_models
 from ....core.utils.events import get_is_deferred_payload
-from ....discount import models as discount_models
 from ....graphql.utils import get_user_or_app_from_context
 from ....permission.auth_filters import AuthorizationFilters
 from ....webhook.error_codes import WebhookTriggerErrorCode
@@ -143,10 +142,6 @@ class WebhookTrigger(BaseMutation):
 
     @classmethod
     def get_instance(cls, info: ResolveInfo, object_id):
-        type, _id = from_global_id_or_error(object_id, raise_error=False)
-        if type == "Sale":
-            object_id = cls.get_global_id_or_error(object_id, "Sale")
-            return discount_models.Promotion.objects.get(old_sale_id=object_id)
         return cls.get_node_or_error(info, object_id, field="objectId")
 
     @classmethod

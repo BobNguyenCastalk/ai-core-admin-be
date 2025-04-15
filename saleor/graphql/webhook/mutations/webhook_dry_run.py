@@ -2,7 +2,6 @@ import graphene
 from graphene.utils.str_converters import to_camel_case
 
 from ....app.models import App
-from ....discount import models as discount_models
 from ....permission.auth_filters import AuthorizationFilters
 from ....webhook.error_codes import WebhookDryRunErrorCode
 from ....webhook.event_types import WebhookEventAsyncType
@@ -111,10 +110,7 @@ class WebhookDryRun(BaseMutation):
     @classmethod
     def get_instance(cls, info: ResolveInfo, object_id):
         type, _id = from_global_id_or_error(object_id, raise_error=False)
-        if type == "Sale":
-            object_id = cls.get_global_id_or_error(object_id, "Sale")
-            return discount_models.Promotion.objects.get(old_sale_id=object_id)
-        elif type == "App":
+        if type == "App":
             qs = App.objects.filter(removed_at__isnull=True)
             return cls.get_node_or_error(info, object_id, field="objectId", qs=qs)
         else:

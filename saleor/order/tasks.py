@@ -9,7 +9,6 @@ from django.utils import timezone
 from ..celeryconf import app
 from ..channel.models import Channel
 from ..core.tracing import traced_atomic_transaction
-from ..discount.models import Voucher, VoucherCode, VoucherCustomer
 from ..payment.models import Payment, TransactionItem
 from ..plugins.manager import get_plugins_manager
 from ..webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
@@ -55,44 +54,6 @@ def send_order_updated(order_ids):
             order,
             webhook_event_map=webhook_event_map,
         )
-
-
-def _bulk_release_voucher_usage(order_ids):
-    voucher_orders = Order.objects.filter(
-        voucher_code=OuterRef("code"),
-        id__in=order_ids,
-    )
-    count_orders = (
-        voucher_orders.annotate(count=Func(F("pk"), function="Count"))
-        .values("count")
-        .order_by()
-    )
-
-    vouchers = Voucher.objects.filter(usage_limit__isnull=False)
-    codes = VoucherCode.objects.filter(
-        Exists(voucher_orders),
-        Exists(vouchers.filter(id=OuterRef("voucher_id"))),
-    ).annotate(order_count=Subquery(count_orders))
-
-    # We observed mismatch between code.used and number of orders which utilize the code
-    # In some cases it is expected, but we want to further investigate the issue
-    suspected_codes = [code.code for code in codes if code.used < code.order_count]
-    if suspected_codes:
-        logger.error(
-            f"Voucher codes: [{','.join(suspected_codes)}] have been used more times "
-            f"than indicated by `code.used` field."
-        )
-
-    codes.update(used=Greatest(F("used") - F("order_count"), 0))
-
-    orders = Order.objects.filter(id__in=order_ids)
-    voucher_codes = VoucherCode.objects.filter(
-        Exists(orders.filter(voucher_code=OuterRef("code")))
-    )
-    VoucherCustomer.objects.filter(
-        Exists(voucher_codes.filter(id=OuterRef("voucher_code_id"))),
-        Exists(orders.filter(user_email=OuterRef("customer_email"))),
-    ).delete()
 
 
 def _call_expired_order_events(order_ids, manager):
@@ -156,7 +117,6 @@ def _expire_orders(manager, now):
         Order.objects.filter(id__in=ids_batch).update(
             status=OrderStatus.EXPIRED, expired_at=now
         )
-        _bulk_release_voucher_usage(ids_batch)
         _order_expired_events(ids_batch)
         _call_expired_order_events(ids_batch, manager)
 

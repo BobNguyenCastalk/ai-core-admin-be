@@ -4,13 +4,8 @@ from typing import TYPE_CHECKING, Optional
 from django.conf import settings
 from prices import Money, TaxedMoney
 
-from ..core.db.connection import allow_writer
 from ..core.prices import quantize_price
 from ..core.taxes import zero_money
-from ..discount import DiscountType, DiscountValueType
-from ..discount.models import OrderDiscount
-from ..discount.utils.manual_discount import apply_discount_to_value
-from ..discount.utils.voucher import is_order_level_voucher, is_shipping_voucher
 from .interface import OrderTaxedPricesData
 
 if TYPE_CHECKING:
@@ -95,74 +90,6 @@ def propagate_order_discount_on_order_prices(
     base_subtotal = base_order_subtotal(order, lines)
     subtotal = base_subtotal
     shipping_price = order.base_shipping_price
-    currency = order.currency
-    order_discounts_to_update = []
-
-    for order_discount in order.discounts.all():
-        subtotal_before_discount = subtotal
-        shipping_price_before_discount = shipping_price
-        if order_discount.type == DiscountType.VOUCHER:
-            voucher = order_discount.voucher
-            if is_order_level_voucher(voucher):
-                subtotal = apply_discount_to_value(
-                    value=order_discount.value,
-                    value_type=order_discount.value_type,
-                    currency=currency,
-                    price_to_discount=subtotal,
-                )
-            # Shipping voucher is tricky: it is associated with an order, but it
-            # decreases base price, similar to line level discounts, so we should
-            # exclude it
-            if is_shipping_voucher(order_discount.voucher):
-                continue
-
-        elif order_discount.type == DiscountType.ORDER_PROMOTION:
-            subtotal = apply_discount_to_value(
-                value=order_discount.value,
-                value_type=order_discount.value_type,
-                currency=currency,
-                price_to_discount=subtotal,
-            )
-        elif order_discount.type == DiscountType.MANUAL:
-            if order_discount.value_type == DiscountValueType.PERCENTAGE:
-                subtotal = apply_discount_to_value(
-                    value=order_discount.value,
-                    value_type=order_discount.value_type,
-                    currency=currency,
-                    price_to_discount=subtotal,
-                )
-                shipping_price = apply_discount_to_value(
-                    value=order_discount.value,
-                    value_type=order_discount.value_type,
-                    currency=currency,
-                    price_to_discount=shipping_price,
-                )
-            elif order_discount.value_type == DiscountValueType.FIXED:
-                temporary_undiscounted_total = subtotal + shipping_price
-                if temporary_undiscounted_total.amount > 0:
-                    temporary_total = apply_discount_to_value(
-                        value=order_discount.value,
-                        value_type=order_discount.value_type,
-                        currency=currency,
-                        price_to_discount=temporary_undiscounted_total,
-                    )
-                    total_discount = temporary_undiscounted_total - temporary_total
-                    subtotal_discount = (
-                        subtotal / temporary_undiscounted_total
-                    ) * total_discount
-                    shipping_discount = total_discount - subtotal_discount
-
-                    subtotal -= subtotal_discount
-                    shipping_price -= shipping_discount
-        shipping_discount_amount = shipping_price_before_discount - shipping_price
-        subtotal_discount_amount = subtotal_before_discount - subtotal
-        total_discount_amount = shipping_discount_amount + subtotal_discount_amount
-        if order_discount.amount != total_discount_amount:
-            order_discount.amount = total_discount_amount
-            order_discounts_to_update.append(order_discount)
-
-    if order_discounts_to_update:
-        OrderDiscount.objects.bulk_update(order_discounts_to_update, ["amount_value"])
 
     return subtotal, shipping_price
 

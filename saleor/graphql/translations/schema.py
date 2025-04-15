@@ -1,7 +1,6 @@
 import graphene
 
 from ...attribute.models import Attribute, AttributeValue
-from ...discount.models import Promotion, PromotionRule, Voucher
 from ...menu.models import MenuItem
 from ...page.models import Page
 from ...permission.enums import SitePermissions
@@ -20,10 +19,6 @@ from .resolvers import (
     resolve_collections,
     resolve_product_variants,
     resolve_products,
-    resolve_promotion_rules,
-    resolve_promotions,
-    resolve_sales,
-    resolve_vouchers,
 )
 
 TYPES_TRANSLATIONS_MAP = {
@@ -34,28 +29,18 @@ TYPES_TRANSLATIONS_MAP = {
     AttributeValue: translation_types.AttributeValueTranslatableContent,
     ProductVariant: translation_types.ProductVariantTranslatableContent,
     Page: translation_types.PageTranslatableContent,
-    Voucher: translation_types.VoucherTranslatableContent,
     MenuItem: translation_types.MenuItemTranslatableContent,
-    Promotion: translation_types.PromotionTranslatableContent,
-    PromotionRule: translation_types.PromotionRuleTranslatableContent,
 }
 
 
 class TranslatableItem(graphene.Union):
     class Meta:
-        types = tuple(TYPES_TRANSLATIONS_MAP.values()) + (
-            translation_types.SaleTranslatableContent,
-        )
+        types = tuple(TYPES_TRANSLATIONS_MAP.values())
 
     @classmethod
     def resolve_type(cls, instance, info: ResolveInfo):
         instance_type = type(instance)
-        kind = info.variable_values.get("kind")
-        if kind == TranslatableKinds.SALE or (
-            instance_type == Promotion and instance.old_sale_id
-        ):
-            return translation_types.SaleTranslatableContent
-        elif instance_type in TYPES_TRANSLATIONS_MAP:
+        if instance_type in TYPES_TRANSLATIONS_MAP:
             return TYPES_TRANSLATIONS_MAP[instance_type]
 
         return super().resolve_type(instance, info)
@@ -74,12 +59,8 @@ class TranslatableKinds(graphene.Enum):
     MENU_ITEM = "MenuItem"
     PAGE = "Page"
     PRODUCT = "Product"
-    PROMOTION = "Promotion"
-    PROMOTION_RULE = "PromotionRule"
     SALE = "Sale"
-    SHIPPING_METHOD = "ShippingMethodType"
     VARIANT = "ProductVariant"
-    VOUCHER = "Voucher"
 
 
 class TranslationQueries(graphene.ObjectType):
@@ -115,8 +96,6 @@ class TranslationQueries(graphene.ObjectType):
             qs = resolve_collections(info)
         elif kind == TranslatableKinds.CATEGORY:
             qs = resolve_categories(info)
-        elif kind == TranslatableKinds.VOUCHER:
-            qs = resolve_vouchers(info)
         elif kind == TranslatableKinds.ATTRIBUTE:
             qs = resolve_attributes(info)
         elif kind == TranslatableKinds.ATTRIBUTE_VALUE:
@@ -125,12 +104,6 @@ class TranslationQueries(graphene.ObjectType):
             qs = resolve_product_variants(info)
         elif kind == TranslatableKinds.MENU_ITEM:
             qs = resolve_menu_items(info)
-        elif kind == TranslatableKinds.SALE:
-            qs = resolve_sales(info)
-        elif kind == TranslatableKinds.PROMOTION:
-            qs = resolve_promotions(info)
-        elif kind == TranslatableKinds.PROMOTION_RULE:
-            qs = resolve_promotion_rules(info)
 
         return create_connection_slice(qs, info, kwargs, TranslatableItemConnection)
 
@@ -147,17 +120,8 @@ class TranslationQueries(graphene.ObjectType):
             TranslatableKinds.ATTRIBUTE_VALUE.value: AttributeValue,  # type: ignore[attr-defined] # noqa: E501
             TranslatableKinds.VARIANT.value: ProductVariant,  # type: ignore[attr-defined] # noqa: E501
             TranslatableKinds.PAGE.value: Page,  # type: ignore[attr-defined]
-            TranslatableKinds.VOUCHER.value: Voucher,  # type: ignore[attr-defined]
             TranslatableKinds.MENU_ITEM.value: MenuItem,  # type: ignore[attr-defined]
-            TranslatableKinds.PROMOTION.value: Promotion,  # type: ignore[attr-defined]
-            TranslatableKinds.PROMOTION_RULE.value: PromotionRule,  # type: ignore[attr-defined] # noqa: E501
         }
-        if kind == TranslatableKinds.SALE.value:  # type: ignore[attr-defined]
-            return (
-                Promotion.objects.using(get_database_connection_name(info.context))
-                .filter(old_sale_id=kind_id)
-                .first()
-            )
         return (
             models[kind]
             .objects.using(get_database_connection_name(info.context))  # type: ignore[attr-defined]

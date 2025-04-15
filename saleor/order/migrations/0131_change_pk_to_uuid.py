@@ -9,8 +9,6 @@ class Migration(migrations.Migration):
     dependencies = [
         ("order", "0130_save_order_token_in_relation_models"),
         ("account", "0063_save_customerevent_order_token"),
-        ("discount", "0036_save_discocunt_order_token"),
-        # ("invoice", "0007_save_invoice_order_token"),
         ("payment", "0032_save_payment_order_token"),
     ]
 

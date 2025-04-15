@@ -20,7 +20,6 @@ from ..core.notification.utils import get_site_context
 from ..core.notify import NotifyEventType, NotifyHandler
 from ..core.prices import quantize_price, quantize_price_fields
 from ..core.utils.url import build_absolute_uri, prepare_url
-from ..discount import DiscountType
 from ..graphql.core.utils import to_global_id_or_none
 from ..product import ProductMediaTypes
 from ..product.models import DigitalContentUrl, Product, ProductMedia, ProductVariant
@@ -264,25 +263,10 @@ def get_address_payload(address):
 
 
 def get_discounts_payload(order):
-    order_discounts = order.discounts.all()
+    order_discounts = []
     voucher_discount = None
     all_discounts = []
     discount_amount = 0
-    for order_discount in order_discounts:
-        dicount_obj = {
-            "type": order_discount.type,
-            "value_type": order_discount.value_type,
-            "value": order_discount.value,
-            "amount_value": order_discount.amount_value,
-            "name": order_discount.name,
-            "translated_name": order_discount.translated_name,
-            "reason": order_discount.reason,
-        }
-        all_discounts.append(dicount_obj)
-        if order_discount.type == DiscountType.VOUCHER:
-            voucher_discount = dicount_obj
-        discount_amount += order_discount.amount_value
-
     return {
         "voucher_discount": voucher_discount,
         "discounts": all_discounts,

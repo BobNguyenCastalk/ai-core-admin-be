@@ -11,10 +11,6 @@ from ..core.db.connection import allow_writer
 from ..core.prices import quantize_price
 from ..core.pricing.interface import LineInfo
 from ..core.taxes import zero_money
-from ..discount import DiscountType, VoucherType
-from ..discount.interface import fetch_variant_rules_info, fetch_voucher_info
-from ..discount.models import OrderLineDiscount
-from ..discount.utils.voucher import apply_voucher_to_line
 from ..graphql.core.types import Money
 from ..payment.models import Payment
 from ..product.models import (
@@ -43,7 +39,7 @@ class OrderLineInfo:
     digital_content: Optional["DigitalContent"] = None
     replace: bool = False
     warehouse_pk: Optional[UUID] = None
-    line_discounts: Optional[Iterable["OrderLineDiscount"]] = None
+    line_discounts = None
 
 
 def fetch_order_info(order: "Order") -> OrderInfo:
@@ -82,7 +78,7 @@ def fetch_order_lines(order: "Order") -> list[OrderLineInfo]:
 @dataclass
 class EditableOrderLineInfo(LineInfo):
     line: "OrderLine"
-    discounts: list["OrderLineDiscount"]
+    discounts: list
 
     @cached_property
     def variant_discounted_price(self) -> Money:
@@ -104,14 +100,6 @@ class EditableOrderLineInfo(LineInfo):
             total_price / self.line.quantity, zero_money(self.line.currency)
         )
         return quantize_price(unit_price, self.line.currency)
-
-    def get_manual_line_discount(
-        self,
-    ) -> Optional["OrderLineDiscount"]:
-        for discount in self.discounts:
-            if discount.type == DiscountType.MANUAL:
-                return discount
-        return None
 
 
 def fetch_draft_order_lines_info(
@@ -146,11 +134,7 @@ def fetch_draft_order_lines_info(
         if not variant_channel_listing:
             continue
 
-        rules_info = (
-            fetch_variant_rules_info(variant_channel_listing, order.language_code)
-            if not line.is_gift
-            else []
-        )
+        rules_info = []
         lines_info.append(
             EditableOrderLineInfo(
                 line=line,
@@ -166,12 +150,6 @@ def fetch_draft_order_lines_info(
                 voucher_code=None,
             )
         )
-    voucher = order.voucher
-    if voucher and (
-        voucher.type == VoucherType.SPECIFIC_PRODUCT or voucher.apply_once_per_order
-    ):
-        voucher_info = fetch_voucher_info(voucher, order.voucher_code)
-        apply_voucher_to_line(voucher_info, lines_info)
     return lines_info
 
 
