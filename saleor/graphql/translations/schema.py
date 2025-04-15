@@ -5,7 +5,6 @@ from ...menu.models import MenuItem
 from ...page.models import Page
 from ...permission.enums import SitePermissions
 from ...product.models import Category, Collection, Product, ProductVariant
-from ..attribute.resolvers import resolve_attributes
 from ..core import ResolveInfo
 from ..core.connection import CountableConnection, create_connection_slice
 from ..core.context import get_database_connection_name
@@ -15,7 +14,6 @@ from ..menu.resolvers import resolve_menu_items
 from ..product.resolvers import resolve_categories
 from ..translations import types as translation_types
 from .resolvers import (
-    resolve_attribute_values,
     resolve_collections,
     resolve_product_variants,
     resolve_products,
@@ -96,10 +94,6 @@ class TranslationQueries(graphene.ObjectType):
             qs = resolve_collections(info)
         elif kind == TranslatableKinds.CATEGORY:
             qs = resolve_categories(info)
-        elif kind == TranslatableKinds.ATTRIBUTE:
-            qs = resolve_attributes(info)
-        elif kind == TranslatableKinds.ATTRIBUTE_VALUE:
-            qs = resolve_attribute_values(info)
         elif kind == TranslatableKinds.VARIANT:
             qs = resolve_product_variants(info)
         elif kind == TranslatableKinds.MENU_ITEM:

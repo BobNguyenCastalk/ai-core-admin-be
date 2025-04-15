@@ -722,10 +722,6 @@ class ProductFilter(MetadataFilterBase):
         field_name="minimal_price_amount",
         help_text="Filter by the lowest variant price after discounts.",
     )
-    attributes = ListObjectTypeFilter(
-        input_class="saleor.graphql.attribute.types.AttributeInput",
-        method="filter_attributes",
-    )
     stock_availability = EnumFilter(
         input_class=StockAvailability,
         method="filter_stock_availability",
@@ -756,7 +752,6 @@ class ProductFilter(MetadataFilterBase):
             "collections",
             "categories",
             "has_category",
-            "attributes",
             "stock_availability",
             "stocks",
             "search",
@@ -1053,11 +1048,6 @@ class ProductWhere(MetadataWhereFilterBase):
         method="filter_minimal_price",
         field_name="minimal_price_amount",
         help_text="Filter by the lowest variant price after discounts.",
-    )
-    attributes = ListObjectTypeWhereFilter(
-        input_class="saleor.graphql.attribute.types.AttributeInput",
-        method="filter_attributes",
-        help_text="Filter by attributes associated with the product.",
     )
     stock_availability = EnumWhereFilter(
         input_class=StockAvailability,

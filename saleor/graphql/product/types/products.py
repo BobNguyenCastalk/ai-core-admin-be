@@ -26,14 +26,6 @@ from ....thumbnail.utils import (
 )
 from ...account import types as account_types
 from ...account.enums import CountryCodeEnum
-from ...attribute.filters import AttributeFilterInput, AttributeWhereInput
-from ...attribute.resolvers import resolve_attributes
-from ...attribute.types import (
-    AssignedVariantAttribute,
-    Attribute,
-    AttributeCountableConnection,
-    SelectedAttribute,
-)
 from ...channel import ChannelContext, ChannelQsContext
 from ...channel.dataloaders import ChannelBySlugLoader
 from ...channel.types import ChannelContextType, ChannelContextTypeWithMetadata
@@ -41,7 +33,6 @@ from ...channel.utils import get_default_channel_slug_or_graphql_error
 from ...core.connection import (
     CountableConnection,
     create_connection_slice,
-    filter_connection_queryset,
 )
 from ...core.context import get_database_connection_name
 from ...core.descriptions import (
@@ -99,20 +90,13 @@ from ..dataloaders import (
     ImagesByProductVariantIdLoader,
     MediaByProductIdLoader,
     MediaByProductVariantIdLoader,
-    ProductAttributesAllByProductTypeIdLoader,
-    ProductAttributesVisibleInStorefrontByProductTypeIdLoader,
     ProductByIdLoader,
     ProductChannelListingByProductIdAndChannelSlugLoader,
     ProductChannelListingByProductIdLoader,
     ProductTypeByIdLoader,
     ProductVariantByIdLoader,
     ProductVariantsByProductIdLoader,
-    SelectedAttributesAllByProductIdLoader,
-    SelectedAttributesByProductVariantIdLoader,
-    SelectedAttributesVisibleInStorefrontByProductIdLoader,
     ThumbnailByProductMediaIdSizeAndFormatLoader,
-    VariantAttributesAllByProductTypeIdLoader,
-    VariantAttributesVisibleInStorefrontByProductTypeIdLoader,
     VariantChannelListingByVariantIdAndChannelSlugLoader,
     VariantChannelListingByVariantIdLoader,
 )
@@ -283,15 +267,6 @@ class ProductVariant(ChannelContextTypeWithMetadata[models.ProductVariant]):
             "only meant for displaying."
         ),
     )
-    attributes = NonNullList(
-        SelectedAttribute,
-        required=True,
-        description="List of attributes assigned to this variant.",
-        variant_selection=graphene.Argument(
-            VariantAttributeScope,
-            description="Define scope of returned attributes.",
-        ),
-    )
     margin = graphene.Int(description="Gross margin percentage value.")
     quantity_ordered = PermissionsField(
         graphene.Int,
@@ -456,33 +431,16 @@ class ProductVariant(ChannelContextTypeWithMetadata[models.ProductVariant]):
         variant_selection: Optional[str] = None,
     ):
         def apply_variant_selection_filter(selected_attributes):
-            if not variant_selection or variant_selection == VariantAttributeScope.ALL:
-                return selected_attributes
-            attributes = [
-                (selected_att["attribute"], selected_att["variant_selection"])
-                for selected_att in selected_attributes
-            ]
-            variant_selection_attrs = [
-                attr for attr, _ in get_variant_selection_attributes(attributes)
-            ]
 
             if variant_selection == VariantAttributeScope.VARIANT_SELECTION:
                 return [
                     selected_attribute
                     for selected_attribute in selected_attributes
-                    if selected_attribute["attribute"] in variant_selection_attrs
                 ]
             return [
                 selected_attribute
                 for selected_attribute in selected_attributes
-                if selected_attribute["attribute"] not in variant_selection_attrs
             ]
-
-        return (
-            SelectedAttributesByProductVariantIdLoader(info.context)
-            .load(root.node.id)
-            .then(apply_variant_selection_filter)
-        )
 
     @staticmethod
     def resolve_channel_listings(root: ChannelContext[models.ProductVariant], info):
@@ -678,23 +636,6 @@ class Product(ChannelContextTypeWithMetadata[models.Product]):
             "given channel, and published."
         ),
     )
-    attribute = graphene.Field(
-        SelectedAttribute,
-        slug=graphene.Argument(
-            graphene.String,
-            description="Slug of the attribute",
-            required=True,
-        ),
-        description=(
-            f"Get a single attribute attached to product by attribute slug."
-            f"{ADDED_IN_39}"
-        ),
-    )
-    attributes = NonNullList(
-        SelectedAttribute,
-        required=True,
-        description="List of attributes assigned to this product.",
-    )
     channel_listings = PermissionsField(
         NonNullList(ProductChannelListing),
         description="List of availability in channels for the product.",
@@ -879,50 +820,6 @@ class Product(ChannelContextTypeWithMetadata[models.Product]):
             .load((root.node.id, channel_slug))
             .then(check_is_available_for_purchase)
         )
-
-    @staticmethod
-    def resolve_attribute(root: ChannelContext[models.Product], info, slug):
-        def get_selected_attribute_by_slug(
-            attributes: list[SelectedAttribute],
-        ) -> Optional[SelectedAttribute]:
-            return next(
-                (atr for atr in attributes if atr["attribute"].slug == slug),
-                None,
-            )
-
-        requestor = get_user_or_app_from_context(info.context)
-        if (
-            requestor
-            and requestor.is_active
-            and requestor.has_perm(ProductPermissions.MANAGE_PRODUCTS)
-        ):
-            return (
-                SelectedAttributesAllByProductIdLoader(info.context)
-                .load(root.node.id)
-                .then(get_selected_attribute_by_slug)
-            )
-        else:
-            return (
-                SelectedAttributesVisibleInStorefrontByProductIdLoader(info.context)
-                .load(root.node.id)
-                .then(get_selected_attribute_by_slug)
-            )
-
-    @staticmethod
-    def resolve_attributes(root: ChannelContext[models.Product], info):
-        requestor = get_user_or_app_from_context(info.context)
-        if (
-            requestor
-            and requestor.is_active
-            and requestor.has_perm(ProductPermissions.MANAGE_PRODUCTS)
-        ):
-            return SelectedAttributesAllByProductIdLoader(info.context).load(
-                root.node.id
-            )
-        else:
-            return SelectedAttributesVisibleInStorefrontByProductIdLoader(
-                info.context
-            ).load(root.node.id)
 
     @staticmethod
     def resolve_media_by_id(root: ChannelContext[models.Product], info, *, id):
@@ -1215,38 +1112,6 @@ class ProductType(ModelObjectType[models.ProductType]):
             "Use the top-level `products` query with the `productTypes` filter."
         ),
     )
-    variant_attributes = NonNullList(
-        Attribute,
-        description="Variant attributes of that product type.",
-        variant_selection=graphene.Argument(
-            VariantAttributeScope,
-            description="Define scope of returned attributes.",
-        ),
-        deprecation_reason=(
-            f"{DEPRECATED_IN_3X_FIELD} Use `assignedVariantAttributes` instead."
-        ),
-    )
-    assigned_variant_attributes = NonNullList(
-        AssignedVariantAttribute,
-        description=(
-            "Variant attributes of that product type with attached variant selection."
-            + ADDED_IN_31
-        ),
-        variant_selection=graphene.Argument(
-            VariantAttributeScope,
-            description="Define scope of returned attributes.",
-        ),
-    )
-    product_attributes = NonNullList(
-        Attribute, description="Product attributes of that product type."
-    )
-    available_attributes = FilterConnectionField(
-        AttributeCountableConnection,
-        filter=AttributeFilterInput(),
-        where=AttributeWhereInput(),
-        description="List of attributes which can be assigned to this product type.",
-        permissions=[ProductPermissions.MANAGE_PRODUCTS],
-    )
 
     class Meta:
         description = (
@@ -1255,110 +1120,6 @@ class ProductType(ModelObjectType[models.ProductType]):
         )
         interfaces = [relay.Node, ObjectWithMetadata]
         model = models.ProductType
-
-
-    @staticmethod
-    def resolve_product_attributes(root: models.ProductType, info):
-        def unpack_attributes(attributes):
-            return [attr for attr, *_ in attributes]
-
-        requestor = get_user_or_app_from_context(info.context)
-        if (
-            requestor
-            and requestor.is_active
-            and requestor.has_perm(ProductPermissions.MANAGE_PRODUCTS)
-        ):
-            return (
-                ProductAttributesAllByProductTypeIdLoader(info.context)
-                .load(root.pk)
-                .then(unpack_attributes)
-            )
-        else:
-            return (
-                ProductAttributesVisibleInStorefrontByProductTypeIdLoader(info.context)
-                .load(root.pk)
-                .then(unpack_attributes)
-            )
-
-    @staticmethod
-    @traced_resolver
-    def resolve_variant_attributes(
-        root: models.ProductType,
-        info,
-        variant_selection: Optional[str] = None,
-    ):
-        def apply_variant_selection_filter(attributes):
-            if not variant_selection or variant_selection == VariantAttributeScope.ALL:
-                return [attr for attr, *_ in attributes]
-            variant_selection_attrs = get_variant_selection_attributes(attributes)
-            if variant_selection == VariantAttributeScope.VARIANT_SELECTION:
-                return [attr for attr, *_ in variant_selection_attrs]
-            return [
-                attr
-                for attr, variant_selection in attributes
-                if (attr, variant_selection) not in variant_selection_attrs
-            ]
-
-        requestor = get_user_or_app_from_context(info.context)
-        if (
-            requestor
-            and requestor.is_active
-            and requestor.has_perm(ProductPermissions.MANAGE_PRODUCTS)
-        ):
-            return (
-                VariantAttributesAllByProductTypeIdLoader(info.context)
-                .load(root.pk)
-                .then(apply_variant_selection_filter)
-            )
-        else:
-            return (
-                VariantAttributesVisibleInStorefrontByProductTypeIdLoader(info.context)
-                .load(root.pk)
-                .then(apply_variant_selection_filter)
-            )
-
-    @staticmethod
-    @traced_resolver
-    def resolve_assigned_variant_attributes(
-        root: models.ProductType,
-        info,
-        variant_selection: Optional[str] = None,
-    ):
-        def apply_variant_selection_filter(attributes):
-            if not variant_selection or variant_selection == VariantAttributeScope.ALL:
-                return [
-                    {"attribute": attr, "variant_selection": variant_selection}
-                    for attr, variant_selection in attributes
-                ]
-            variant_selection_attrs = get_variant_selection_attributes(attributes)
-            if variant_selection == VariantAttributeScope.VARIANT_SELECTION:
-                return [
-                    {"attribute": attr, "variant_selection": variant_selection}
-                    for attr, variant_selection in variant_selection_attrs
-                ]
-            return [
-                {"attribute": attr, "variant_selection": variant_selection}
-                for attr, variant_selection in attributes
-                if (attr, variant_selection) not in variant_selection_attrs
-            ]
-
-        requestor = get_user_or_app_from_context(info.context)
-        if (
-            requestor
-            and requestor.is_active
-            and requestor.has_perm(ProductPermissions.MANAGE_PRODUCTS)
-        ):
-            return (
-                VariantAttributesAllByProductTypeIdLoader(info.context)
-                .load(root.pk)
-                .then(apply_variant_selection_filter)
-            )
-        else:
-            return (
-                VariantAttributesVisibleInStorefrontByProductTypeIdLoader(info.context)
-                .load(root.pk)
-                .then(apply_variant_selection_filter)
-            )
 
     @staticmethod
     def resolve_products(root: models.ProductType, info, *, channel=None, **kwargs):
@@ -1386,16 +1147,6 @@ class ProductType(ModelObjectType[models.ProductType]):
         else:
             return _resolve_products(None)
 
-    @staticmethod
-    def resolve_available_attributes(root: models.ProductType, info, **kwargs):
-        qs = attribute_models.Attribute.objects.using(
-            get_database_connection_name(info.context)
-        ).get_unassigned_product_type_attributes(root.pk)
-        qs = resolve_attributes(info, qs=qs)
-        qs = filter_connection_queryset(
-            qs, kwargs, info.context, allow_replica=info.context.allow_replica
-        )
-        return create_connection_slice(qs, info, kwargs, AttributeCountableConnection)
 
     @staticmethod
     def resolve_weight(root: models.ProductType, _info):

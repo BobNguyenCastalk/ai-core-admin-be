@@ -14,7 +14,6 @@ from ...permission.enums import (
 )
 from ...product import models as product_models
 from ...site import models as site_models
-from ..attribute.dataloaders import AttributesByAttributeId, AttributeValueByIdLoader
 from ..channel import ChannelContext
 from ..core.context import get_database_connection_name
 from ..core.descriptions import (
@@ -34,9 +33,6 @@ from ..product.dataloaders import (
     CollectionByIdLoader,
     ProductByIdLoader,
     ProductVariantByIdLoader,
-    SelectedAttributesAllByProductIdLoader,
-    SelectedAttributesByProductVariantIdLoader,
-    SelectedAttributesVisibleInStorefrontByProductIdLoader,
 )
 from ..utils import get_user_or_app_from_context
 from .fields import TranslationField
@@ -106,11 +102,6 @@ class AttributeValueTranslation(
         interfaces = [graphene.relay.Node]
         description = "Represents attribute value translations."
 
-    @staticmethod
-    def resolve_translatable_content(
-        root: attribute_models.AttributeValueTranslation, info
-    ):
-        return AttributeValueByIdLoader(info.context).load(root.attribute_value_id)
 
 
 class AttributeTranslation(BaseTranslationType[attribute_models.AttributeTranslation]):
@@ -128,10 +119,6 @@ class AttributeTranslation(BaseTranslationType[attribute_models.AttributeTransla
         interfaces = [graphene.relay.Node]
         description = "Represents attribute translations."
 
-    @staticmethod
-    def resolve_translatable_content(root: attribute_models.AttributeTranslation, info):
-        return AttributesByAttributeId(info.context).load(root.attribute_id)
-
 
 class AttributeTranslatableContent(ModelObjectType[attribute_models.Attribute]):
     id = graphene.GlobalID(
@@ -145,21 +132,7 @@ class AttributeTranslatableContent(ModelObjectType[attribute_models.Attribute]):
         required=True, description="Name of the attribute to translate."
     )
     translation = TranslationField(AttributeTranslation, type_name="attribute")
-    attribute = graphene.Field(
-        "saleor.graphql.attribute.types.Attribute",
-        description="Custom attribute of a product.",
-        deprecation_reason=(
-            f"{DEPRECATED_IN_3X_FIELD} Get model fields from the root level queries."
-        ),
-    )
 
-    class Meta:
-        model = attribute_models.Attribute
-        interfaces = [graphene.relay.Node]
-        description = (
-            "Represents attribute's original translatable fields "
-            "and related translations."
-        )
 
     @staticmethod
     def resolve_attribute(root: attribute_models.Attribute, _info):
@@ -189,13 +162,6 @@ class AttributeValueTranslatableContent(
     translation = TranslationField(
         AttributeValueTranslation, type_name="attribute value"
     )
-    attribute_value = graphene.Field(
-        "saleor.graphql.attribute.types.AttributeValue",
-        description="Represents a value of an attribute.",
-        deprecation_reason=(
-            f"{DEPRECATED_IN_3X_FIELD} Get model fields from the root level queries."
-        ),
-    )
     attribute = graphene.Field(
         AttributeTranslatableContent,
         description="Associated attribute that can be translated." + ADDED_IN_39,
@@ -212,10 +178,6 @@ class AttributeValueTranslatableContent(
     @staticmethod
     def resolve_attribute_value(root: attribute_models.AttributeValue, _info):
         return root
-
-    @staticmethod
-    def resolve_attribute(root: attribute_models.AttributeValue, info):
-        return AttributesByAttributeId(info.context).load(root.attribute_id)
 
     @staticmethod
     def resolve_attribute_value_id(root: attribute_models.AttributeValue, _info):
@@ -290,14 +252,6 @@ class ProductVariantTranslatableContent(ModelObjectType[product_models.ProductVa
     @staticmethod
     def resolve_product_variant(root: product_models.ProductVariant, _info):
         return ChannelContext(node=root, channel_slug=None)
-
-    @staticmethod
-    def resolve_attribute_values(root: product_models.ProductVariant, info):
-        return (
-            SelectedAttributesByProductVariantIdLoader(info.context)
-            .load(root.id)
-            .then(get_translatable_attribute_values)
-        )
 
     @staticmethod
     def resolve_product_variant_id(root: product_models.ProductVariant, _info):
@@ -394,22 +348,6 @@ class ProductTranslatableContent(ModelObjectType[product_models.Product]):
     @staticmethod
     def resolve_attribute_values(root: product_models.Product, info):
         requestor = get_user_or_app_from_context(info.context)
-        if (
-            requestor
-            and requestor.is_active
-            and requestor.has_perm(ProductPermissions.MANAGE_PRODUCTS)
-        ):
-            return (
-                SelectedAttributesAllByProductIdLoader(info.context)
-                .load(root.id)
-                .then(get_translatable_attribute_values)
-            )
-        else:
-            return (
-                SelectedAttributesVisibleInStorefrontByProductIdLoader(info.context)
-                .load(root.id)
-                .then(get_translatable_attribute_values)
-            )
 
     @staticmethod
     def resolve_product_id(root: product_models.Product, _info):

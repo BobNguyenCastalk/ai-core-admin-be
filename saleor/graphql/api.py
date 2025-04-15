@@ -18,7 +18,6 @@ from graphql.execution import ExecutionResult
 from ..core.utils.cache import CacheDict
 from .account.schema import AccountMutations, AccountQueries
 from .app.schema import AppQueries
-from .attribute.schema import AttributeMutations, AttributeQueries
 from .channel.schema import ChannelQueries
 from .core.enums import unit_enums
 from .core.federation.schema import build_federated_schema
@@ -37,7 +36,6 @@ API_PATH = SimpleLazyObject(lambda: reverse("api"))
 class Query(
     AccountQueries,
     AppQueries,
-    AttributeQueries,
     ChannelQueries,
     CoreQueries,
     PluginsQueries,
@@ -52,7 +50,6 @@ class Query(
 
 class Mutation(
     AccountMutations,
-    AttributeMutations,
     CoreMutations,
     PluginsMutations,
     MenuMutations,

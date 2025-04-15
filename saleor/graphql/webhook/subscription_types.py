@@ -330,78 +330,6 @@ class AppStatusChanged(SubscriptionObjectType, AppBase):
         description = "Event sent when app status has changed." + ADDED_IN_34
 
 
-class AttributeBase(AbstractType):
-    attribute = graphene.Field(
-        "saleor.graphql.attribute.types.Attribute",
-        description="The attribute the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_attribute(root, _info: ResolveInfo):
-        _, attribute = root
-        return attribute
-
-
-class AttributeCreated(SubscriptionObjectType, AttributeBase):
-    class Meta:
-        root_type = "Attribute"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new attribute is created." + ADDED_IN_35
-
-
-class AttributeUpdated(SubscriptionObjectType, AttributeBase):
-    class Meta:
-        root_type = "Attribute"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when attribute is updated." + ADDED_IN_35
-
-
-class AttributeDeleted(SubscriptionObjectType, AttributeBase):
-    class Meta:
-        root_type = "Attribute"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when attribute is deleted." + ADDED_IN_35
-
-
-class AttributeValueBase(AbstractType):
-    attribute_value = graphene.Field(
-        "saleor.graphql.attribute.types.AttributeValue",
-        description="The attribute value the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_attribute_value(root, _info: ResolveInfo):
-        _, attribute = root
-        return attribute
-
-
-class AttributeValueCreated(SubscriptionObjectType, AttributeValueBase):
-    class Meta:
-        root_type = "AttributeValue"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new attribute value is created." + ADDED_IN_35
-
-
-class AttributeValueUpdated(SubscriptionObjectType, AttributeValueBase):
-    class Meta:
-        root_type = "AttributeValue"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when attribute value is updated." + ADDED_IN_35
-
-
-class AttributeValueDeleted(SubscriptionObjectType, AttributeValueBase):
-    class Meta:
-        root_type = "AttributeValue"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when attribute value is deleted." + ADDED_IN_35
-
-
 class CategoryBase(AbstractType):
     category = graphene.Field(
         "saleor.graphql.product.types.Category",
@@ -1966,12 +1894,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.APP_UPDATED: AppUpdated,
     WebhookEventAsyncType.APP_DELETED: AppDeleted,
     WebhookEventAsyncType.APP_STATUS_CHANGED: AppStatusChanged,
-    WebhookEventAsyncType.ATTRIBUTE_CREATED: AttributeCreated,
-    WebhookEventAsyncType.ATTRIBUTE_UPDATED: AttributeUpdated,
-    WebhookEventAsyncType.ATTRIBUTE_DELETED: AttributeDeleted,
-    WebhookEventAsyncType.ATTRIBUTE_VALUE_CREATED: AttributeValueCreated,
-    WebhookEventAsyncType.ATTRIBUTE_VALUE_UPDATED: AttributeValueUpdated,
-    WebhookEventAsyncType.ATTRIBUTE_VALUE_DELETED: AttributeValueDeleted,
     WebhookEventAsyncType.CATEGORY_CREATED: CategoryCreated,
     WebhookEventAsyncType.CATEGORY_UPDATED: CategoryUpdated,
     WebhookEventAsyncType.CATEGORY_DELETED: CategoryDeleted,
