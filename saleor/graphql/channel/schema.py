@@ -6,13 +6,6 @@ from ..core.descriptions import ADDED_IN_36
 from ..core.doc_category import DOC_CATEGORY_CHANNELS
 from ..core.fields import BaseField, PermissionsField
 from ..core.types import NonNullList
-from .mutations import (
-    ChannelActivate,
-    ChannelCreate,
-    ChannelDeactivate,
-    ChannelDelete,
-    ChannelUpdate,
-)
 from .resolvers import resolve_channel, resolve_channels
 from .types import Channel
 
@@ -48,11 +41,3 @@ class ChannelQueries(graphene.ObjectType):
     @staticmethod
     def resolve_channels(_root, info: ResolveInfo, **kwargs):
         return resolve_channels(info)
-
-
-class ChannelMutations(graphene.ObjectType):
-    channel_create = ChannelCreate.Field()
-    channel_update = ChannelUpdate.Field()
-    channel_delete = ChannelDelete.Field()
-    channel_activate = ChannelActivate.Field()
-    channel_deactivate = ChannelDeactivate.Field()

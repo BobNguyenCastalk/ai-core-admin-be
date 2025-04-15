@@ -19,7 +19,7 @@ from ..core.utils.cache import CacheDict
 from .account.schema import AccountMutations, AccountQueries
 from .app.schema import AppQueries
 from .attribute.schema import AttributeMutations, AttributeQueries
-from .channel.schema import ChannelMutations, ChannelQueries
+from .channel.schema import ChannelQueries
 from .core.enums import unit_enums
 from .core.federation.schema import build_federated_schema
 from .core.schema import CoreMutations, CoreQueries
@@ -53,7 +53,6 @@ class Query(
 class Mutation(
     AccountMutations,
     AttributeMutations,
-    ChannelMutations,
     CoreMutations,
     PluginsMutations,
     MenuMutations,
