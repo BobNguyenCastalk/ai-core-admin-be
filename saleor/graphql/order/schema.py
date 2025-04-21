@@ -25,8 +25,6 @@ from ..core.types import FilterInputObjectType, TaxedMoney
 from ..core.utils import ext_ref_to_global_id_or_error, from_global_id_or_error
 from ..core.validators import validate_one_of_args_is_in_query
 from ..utils import get_user_or_app_from_context
-from .bulk_mutations.draft_orders import DraftOrderBulkDelete, DraftOrderLinesBulkDelete
-from .bulk_mutations.order_bulk_cancel import OrderBulkCancel
 from .filters import DraftOrderFilter, OrderFilter
 from .mutations.draft_order_complete import DraftOrderComplete
 from .mutations.fulfillment_approve import FulfillmentApprove
@@ -227,10 +225,6 @@ class OrderQueries(graphene.ObjectType):
 
 class OrderMutations(graphene.ObjectType):
     draft_order_complete = DraftOrderComplete.Field()
-    draft_order_bulk_delete = DraftOrderBulkDelete.Field()
-    draft_order_lines_bulk_delete = DraftOrderLinesBulkDelete.Field(
-        deprecation_reason=DEPRECATED_IN_3X_FIELD
-    )
 
     order_add_note = OrderAddNote.Field(
         deprecation_reason=(f"{DEPRECATED_IN_3X_FIELD} Use `orderNoteAdd` instead.")
@@ -257,4 +251,3 @@ class OrderMutations(graphene.ObjectType):
     order_refund = OrderRefund.Field()
     order_update = OrderUpdate.Field()
     order_void = OrderVoid.Field()
-    order_bulk_cancel = OrderBulkCancel.Field()
