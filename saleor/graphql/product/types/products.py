@@ -7,18 +7,15 @@ from typing import Optional
 import graphene
 from graphene import relay
 
-from ....attribute import models as attribute_models
 from ....channel.models import Channel
 from ....core.db.connection import allow_writer_in_context
 from ....core.utils import build_absolute_uri
-from ....core.utils.country import get_active_country
 from ....core.weight import convert_weight_to_default_weight_unit
 from ....permission.auth_filters import AuthorizationFilters
-from ....permission.enums import OrderPermissions, ProductPermissions
+from ....permission.enums import ProductPermissions
 from ....permission.utils import has_one_of_permissions
 from ....product import models
 from ....product.models import ALL_PRODUCTS_PERMISSIONS
-from ....product.utils import calculate_revenue_for_variant
 from ....thumbnail.utils import (
     get_image_or_proxy_url,
     get_thumbnail_format,
@@ -68,10 +65,6 @@ from ...core.types import (
 from ...core.utils import from_global_id_or_error
 from ...core.validators import validate_one_of_args_is_in_query
 from ...meta.types import ObjectWithMetadata
-from ...order.dataloaders import (
-    OrderByIdLoader,
-    OrderLinesByVariantIdAndChannelIdLoader,
-)
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ...product.dataloaders.products import (
     AvailableProductVariantsByProductIdAndChannel,
@@ -458,47 +451,6 @@ class ProductVariant(ChannelContextTypeWithMetadata[models.ProductVariant]):
         # This field is added through annotation when using the
         # `resolve_report_product_sales` resolver.
         return getattr(root.node, "quantity_ordered", None)
-
-    @staticmethod
-    @traced_resolver
-    def resolve_revenue(root: ChannelContext[models.ProductVariant], info, *, period):
-        start_date = reporting_period_to_date(period)
-        variant = root.node
-        channel_slug = root.channel_slug
-
-        def calculate_revenue_with_channel(channel):
-            if not channel:
-                return None
-
-            def calculate_revenue_with_order_lines(order_lines):
-                def calculate_revenue_with_orders(orders):
-                    orders_dict = {order.id: order for order in orders}
-                    return calculate_revenue_for_variant(
-                        variant,
-                        start_date,
-                        order_lines,
-                        orders_dict,
-                        channel.currency_code,
-                    )
-
-                order_ids = [order_line.order_id for order_line in order_lines]
-                return (
-                    OrderByIdLoader(info.context)
-                    .load_many(order_ids)
-                    .then(calculate_revenue_with_orders)
-                )
-
-            return (
-                OrderLinesByVariantIdAndChannelIdLoader(info.context)
-                .load((variant.id, channel.id))
-                .then(calculate_revenue_with_order_lines)
-            )
-
-        return (
-            ChannelBySlugLoader(info.context)
-            .load(channel_slug)
-            .then(calculate_revenue_with_channel)
-        )
 
     @staticmethod
     def resolve_media(root: ChannelContext[models.ProductVariant], info):

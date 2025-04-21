@@ -23,7 +23,6 @@ from .core.enums import unit_enums
 from .core.federation.schema import build_federated_schema
 from .core.schema import CoreMutations, CoreQueries
 from .menu.schema import MenuMutations, MenuQueries
-from .order.schema import OrderMutations, OrderQueries
 from .plugins.schema import PluginsMutations, PluginsQueries
 from .product.schema import ProductMutations, ProductQueries
 from .translations.schema import TranslationQueries
@@ -40,7 +39,6 @@ class Query(
     CoreQueries,
     PluginsQueries,
     MenuQueries,
-    OrderQueries,
     ProductQueries,
     TranslationQueries,
     WebhookQueries,
@@ -53,7 +51,6 @@ class Mutation(
     CoreMutations,
     PluginsMutations,
     MenuMutations,
-    OrderMutations,
     ProductMutations,
     WebhookMutations,
 ):

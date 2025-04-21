@@ -58,7 +58,6 @@ from ..core.doc_category import (
 from ..core.fields import BaseField
 from ..core.scalars import JSON, DateTime, PositiveDecimal
 from ..core.types import NonNullList, SubscriptionObjectType
-from ..order.types import Order, OrderGrantedRefund
 from ..translations import types as translation_types
 
 TRANSLATIONS_TYPES_MAP = {
@@ -418,161 +417,6 @@ class ChannelMetadataUpdated(SubscriptionObjectType, ChannelBase):
         description = "Event sent when channel metadata is updated." + ADDED_IN_315
 
 
-class OrderBase(AbstractType):
-    order = graphene.Field(
-        "saleor.graphql.order.types.Order",
-        description="The order the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_order(root, info: ResolveInfo):
-        _, order = root
-        return order
-
-
-class OrderCreated(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new order is created." + ADDED_IN_32
-
-
-class OrderUpdated(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when order is updated." + ADDED_IN_32
-
-
-class OrderConfirmed(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when order is confirmed." + ADDED_IN_32
-
-
-class OrderFullyPaid(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when order is fully paid." + ADDED_IN_32
-
-
-class OrderPaid(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = (
-            "Payment has been made. The order may be partially or fully paid."
-            + ADDED_IN_314
-            + PREVIEW_FEATURE
-        )
-
-
-class OrderRefunded(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = (
-            "The order received a refund. The order may be partially or fully refunded."
-            + ADDED_IN_314
-            + PREVIEW_FEATURE
-        )
-
-
-class OrderFullyRefunded(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "The order is fully refunded." + ADDED_IN_314 + PREVIEW_FEATURE
-
-
-class OrderFulfilled(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when order is fulfilled." + ADDED_IN_32
-
-
-class OrderCancelled(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when order is canceled." + ADDED_IN_32
-
-
-class OrderExpired(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = (
-            "Event sent when order becomes expired." + ADDED_IN_313 + PREVIEW_FEATURE
-        )
-
-
-class OrderMetadataUpdated(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when order metadata is updated." + ADDED_IN_38
-
-
-class OrderBulkCreated(SubscriptionObjectType):
-    orders = NonNullList(
-        Order,
-        description="The orders the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_orders(root, _info: ResolveInfo):
-        _, orders = root
-        return orders
-
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = (
-            "Event sent when orders are imported." + ADDED_IN_314 + PREVIEW_FEATURE
-        )
-        doc_category = DOC_CATEGORY_ORDERS
-
-
-class DraftOrderCreated(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new draft order is created." + ADDED_IN_32
-
-
-class DraftOrderUpdated(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when draft order is updated." + ADDED_IN_32
-
-
-class DraftOrderDeleted(SubscriptionObjectType, OrderBase):
-    class Meta:
-        root_type = "Order"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when draft order is deleted." + ADDED_IN_32
-
-
 class MenuBase(AbstractType):
     menu = graphene.Field(
         "saleor.graphql.menu.types.Menu",
@@ -792,113 +636,6 @@ class ProductVariantMetadataUpdated(SubscriptionObjectType, ProductVariantBase):
         )
 
 
-class FulfillmentBase(AbstractType):
-    fulfillment = graphene.Field(
-        "saleor.graphql.order.types.Fulfillment",
-        description="The fulfillment the event relates to.",
-    )
-    order = graphene.Field(
-        "saleor.graphql.order.types.Order",
-        description="The order the fulfillment belongs to.",
-    )
-
-    @staticmethod
-    def resolve_fulfillment(root, _info: ResolveInfo):
-        _, fulfillment = root
-        return fulfillment
-
-    @staticmethod
-    def resolve_order(root, info: ResolveInfo):
-        _, fulfillment = root
-        return fulfillment.order
-
-
-class FulfillmentTrackingNumberUpdated(SubscriptionObjectType, FulfillmentBase):
-    class Meta:
-        root_type = "Fulfillment"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when the tracking number is updated." + ADDED_IN_316
-        doc_category = DOC_CATEGORY_ORDERS
-
-
-class FulfillmentCreated(SubscriptionObjectType, FulfillmentBase):
-    notify_customer = graphene.Boolean(
-        description=(
-            "If true, the app should send a notification to the customer."
-            + ADDED_IN_316
-        ),
-        required=True,
-    )
-
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = "Event sent when new fulfillment is created." + ADDED_IN_34
-        doc_category = DOC_CATEGORY_ORDERS
-
-    @staticmethod
-    def resolve_fulfillment(root, info: ResolveInfo):
-        _, data = root
-        return data["fulfillment"]
-
-    @staticmethod
-    def resolve_order(root, info: ResolveInfo):
-        _, data = root
-        return data["fulfillment"].order
-
-    @staticmethod
-    def resolve_notify_customer(root, _info: ResolveInfo):
-        _, data = root
-        return data["notify_customer"]
-
-
-class FulfillmentCanceled(SubscriptionObjectType, FulfillmentBase):
-    class Meta:
-        root_type = "Fulfillment"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when fulfillment is canceled." + ADDED_IN_34
-
-
-class FulfillmentApproved(SubscriptionObjectType, FulfillmentBase):
-    notify_customer = graphene.Boolean(
-        description="If true, send a notification to the customer." + ADDED_IN_316,
-        required=True,
-    )
-
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = "Event sent when fulfillment is approved." + ADDED_IN_37
-        doc_category = DOC_CATEGORY_ORDERS
-
-    @staticmethod
-    def resolve_fulfillment(root, info: ResolveInfo):
-        _, data = root
-        return data["fulfillment"]
-
-    @staticmethod
-    def resolve_order(root, info: ResolveInfo):
-        _, data = root
-        return data["fulfillment"].order
-
-    @staticmethod
-    def resolve_notify_customer(root, _info: ResolveInfo):
-        _, data = root
-        return data["notify_customer"]
-
-
-class FulfillmentMetadataUpdated(SubscriptionObjectType, FulfillmentBase):
-    class Meta:
-        root_type = "Fulfillment"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when fulfillment metadata is updated." + ADDED_IN_38
-
-
 class UserBase(AbstractType):
     user = graphene.Field(
         "saleor.graphql.account.types.User",
@@ -1108,44 +845,6 @@ class TransactionChargeRequested(TransactionActionBase, SubscriptionObjectType):
         )
         doc_category = DOC_CATEGORY_PAYMENTS
 
-
-class TransactionRefundRequested(TransactionActionBase, SubscriptionObjectType):
-    granted_refund = graphene.Field(
-        OrderGrantedRefund,
-        description="Granted refund related to refund request."
-        + ADDED_IN_315
-        + PREVIEW_FEATURE,
-    )
-
-    class Meta:
-        interfaces = (Event,)
-        root_type = None
-        enable_dry_run = False
-        description = (
-            "Event sent when transaction refund is requested."
-            + ADDED_IN_313
-            + PREVIEW_FEATURE
-        )
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-    @staticmethod
-    def resolve_granted_refund(root, _info: ResolveInfo):
-        _, transaction_action_data = root
-        transaction_action_data: TransactionActionData
-        return transaction_action_data.granted_refund
-
-
-class TransactionCancelationRequested(TransactionActionBase, SubscriptionObjectType):
-    class Meta:
-        interfaces = (Event,)
-        root_type = None
-        enable_dry_run = False
-        description = (
-            "Event sent when transaction cancelation is requested."
-            + ADDED_IN_313
-            + PREVIEW_FEATURE
-        )
-        doc_category = DOC_CATEGORY_PAYMENTS
 
 
 class PaymentGatewayInitializeSession(SubscriptionObjectType):
@@ -1636,146 +1335,6 @@ class Subscription(SubscriptionObjectType):
         Event,
         description="Look up subscription event." + ADDED_IN_32,
     )
-    draft_order_created = BaseField(
-        DraftOrderCreated,
-        description=(
-            "Event sent when new draft order is created."
-            + ADDED_IN_320
-            + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    draft_order_updated = BaseField(
-        DraftOrderUpdated,
-        description=(
-            "Event sent when draft order is updated." + ADDED_IN_320 + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    draft_order_deleted = BaseField(
-        DraftOrderDeleted,
-        description=(
-            "Event sent when draft order is deleted." + ADDED_IN_320 + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_created = BaseField(
-        OrderCreated,
-        description=(
-            "Event sent when new order is created." + ADDED_IN_320 + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_updated = BaseField(
-        OrderUpdated,
-        description=(
-            "Event sent when order is updated." + ADDED_IN_320 + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_confirmed = BaseField(
-        OrderConfirmed,
-        description=(
-            "Event sent when order is confirmed." + ADDED_IN_320 + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_paid = BaseField(
-        OrderPaid,
-        description=(
-            "Payment has been made. The order may be partially or fully paid."
-            + ADDED_IN_320
-            + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_fully_paid = BaseField(
-        OrderFullyPaid,
-        description=(
-            "Event sent when order is fully paid." + ADDED_IN_320 + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_refunded = BaseField(
-        OrderRefunded,
-        description=(
-            "The order received a refund. The order may be partially or fully "
-            "refunded." + ADDED_IN_320 + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_fully_refunded = BaseField(
-        OrderFullyRefunded,
-        description=("The order is fully refunded." + ADDED_IN_320 + PREVIEW_FEATURE),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_fulfilled = BaseField(
-        OrderFulfilled,
-        description=(
-            "Event sent when order is fulfilled." + ADDED_IN_320 + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_cancelled = BaseField(
-        OrderCancelled,
-        description=(
-            "Event sent when order is cancelled." + ADDED_IN_320 + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_expired = BaseField(
-        OrderExpired,
-        description=(
-            "Event sent when order becomes expired." + ADDED_IN_320 + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_metadata_updated = BaseField(
-        OrderMetadataUpdated,
-        description=(
-            "Event sent when order metadata is updated."
-            + ADDED_IN_320
-            + PREVIEW_FEATURE
-        ),
-        resolver=default_order_resolver,
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-    order_bulk_created = BaseField(
-        OrderBulkCreated,
-        description=(
-            "Event sent when orders are imported." + ADDED_IN_320 + PREVIEW_FEATURE
-        ),
-        channels=channels_argument,
-        doc_category=DOC_CATEGORY_ORDERS,
-    )
-
     class Meta:
         doc_category = DOC_CATEGORY_MISC
 
@@ -1851,11 +1410,7 @@ SYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventSyncType.PAYMENT_VOID: PaymentVoidEvent,
     WebhookEventSyncType.PAYMENT_CONFIRM: PaymentConfirmEvent,
     WebhookEventSyncType.PAYMENT_PROCESS: PaymentProcessEvent,
-    WebhookEventSyncType.TRANSACTION_CANCELATION_REQUESTED: (
-        TransactionCancelationRequested
-    ),
     WebhookEventSyncType.TRANSACTION_CHARGE_REQUESTED: TransactionChargeRequested,
-    WebhookEventSyncType.TRANSACTION_REFUND_REQUESTED: TransactionRefundRequested,
     WebhookEventSyncType.CHECKOUT_CALCULATE_TAXES: CalculateTaxes,
     WebhookEventSyncType.ORDER_CALCULATE_TAXES: CalculateTaxes,
     WebhookEventSyncType.PAYMENT_GATEWAY_INITIALIZE_SESSION: (
@@ -1908,21 +1463,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.MENU_ITEM_CREATED: MenuItemCreated,
     WebhookEventAsyncType.MENU_ITEM_UPDATED: MenuItemUpdated,
     WebhookEventAsyncType.MENU_ITEM_DELETED: MenuItemDeleted,
-    WebhookEventAsyncType.ORDER_CREATED: OrderCreated,
-    WebhookEventAsyncType.ORDER_UPDATED: OrderUpdated,
-    WebhookEventAsyncType.ORDER_CONFIRMED: OrderConfirmed,
-    WebhookEventAsyncType.ORDER_FULLY_PAID: OrderFullyPaid,
-    WebhookEventAsyncType.ORDER_PAID: OrderPaid,
-    WebhookEventAsyncType.ORDER_REFUNDED: OrderRefunded,
-    WebhookEventAsyncType.ORDER_FULLY_REFUNDED: OrderFullyRefunded,
-    WebhookEventAsyncType.ORDER_FULFILLED: OrderFulfilled,
-    WebhookEventAsyncType.ORDER_CANCELLED: OrderCancelled,
-    WebhookEventAsyncType.ORDER_EXPIRED: OrderExpired,
-    WebhookEventAsyncType.ORDER_METADATA_UPDATED: OrderMetadataUpdated,
-    WebhookEventAsyncType.ORDER_BULK_CREATED: OrderBulkCreated,
-    WebhookEventAsyncType.DRAFT_ORDER_CREATED: DraftOrderCreated,
-    WebhookEventAsyncType.DRAFT_ORDER_UPDATED: DraftOrderUpdated,
-    WebhookEventAsyncType.DRAFT_ORDER_DELETED: DraftOrderDeleted,
     WebhookEventAsyncType.PRODUCT_CREATED: ProductCreated,
     WebhookEventAsyncType.PRODUCT_UPDATED: ProductUpdated,
     WebhookEventAsyncType.PRODUCT_DELETED: ProductDeleted,
@@ -1936,11 +1476,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.PRODUCT_VARIANT_METADATA_UPDATED: (
         ProductVariantMetadataUpdated
     ),
-    WebhookEventAsyncType.FULFILLMENT_CREATED: FulfillmentCreated,
-    WebhookEventAsyncType.FULFILLMENT_TRACKING_NUMBER_UPDATED: FulfillmentTrackingNumberUpdated,  # noqa: E501
-    WebhookEventAsyncType.FULFILLMENT_CANCELED: FulfillmentCanceled,
-    WebhookEventAsyncType.FULFILLMENT_APPROVED: FulfillmentApproved,
-    WebhookEventAsyncType.FULFILLMENT_METADATA_UPDATED: FulfillmentMetadataUpdated,
     WebhookEventAsyncType.CUSTOMER_CREATED: CustomerCreated,
     WebhookEventAsyncType.CUSTOMER_UPDATED: CustomerUpdated,
     WebhookEventAsyncType.CUSTOMER_METADATA_UPDATED: CustomerMetadataUpdated,

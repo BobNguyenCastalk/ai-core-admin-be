@@ -15,7 +15,6 @@ from ...permission.auth_filters import AuthorizationFilters
 from ...permission.enums import (
     AccountPermissions,
     AppPermission,
-    OrderPermissions,
 )
 from ...thumbnail.utils import (
     get_image_or_proxy_url,
@@ -56,7 +55,6 @@ from ..core.types import (
 )
 from ..core.utils import from_global_id_or_error, str_to_enum, to_global_id_or_none
 from ..meta.types import ObjectWithMetadata
-from ..order.dataloaders import OrderLineByIdLoader, OrdersByUserLoader
 from ..plugins.dataloaders import get_plugin_manager_promise
 from ..utils import format_permissions_for_display, get_user_or_app_from_context
 from .dataloaders import (
@@ -224,12 +222,6 @@ class CustomerEvent(ModelObjectType[models.CustomerEvent]):
     app = graphene.Field(App, description="App that performed the action.")
     message = graphene.String(description="Content of the event.")
     count = graphene.Int(description="Number of objects concerned by the event.")
-    order = graphene.Field(
-        "saleor.graphql.order.types.Order", description="The concerned order."
-    )
-    order_line = graphene.Field(
-        "saleor.graphql.order.types.OrderLine", description="The concerned order line."
-    )
 
     class Meta:
         description = "History log of the customer."
@@ -270,14 +262,6 @@ class CustomerEvent(ModelObjectType[models.CustomerEvent]):
     @staticmethod
     def resolve_count(root: models.CustomerEvent, _info: ResolveInfo):
         return root.parameters.get("count", None)
-
-    @staticmethod
-    def resolve_order_line(root: models.CustomerEvent, info: ResolveInfo):
-        if "order_line_pk" in root.parameters:
-            return OrderLineByIdLoader(info.context).load(
-                uuid.UUID(root.parameters["order_line_pk"])
-            )
-        return None
 
 
 class UserPermission(Permission):
@@ -349,14 +333,6 @@ class User(ModelObjectType[models.User]):
         graphene.String,
         description="A note about the customer.",
         permissions=[AccountPermissions.MANAGE_USERS, AccountPermissions.MANAGE_STAFF],
-    )
-    orders = ConnectionField(
-        "saleor.graphql.order.types.OrderCountableConnection",
-        description=(
-            "List of user's orders. Requires one of the following permissions: "
-            f"{AccountPermissions.MANAGE_STAFF.name}, "
-            f"{AuthorizationFilters.OWNER.name}."
-        ),
     )
     user_permissions = NonNullList(
         UserPermission, description="List of user's permissions."
@@ -460,52 +436,6 @@ class User(ModelObjectType[models.User]):
     @staticmethod
     def resolve_events(root: models.User, info: ResolveInfo):
         return CustomerEventsByUserLoader(info.context).load(root.id)
-
-    @staticmethod
-    def resolve_orders(root: models.User, info: ResolveInfo, **kwargs):
-        from ..order.types import OrderCountableConnection
-
-        user_or_app = get_user_or_app_from_context(info.context)
-        if not user_or_app or (
-            root != user_or_app
-            and not user_or_app.has_perm(OrderPermissions.MANAGE_ORDERS)
-        ):
-            raise PermissionDenied(
-                permissions=[
-                    AuthorizationFilters.OWNER,
-                    OrderPermissions.MANAGE_ORDERS,
-                ]
-            )
-        requester = user_or_app
-
-        def _resolve_orders(data):
-            orders = data[0]
-            accessible_channels = data[1] if len(data) == 2 else None
-            if not requester.has_perm(OrderPermissions.MANAGE_ORDERS):
-                # allow fetch requestor orders (except drafts)
-                orders = [
-                    order for order in orders if order.status != OrderStatus.DRAFT
-                ]
-
-            # Return only orders from channels that the user has access to.
-            # The app has access to all channels.
-            if root != user_or_app and accessible_channels is not None:
-                accessible_channels = [channel.id for channel in accessible_channels]
-                orders = [
-                    order for order in orders if order.channel_id in accessible_channels
-                ]
-
-            return create_connection_slice(
-                orders, info, kwargs, OrderCountableConnection
-            )
-
-        to_fetch = [OrdersByUserLoader(info.context).load(root.id)]
-        if isinstance(requester, models.User):
-            to_fetch.append(
-                AccessibleChannelsByUserIdLoader(info.context).load(requester.id)
-            )
-
-        return Promise.all(to_fetch).then(_resolve_orders)
 
     @staticmethod
     def resolve_avatar(

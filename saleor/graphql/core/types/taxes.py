@@ -8,7 +8,6 @@ from ...channel.dataloaders import ChannelByIdLoader
 from ...channel.types import Channel
 from ...core.doc_category import DOC_CATEGORY_TAXES
 from ...core.types import BaseObjectType
-from ...order.dataloaders import OrderLinesByOrderIdLoader
 from .. import ResolveInfo
 from .money import Money as MoneyType
 
@@ -54,7 +53,3 @@ class TaxableObject(BaseObjectType):
     @staticmethod
     def resolve_currency(root: Union[Order], _info: ResolveInfo):
         return root.currency
-
-    @staticmethod
-    def resolve_lines(root: Union[Order], info: ResolveInfo):
-        return OrderLinesByOrderIdLoader(info.context).load(root.id)
