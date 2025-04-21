@@ -16,10 +16,8 @@ from ..core.fields import FilterConnectionField, JSONString
 from ..core.scalars import DateTime
 from ..core.types import ModelObjectType, NonNullList
 from ..webhook.enums import EventDeliveryStatusEnum, WebhookEventTypeEnum
-from ..webhook.filters import EventDeliveryFilterInput
 from ..webhook.sorters import (
     EventDeliveryAttemptSortingInput,
-    EventDeliverySortingInput,
 )
 from . import enums
 from .dataloaders import PayloadByIdLoader, WebhookEventsByWebhookIdLoader
@@ -178,12 +176,6 @@ class Webhook(ModelObjectType[models.Webhook]):
         "saleor.graphql.app.types.App",
         required=True,
         description="The app associated with Webhook.",
-    )
-    event_deliveries = FilterConnectionField(
-        EventDeliveryCountableConnection,
-        sort_by=EventDeliverySortingInput(description="Event delivery sorter."),
-        filter=EventDeliveryFilterInput(description="Event delivery filter options."),
-        description="Event deliveries.",
     )
     target_url = graphene.String(required=True, description="Target URL for webhook.")
     is_active = graphene.Boolean(
