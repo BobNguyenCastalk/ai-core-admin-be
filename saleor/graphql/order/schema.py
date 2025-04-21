@@ -26,24 +26,6 @@ from ..core.utils import ext_ref_to_global_id_or_error, from_global_id_or_error
 from ..core.validators import validate_one_of_args_is_in_query
 from ..utils import get_user_or_app_from_context
 from .filters import DraftOrderFilter, OrderFilter
-from .mutations.draft_order_complete import DraftOrderComplete
-from .mutations.fulfillment_approve import FulfillmentApprove
-from .mutations.fulfillment_cancel import FulfillmentCancel
-from .mutations.fulfillment_refund_products import FulfillmentRefundProducts
-from .mutations.fulfillment_return_products import FulfillmentReturnProducts
-from .mutations.fulfillment_update_tracking import FulfillmentUpdateTracking
-from .mutations.order_cancel import OrderCancel
-from .mutations.order_capture import OrderCapture
-from .mutations.order_confirm import OrderConfirm
-from .mutations.order_grant_refund_create import OrderGrantRefundCreate
-from .mutations.order_grant_refund_update import OrderGrantRefundUpdate
-from .mutations.order_line_delete import OrderLineDelete
-from .mutations.order_mark_as_paid import OrderMarkAsPaid
-from .mutations.order_note_add import OrderAddNote, OrderNoteAdd
-from .mutations.order_note_update import OrderNoteUpdate
-from .mutations.order_refund import OrderRefund
-from .mutations.order_update import OrderUpdate
-from .mutations.order_void import OrderVoid
 from .resolvers import (
     resolve_draft_orders,
     resolve_homepage_events,
@@ -224,30 +206,4 @@ class OrderQueries(graphene.ObjectType):
 
 
 class OrderMutations(graphene.ObjectType):
-    draft_order_complete = DraftOrderComplete.Field()
-
-    order_add_note = OrderAddNote.Field(
-        deprecation_reason=(f"{DEPRECATED_IN_3X_FIELD} Use `orderNoteAdd` instead.")
-    )
-    order_cancel = OrderCancel.Field()
-    order_capture = OrderCapture.Field()
-    order_confirm = OrderConfirm.Field()
-
-    order_fulfillment_cancel = FulfillmentCancel.Field()
-    order_fulfillment_approve = FulfillmentApprove.Field()
-    order_fulfillment_update_tracking = FulfillmentUpdateTracking.Field()
-    order_fulfillment_refund_products = FulfillmentRefundProducts.Field()
-    order_fulfillment_return_products = FulfillmentReturnProducts.Field()
-
-    order_grant_refund_create = OrderGrantRefundCreate.Field()
-    order_grant_refund_update = OrderGrantRefundUpdate.Field()
-
-    order_line_delete = OrderLineDelete.Field()
-
-    order_note_add = OrderNoteAdd.Field()
-    order_note_update = OrderNoteUpdate.Field()
-
-    order_mark_as_paid = OrderMarkAsPaid.Field()
-    order_refund = OrderRefund.Field()
-    order_update = OrderUpdate.Field()
-    order_void = OrderVoid.Field()
+    pass
