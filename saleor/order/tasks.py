@@ -14,7 +14,6 @@ from ..plugins.manager import get_plugins_manager
 from ..webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
 from ..webhook.utils import get_webhooks_for_multiple_events
 from . import OrderEvents, OrderStatus
-from .actions import call_order_event, call_order_events
 from .models import Order, OrderEvent
 from .utils import invalidate_order_prices
 
@@ -37,25 +36,6 @@ def recalculate_orders_task(order_ids: list[int]):
 
     Order.objects.bulk_update(orders, ["should_refresh_prices"])
 
-
-@app.task
-def send_order_updated(order_ids):
-    manager = get_plugins_manager(allow_replica=True)
-    webhook_event_map = get_webhooks_for_multiple_events(
-        [
-            WebhookEventAsyncType.ORDER_UPDATED,
-            *WebhookEventSyncType.ORDER_EVENTS,
-        ]
-    )
-    for order in Order.objects.filter(id__in=order_ids):
-        call_order_event(
-            manager,
-            WebhookEventAsyncType.ORDER_UPDATED,
-            order,
-            webhook_event_map=webhook_event_map,
-        )
-
-
 def _call_expired_order_events(order_ids, manager):
     orders = (
         Order.objects.using(settings.DATABASE_CONNECTION_REPLICA_NAME)
@@ -69,17 +49,6 @@ def _call_expired_order_events(order_ids, manager):
             *WebhookEventSyncType.ORDER_EVENTS,
         ]
     )
-    for order in orders:
-        call_order_events(
-            manager,
-            [
-                WebhookEventAsyncType.ORDER_EXPIRED,
-                WebhookEventAsyncType.ORDER_UPDATED,
-            ],
-            order,
-            webhook_event_map=webhook_event_map,
-        )
-
 
 def _order_expired_events(order_ids):
     OrderEvent.objects.bulk_create(

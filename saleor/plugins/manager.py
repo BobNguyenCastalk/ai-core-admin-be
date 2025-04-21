@@ -20,14 +20,6 @@ from ..core.payments import PaymentInterface
 from ..core.prices import quantize_price
 from ..core.taxes import TaxData, TaxType, zero_money, zero_taxed_money
 from ..graphql.core import ResolveInfo, SaleorContext
-from ..order import base_calculations as base_order_calculations
-from ..order.base_calculations import (
-    base_order_line_total,
-    base_order_subtotal,
-    get_total_price_with_subtotal_discount_for_order_line,
-    propagate_order_discount_on_order_prices,
-)
-from ..order.interface import OrderTaxedPricesData
 from ..payment.interface import (
     CustomerSource,
     GatewayResponse,
@@ -293,54 +285,6 @@ class PluginsManager(PaymentInterface):
             currency,
         )
 
-    def calculate_order_total(
-        self,
-        order: "Order",
-        lines: Iterable["OrderLine"],
-        plugin_ids: Optional[list[str]] = None,
-    ) -> TaxedMoney:
-        currency = order.currency
-        default_value = base_order_calculations.base_order_total(order, lines)
-        default_value = TaxedMoney(default_value, default_value)
-        if default_value <= zero_taxed_money(currency):
-            return quantize_price(
-                default_value,
-                currency,
-            )
-
-        return quantize_price(
-            self.__run_method_on_plugins(
-                "calculate_order_total",
-                default_value,
-                order,
-                lines,
-                channel_slug=order.channel.slug,
-                plugin_ids=plugin_ids,
-            ),
-            currency,
-        )
-
-    def calculate_order_shipping(
-        self,
-        order: "Order",
-        lines: Iterable["OrderLine"],
-        plugin_ids: Optional[list[str]] = None,
-    ) -> TaxedMoney:
-        subtotal, shipping_price = propagate_order_discount_on_order_prices(
-            order, lines
-        )
-        default_value = TaxedMoney(shipping_price, shipping_price)
-        return quantize_price(
-            self.__run_method_on_plugins(
-                "calculate_order_shipping",
-                default_value,
-                order,
-                channel_slug=order.channel.slug,
-                plugin_ids=plugin_ids,
-            ),
-            order.currency,
-        )
-
     def get_checkout_shipping_tax_rate(
         self,
         checkout_info: "CheckoutInfo",
@@ -374,95 +318,6 @@ class PluginsManager(PaymentInterface):
             channel_slug=order.channel.slug,
             plugin_ids=plugin_ids,
         ).quantize(Decimal(".0001"))
-
-    def calculate_order_line_total(
-        self,
-        order: "Order",
-        order_line: "OrderLine",
-        variant: "ProductVariant",
-        product: "Product",
-        lines: Iterable["OrderLine"],
-        plugin_ids: Optional[list[str]] = None,
-    ) -> OrderTaxedPricesData:
-        base_subtotal = base_order_subtotal(order, lines)
-        subtotal, shipping_price = propagate_order_discount_on_order_prices(
-            order, lines
-        )
-        total_price = get_total_price_with_subtotal_discount_for_order_line(
-            order_line, lines, base_subtotal, base_subtotal - subtotal
-        )
-
-        default_value = OrderTaxedPricesData(
-            undiscounted_price=base_order_line_total(order_line).undiscounted_price,
-            price_with_discounts=TaxedMoney(total_price, total_price),
-        )
-
-        currency = order_line.currency
-
-        line_total = self.__run_method_on_plugins(
-            "calculate_order_line_total",
-            default_value,
-            order,
-            order_line,
-            variant,
-            product,
-            channel_slug=order.channel.slug,
-            plugin_ids=plugin_ids,
-        )
-
-        line_total.price_with_discounts = quantize_price(
-            line_total.price_with_discounts, currency
-        )
-        line_total.undiscounted_price = quantize_price(
-            line_total.undiscounted_price, currency
-        )
-        return line_total
-
-    def calculate_order_line_unit(
-        self,
-        order: "Order",
-        order_line: "OrderLine",
-        variant: "ProductVariant",
-        product: "Product",
-        lines: Iterable["OrderLine"],
-        plugin_ids: Optional[list[str]] = None,
-    ) -> OrderTaxedPricesData:
-        base_subtotal = base_order_subtotal(order, lines)
-        subtotal, shipping_price = propagate_order_discount_on_order_prices(
-            order, lines
-        )
-        total_price = get_total_price_with_subtotal_discount_for_order_line(
-            order_line, lines, base_subtotal, base_subtotal - subtotal
-        )
-        if total_price:
-            unit_price = total_price / order_line.quantity
-            unit_price = quantize_price(unit_price, order.currency)
-        else:
-            unit_price = order_line.base_unit_price
-
-        default_value = OrderTaxedPricesData(
-            undiscounted_price=order_line.undiscounted_unit_price,
-            price_with_discounts=TaxedMoney(unit_price, unit_price),
-        )
-
-        currency = order_line.currency
-        line_unit = self.__run_method_on_plugins(
-            "calculate_order_line_unit",
-            default_value,
-            order,
-            order_line,
-            variant,
-            product,
-            channel_slug=order.channel.slug,
-            plugin_ids=plugin_ids,
-        )
-        line_unit.price_with_discounts = quantize_price(
-            line_unit.price_with_discounts, currency
-        )
-        line_unit.undiscounted_price = quantize_price(
-            line_unit.undiscounted_price, currency
-        )
-        return line_unit
 
     def get_checkout_line_tax_rate(
         self,

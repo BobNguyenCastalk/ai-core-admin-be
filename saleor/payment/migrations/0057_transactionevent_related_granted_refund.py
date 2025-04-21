@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("order", "0185_ordergrantedrefund_transaction_item"),
         ("payment", "0056_merge_20231213_0755"),
     ]
 

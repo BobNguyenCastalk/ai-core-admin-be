@@ -12,7 +12,6 @@ import saleor.core.utils.json_serializer
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("order", "0137_alter_orderevent_type"),
         ("payment", "0034_auto_20220414_1051"),
     ]
 

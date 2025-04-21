@@ -77,7 +77,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("order", "0084_auto_20200522_0522"),
         ("product", "0118_populate_product_variant_price"),
     ]
 
