@@ -4,7 +4,6 @@ from uuid import UUID
 import graphene
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django_prices.utils.formatting import get_currency_fraction
 from graphene.utils.str_converters import to_camel_case
 from graphql.error import GraphQLError
 
@@ -52,36 +51,6 @@ def validate_one_of_args_is_in_query(*args, **kwargs):
         else:
             required_args = ", ".join([f"'{item[0]}'" for item in splitted_args])
         raise GraphQLError(f"At least one of arguments is required: {required_args}.")
-
-
-def validate_price_precision(
-    value: Optional["Decimal"],
-    currency: str,
-    currency_fractions=None,
-):
-    """Validate if price amount does not have too many decimal places.
-
-    Price amount can't have more decimal places than currency allow to.
-    Works only with decimal created from a string.
-    """
-
-    # check no needed when there is no value
-    if not value:
-        return
-
-    if currency_fractions:
-        try:
-            currency_fraction = currency_fractions[currency][0]
-        except KeyError:
-            currency_fraction = currency_fractions["DEFAULT"][0]
-    else:
-        currency_fraction = get_currency_fraction(currency)
-
-    value = value.normalize()
-    if value.as_tuple().exponent < -currency_fraction:
-        raise ValidationError(
-            f"Value cannot have more than {currency_fraction} decimal places."
-        )
 
 
 def validate_decimal_max_value(value: "Decimal", max_value=10**9):

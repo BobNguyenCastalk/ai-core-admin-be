@@ -10,12 +10,10 @@ from typing import TYPE_CHECKING, Any, Callable, Optional
 import dateutil.parser
 import i18naddress
 import pybars
-from babel.numbers import format_currency
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.mail.backends.smtp import EmailBackend
 from django.core.validators import EmailValidator
-from django_prices.utils.locale import get_locale_data
 from lxml import etree
 from lxml import html as lxml_html
 
@@ -166,26 +164,6 @@ def compare(this, val1, compare_operator, val2):
     if compare_operator not in operators:
         return False
     return operators[compare_operator](val1, val2)
-
-
-def price(this, net_amount, gross_amount, currency, display_gross=False):
-    amount = net_amount
-    if display_gross:
-        amount = gross_amount
-    try:
-        value = Decimal(amount)
-    except (TypeError, InvalidOperation):
-        return ""
-
-    locale, locale_code = get_locale_data()
-    pattern = locale.currency_formats.get("standard").pattern
-
-    pattern = re.sub("(\xa4+)", '<span class="currency">\\1</span>', pattern)
-
-    formatted_price = format_currency(
-        value, currency, format=pattern, locale=locale_code
-    )
-    return pybars.strlist([formatted_price])
 
 
 def get_plain_text_message_for_email(message: str) -> str:

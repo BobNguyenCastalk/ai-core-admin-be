@@ -1477,24 +1477,6 @@ phonenumbers = ["phonenumbers (>=7.0.2)"]
 phonenumberslite = ["phonenumberslite (>=7.0.2)"]
 
 [[package]]
-name = "django-prices"
-version = "2.3.0"
-description = "Django fields for the prices module"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "django-prices-2.3.0.tar.gz", hash = "sha256:dc2ba039fcdeeffbcb8ba41e46821d509af4d50cca36f527990ed319ff83fed9"},
-    {file = "django_prices-2.3.0-py3-none-any.whl", hash = "sha256:b72ec33ac9475b8a2a8fff1414427b17fd6df58d8dfde4d257f7d58fd7251b80"},
-]
-
-[package.dependencies]
-Babel = ">=2.2"
-Django = ">=3.0,<5"
-enmerkar = ">=0.7.1"
-prices = ">=1.0.0"
-
-[[package]]
 name = "django-storages"
 version = "1.14.6"
 description = "Support for many storage backends in Django"
@@ -1588,22 +1570,6 @@ urllib3 = "*"
 
 [package.extras]
 dev = ["mock", "pre-commit", "pytest"]
-
-[[package]]
-name = "enmerkar"
-version = "0.7.1"
-description = "Utilities for using Babel in Django"
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "enmerkar-0.7.1-py3-none-any.whl", hash = "sha256:ba5a79e022963580c994ce8f4fe8477d574159adbe86e5271b1a3d4127b8794d"},
-    {file = "enmerkar-0.7.1.tar.gz", hash = "sha256:a4a6c859b4ed293deee40ff61d6695b3ff7bc153770a1799f2be872181282e00"},
-]
-
-[package.dependencies]
-babel = ">=1.3"
-django = ">=2.2"
 
 [[package]]
 name = "et-xmlfile"
@@ -6046,4 +6012,4 @@ test = ["pytest"]
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.12"
-content-hash = "003de467843267400e6808325c27af0d95abe858195e58eb4acba057712352b6"
+content-hash = "119c313fa0486d90fed2a855924563eda0df0cd6e14a7bc85e7251a17ebc411c"
