@@ -705,15 +705,6 @@ class ThumbnailCreated(SubscriptionObjectType):
         return graphene.Node.to_global_id(type, thumbnail.instance.id)
 
 
-SYNC_WEBHOOK_TYPES_MAP = {
-    WebhookEventSyncType.CHECKOUT_CALCULATE_TAXES: CalculateTaxes,
-    WebhookEventSyncType.ORDER_CALCULATE_TAXES: CalculateTaxes,
-    WebhookEventSyncType.PAYMENT_GATEWAY_INITIALIZE_SESSION: (
-        PaymentGatewayInitializeSession
-    ),
-}
-
-
 ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.ACCOUNT_CONFIRMATION_REQUESTED: AccountConfirmationRequested,
     WebhookEventAsyncType.ACCOUNT_CHANGE_EMAIL_REQUESTED: AccountChangeEmailRequested,
@@ -722,9 +713,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.ACCOUNT_CONFIRMED: AccountConfirmed,
     WebhookEventAsyncType.ACCOUNT_DELETE_REQUESTED: AccountDeleteRequested,
     WebhookEventAsyncType.ACCOUNT_DELETED: AccountDeleted,
-    WebhookEventAsyncType.ADDRESS_CREATED: AddressCreated,
-    WebhookEventAsyncType.ADDRESS_UPDATED: AddressUpdated,
-    WebhookEventAsyncType.ADDRESS_DELETED: AddressDeleted,
     WebhookEventAsyncType.APP_INSTALLED: AppInstalled,
     WebhookEventAsyncType.APP_UPDATED: AppUpdated,
     WebhookEventAsyncType.APP_DELETED: AppDeleted,
@@ -750,10 +738,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.STAFF_UPDATED: StaffUpdated,
     WebhookEventAsyncType.STAFF_DELETED: StaffDeleted,
     WebhookEventAsyncType.STAFF_SET_PASSWORD_REQUESTED: StaffSetPasswordRequested,
-    WebhookEventAsyncType.TRANSACTION_ITEM_METADATA_UPDATED: (
-        TransactionItemMetadataUpdated
-    ),
-    WebhookEventAsyncType.THUMBNAIL_CREATED: ThumbnailCreated,
 }
 
-WEBHOOK_TYPES_MAP = ASYNC_WEBHOOK_TYPES_MAP | SYNC_WEBHOOK_TYPES_MAP
+WEBHOOK_TYPES_MAP = ASYNC_WEBHOOK_TYPES_MAP

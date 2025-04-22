@@ -14,11 +14,7 @@ from ....account.search import prepare_user_search_document_value
 from ....core.exceptions import PermissionDenied
 from ....core.tracing import traced_atomic_transaction
 from ....core.utils.url import prepare_url, validate_storefront_url
-from ....graphql.utils import get_user_or_app_from_context
-from ....permission.auth_filters import AuthorizationFilters
-from ....permission.enums import AccountPermissions
 from ...account.i18n import I18nMixin
-from ...account.types import Address, AddressInput, User
 from ...app.dataloaders import get_app_promise
 from ...channel.utils import clean_channel, validate_channel
 from ...core import ResolveInfo, SaleorContext
@@ -30,7 +26,7 @@ from ...core.descriptions import (
 )
 from ...core.doc_category import DOC_CATEGORY_USERS
 from ...core.enums import LanguageCodeEnum
-from ...core.mutations import ModelDeleteMutation, ModelMutation
+from ...core.mutations import ModelMutation
 from ...core.types import BaseInputObjectType, NonNullList
 from ...meta.inputs import MetadataInput
 from ...plugins.dataloaders import get_plugin_manager_promise
@@ -42,135 +38,6 @@ from ..utils import (
 BILLING_ADDRESS_FIELD = "default_billing_address"
 SHIPPING_ADDRESS_FIELD = "default_shipping_address"
 INVALID_TOKEN = "Invalid or expired token."
-
-
-def check_can_edit_address(context, address):
-    """Determine whether the user or app can edit the given address.
-
-    This method assumes that an address can be edited by:
-    - apps with manage users permission
-    - staff with manage users permission
-    - customers associated to the given address.
-    """
-    requester = get_user_or_app_from_context(context)
-    if requester and requester.has_perm(AccountPermissions.MANAGE_USERS):
-        return True
-    app = get_app_promise(context).get()
-    if not app and context.user:
-        is_owner = context.user.addresses.filter(pk=address.pk).exists()
-        if is_owner:
-            return True
-    raise PermissionDenied(
-        permissions=[AccountPermissions.MANAGE_USERS, AuthorizationFilters.OWNER]
-    )
-
-
-class BaseAddressUpdate(ModelMutation, I18nMixin):
-    """Base mutation for address update used by staff and account."""
-
-    user = graphene.Field(
-        User, description="A user object for which the address was edited."
-    )
-
-    class Arguments:
-        id = graphene.ID(description="ID of the address to update.", required=True)
-        input = AddressInput(
-            description="Fields required to update the address.", required=True
-        )
-
-    class Meta:
-        abstract = True
-
-    @classmethod
-    def clean_input(cls, info: ResolveInfo, instance, data, **kwargs):
-        # Method check_permissions cannot be used for permission check, because
-        # it doesn't have the address instance.
-        check_can_edit_address(info.context, instance)
-        return super().clean_input(info, instance, data, **kwargs)
-
-    @classmethod
-    def perform_mutation(cls, _root, info: ResolveInfo, /, **data):
-        instance = cls.get_instance(info, **data)
-        cleaned_input = cls.clean_input(
-            info=info, instance=instance, data=data.get("input")
-        )
-        cls.update_metadata(instance, cleaned_input.pop("metadata", list()))
-        address = cls.validate_address(cleaned_input, instance=instance, info=info)
-        cls.clean_instance(info, address)
-        cls.save(info, address, cleaned_input)
-        cls._save_m2m(info, address, cleaned_input)
-
-        user = address.user_addresses.first()
-        if user:
-            user.search_document = prepare_user_search_document_value(user)
-            user.save(update_fields=["search_document", "updated_at"])
-        manager = get_plugin_manager_promise(info.context).get()
-        address = manager.change_user_address(address, None, user)
-        cls.call_event(manager.address_updated, address)
-
-        success_response = cls.success_response(address)
-        success_response.user = user
-        success_response.address = address
-        return success_response
-
-
-class BaseAddressDelete(ModelDeleteMutation):
-    """Base mutation for address delete used by staff and customers."""
-
-    user = graphene.Field(
-        User, description="A user instance for which the address was deleted."
-    )
-
-    class Arguments:
-        id = graphene.ID(required=True, description="ID of the address to delete.")
-
-    class Meta:
-        abstract = True
-
-    @classmethod
-    def clean_instance(cls, info: ResolveInfo, instance) -> None:
-        # Method check_permissions cannot be used for permission check, because
-        # it doesn't have the address instance.
-        check_can_edit_address(info.context, instance)
-        return super().clean_instance(info, instance)
-
-    @classmethod
-    def perform_mutation(  # type: ignore[override]
-        cls, _root, info: ResolveInfo, /, *, id: str
-    ):
-        if not cls.check_permissions(info.context):
-            raise PermissionDenied()
-
-        instance = cls.get_node_or_error(info, id, only_type=Address)
-        if instance:
-            cls.clean_instance(info, instance)
-
-        db_id = instance.id
-
-        # Return the first user that the address is assigned to. There is M2M
-        # relation between users and addresses, but in most cases address is
-        # related to only one user.
-        user = instance.user_addresses.first()
-
-        instance.delete()
-        instance.id = db_id
-
-        if user:
-            # Refresh the user instance to clear the default addresses. If the
-            # deleted address was used as default, it would stay cached in the
-            # user instance and the invalid ID returned in the response might cause
-            # an error.
-            user.refresh_from_db()
-
-            user.search_document = prepare_user_search_document_value(user)
-            user.save(update_fields=["search_document", "updated_at"])
-
-        response = cls.success_response(instance)
-
-        response.user = user
-        manager = get_plugin_manager_promise(info.context).get()
-        cls.call_event(manager.address_deleted, instance)
-        return response
 
 
 class UserInput(BaseInputObjectType):
@@ -197,13 +64,6 @@ class UserInput(BaseInputObjectType):
 
 
 class UserAddressInput(BaseInputObjectType):
-    default_billing_address = AddressInput(
-        description="Billing address of the customer."
-    )
-    default_shipping_address = AddressInput(
-        description="Shipping address of the customer."
-    )
-
     class Meta:
         doc_category = DOC_CATEGORY_USERS
 

@@ -1,7 +1,4 @@
-from .address_create import AddressCreate
-from .address_delete import AddressDelete
-from .address_update import AddressUpdate
-from .customer_create import CustomerCreate
+
 from .customer_delete import CustomerDelete
 from .customer_update import CustomerUpdate
 from .staff_create import StaffCreate
@@ -9,9 +6,6 @@ from .staff_delete import StaffDelete
 from .staff_update import StaffUpdate
 
 __all__ = [
-    "AddressCreate",
-    "AddressDelete",
-    "AddressUpdate",
     "CustomerCreate",
     "CustomerDelete",
     "CustomerUpdate",

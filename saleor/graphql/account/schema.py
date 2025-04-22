@@ -17,12 +17,8 @@ from .bulk_mutations import (
     StaffBulkDelete,
     UserBulkSetActive,
 )
-from .enums import CountryCodeEnum
 from .filters import CustomerFilter, PermissionGroupFilter, StaffUserFilter
 from .mutations.account import (
-    AccountAddressCreate,
-    AccountAddressDelete,
-    AccountAddressUpdate,
     AccountDelete,
     AccountRegister,
     AccountRequestDeletion,
@@ -52,10 +48,6 @@ from .mutations.permission_group import (
     PermissionGroupUpdate,
 )
 from .mutations.staff import (
-    AddressCreate,
-    AddressDelete,
-    AddressUpdate,
-    CustomerCreate,
     CustomerDelete,
     CustomerUpdate,
     StaffCreate,
@@ -63,8 +55,6 @@ from .mutations.staff import (
     StaffUpdate,
 )
 from .resolvers import (
-    resolve_address,
-    resolve_address_validation_rules,
     resolve_customers,
     resolve_permission_group,
     resolve_permission_groups,
@@ -73,8 +63,6 @@ from .resolvers import (
 )
 from .sorters import PermissionGroupSortingInput, UserSortingInput
 from .types import (
-    Address,
-    AddressValidationData,
     Group,
     GroupCountableConnection,
     User,
@@ -101,34 +89,6 @@ class StaffUserInput(FilterInputObjectType):
 
 
 class AccountQueries(graphene.ObjectType):
-    address_validation_rules = BaseField(
-        AddressValidationData,
-        description="Returns address validation rules.",
-        country_code=graphene.Argument(
-            CountryCodeEnum,
-            description="Two-letter ISO 3166-1 country code.",
-            required=True,
-        ),
-        country_area=graphene.Argument(
-            graphene.String, description="Designation of a region, province or state."
-        ),
-        city=graphene.Argument(graphene.String, description="City or a town name."),
-        city_area=graphene.Argument(
-            graphene.String, description="Sublocality like a district."
-        ),
-        doc_category=DOC_CATEGORY_USERS,
-    )
-    address = BaseField(
-        Address,
-        id=graphene.Argument(
-            graphene.ID, description="ID of an address.", required=True
-        ),
-        description="Look up an address by ID."
-        + message_one_of_permissions_required(
-            [AccountPermissions.MANAGE_USERS, AuthorizationFilters.OWNER]
-        ),
-        doc_category=DOC_CATEGORY_USERS,
-    )
     customers = FilterConnectionField(
         UserCountableConnection,
         filter=CustomerFilterInput(description="Filtering options for customers."),
@@ -188,24 +148,6 @@ class AccountQueries(graphene.ObjectType):
     )
 
     @staticmethod
-    def resolve_address_validation_rules(
-        _root,
-        info: ResolveInfo,
-        *,
-        country_code,
-        country_area=None,
-        city=None,
-        city_area=None,
-    ):
-        return resolve_address_validation_rules(
-            info,
-            country_code,
-            country_area=country_area,
-            city=city,
-            city_area=city_area,
-        )
-
-    @staticmethod
     def resolve_customers(_root, info: ResolveInfo, **kwargs):
         qs = resolve_customers(info)
         qs = filter_connection_queryset(
@@ -248,11 +190,6 @@ class AccountQueries(graphene.ObjectType):
         )
         return resolve_user(info, id, email, external_reference)
 
-    @staticmethod
-    @app_promise_callback
-    def resolve_address(_root, info: ResolveInfo, app, *, id):
-        return resolve_address(info, id, app)
-
 
 class AccountMutations(graphene.ObjectType):
     # Base mutations
@@ -276,22 +213,12 @@ class AccountMutations(graphene.ObjectType):
     request_email_change = RequestEmailChange.Field()
     confirm_email_change = ConfirmEmailChange.Field()
 
-    # Account mutations
-    account_address_create = AccountAddressCreate.Field()
-    account_address_update = AccountAddressUpdate.Field()
-    account_address_delete = AccountAddressDelete.Field()
-
     account_register = AccountRegister.Field()
     account_update = AccountUpdate.Field()
     account_request_deletion = AccountRequestDeletion.Field()
     account_delete = AccountDelete.Field()
 
     # Staff mutations
-    address_create = AddressCreate.Field()
-    address_update = AddressUpdate.Field()
-    address_delete = AddressDelete.Field()
-
-    customer_create = CustomerCreate.Field()
     customer_update = CustomerUpdate.Field()
     customer_delete = CustomerDelete.Field()
     customer_bulk_delete = CustomerBulkDelete.Field()

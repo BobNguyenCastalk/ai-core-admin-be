@@ -38,7 +38,7 @@ from ..core.utils import from_global_id_or_error
 from ..meta.types import ObjectWithMetadata
 from ..utils import format_permissions_for_display, get_user_or_app_from_context
 from ..webhook.dataloaders import WebhooksByAppIdLoader
-from ..webhook.enums import WebhookEventTypeAsyncEnum, WebhookEventTypeSyncEnum
+from ..webhook.enums import WebhookEventTypeAsyncEnum
 from ..webhook.types import Webhook
 from .dataloaders import (
     AppByIdLoader,
@@ -198,10 +198,6 @@ class AppManifestWebhook(BaseObjectType):
         WebhookEventTypeAsyncEnum,
         description="The asynchronous events that webhook wants to subscribe.",
     )
-    sync_events = NonNullList(
-        WebhookEventTypeSyncEnum,
-        description="The synchronous events that webhook wants to subscribe.",
-    )
     query = graphene.String(
         description="Subscription query of a webhook", required=True
     )
@@ -215,10 +211,6 @@ class AppManifestWebhook(BaseObjectType):
     @staticmethod
     def resolve_async_events(root, _info: ResolveInfo):
         return [WebhookEventTypeAsyncEnum[name] for name in root.get("asyncEvents", [])]
-
-    @staticmethod
-    def resolve_sync_events(root, _info: ResolveInfo):
-        return [WebhookEventTypeSyncEnum[name] for name in root.get("syncEvents", [])]
 
     @staticmethod
     def resolve_target_url(root, _info: ResolveInfo):

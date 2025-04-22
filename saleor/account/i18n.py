@@ -175,28 +175,8 @@ class CountryAwareAddressForm(AddressForm):
                     error_msg = "This value is not valid for the address."
                 self.add_error(field, ValidationError(error_msg, code=error_code))
 
-    def validate_address(self, data):
-        try:
-            data["country_code"] = data.get("country", "")
-
-            street_address_1 = data.get("street_address_1", "")
-            street_address_2 = data.get("street_address_2", "")
-            if street_address_1 or street_address_2:
-                data["street_address"] = f"{street_address_1}\n{street_address_2}"
-
-            self.substitute_invalid_values(data)
-            normalized_data = i18naddress.normalize_address(data)
-            if getattr(self, "enable_normalization", True):
-                data = normalized_data
-                del data["sorting_code"]
-        except i18naddress.InvalidAddressError as exc:
-            self.add_field_errors(exc.errors)
-            self.log_errors()
-        return data
-
     def clean(self):
         data = super().clean()
-        return self.validate_address(data)
 
     @staticmethod
     def substitute_invalid_values(data):

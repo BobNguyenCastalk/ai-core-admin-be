@@ -13,18 +13,12 @@ from ....core.types import AccountError, NonNullList
 from ....core.utils import WebhookEventInfo
 from ....meta.inputs import MetadataInput
 from ...mixins import AppImpersonateMixin
-from ...types import AddressInput, User
+from ...types import User
 from ..base import BaseCustomerCreate
 from .base import AccountBaseInput
 
 
 class AccountInput(AccountBaseInput):
-    default_billing_address = AddressInput(
-        description="Billing address of the customer."
-    )
-    default_shipping_address = AddressInput(
-        description="Shipping address of the customer."
-    )
     metadata = NonNullList(
         MetadataInput,
         description="Fields required to update the user metadata." + ADDED_IN_314,

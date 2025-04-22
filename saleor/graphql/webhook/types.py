@@ -55,23 +55,6 @@ class WebhookEventAsync(ModelObjectType[models.WebhookEvent]):
         return root.event_type
 
 
-class WebhookEventSync(ModelObjectType[models.WebhookEvent]):
-    name = graphene.String(description="Display name of the event.", required=True)
-    event_type = enums.WebhookEventTypeSyncEnum(
-        description="Internal name of the event type.", required=True
-    )
-
-    class Meta:
-        model = models.WebhookEvent
-        description = "Synchronous webhook event."
-
-    @staticmethod
-    def resolve_name(root: models.WebhookEvent, _info):
-        if root.event_type in WebhookEventSyncType.EVENT_MAP:
-            return WebhookEventSyncType.EVENT_MAP[root.event_type]["name"]
-        return root.event_type
-
-
 class EventDeliveryAttempt(ModelObjectType[core_models.EventDeliveryAttempt]):
     id = graphene.GlobalID(
         required=True, description="The ID of Event Delivery Attempt."
@@ -160,11 +143,6 @@ class Webhook(ModelObjectType[models.Webhook]):
         deprecation_reason=(
             f"{DEPRECATED_IN_3X_FIELD} Use `asyncEvents` or `syncEvents` instead."
         ),
-        required=True,
-    )
-    sync_events = NonNullList(
-        WebhookEventSync,
-        description="List of synchronous webhook events.",
         required=True,
     )
     async_events = NonNullList(

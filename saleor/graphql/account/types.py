@@ -60,151 +60,6 @@ from .enums import CountryCodeEnum, CustomerEventsEnum
 from .utils import can_user_manage_group, get_groups_which_user_can_manage
 
 
-class AddressInput(BaseInputObjectType):
-    first_name = graphene.String(description="Given name.")
-    last_name = graphene.String(description="Family name.")
-    company_name = graphene.String(description="Company or organization.")
-    street_address_1 = graphene.String(description="Address.")
-    street_address_2 = graphene.String(description="Address.")
-    city = graphene.String(description="City.")
-    city_area = graphene.String(description="District.")
-    postal_code = graphene.String(description="Postal code.")
-    country = CountryCodeEnum(description="Country.")
-    country_area = graphene.String(description="State or province.")
-    phone = graphene.String(
-        description=(
-            "Phone number.\n\n"
-            "Phone numbers are validated with Google's "
-            "[libphonenumber](https://github.com/google/libphonenumber) library."
-        )
-    )
-    metadata = graphene.List(
-        graphene.NonNull(MetadataInput),
-        description="Address public metadata." + ADDED_IN_315,
-        required=False,
-    )
-    skip_validation = graphene.Boolean(
-        description=(
-            "Determine if the address should be validated. "
-            "By default, Saleor accepts only address inputs matching ruleset from "
-            "[Google Address Data]{https://chromium-i18n.appspot.com/ssl-address), "
-            "using [i18naddress](https://github.com/mirumee/google-i18n-address) "
-            "library. Some mutations may require additional permissions to use the "
-            "the field. More info about permissions can be found in relevant mutation."
-        )
-        + ADDED_IN_319
-        + PREVIEW_FEATURE,
-        default_value=False,
-        required=False,
-    )
-
-
-@federated_entity("id")
-class Address(ModelObjectType[models.Address]):
-    id = graphene.GlobalID(required=True, description="The ID of the address.")
-    first_name = graphene.String(
-        required=True, description="The given name of the address."
-    )
-    last_name = graphene.String(
-        required=True, description="The family name of the address."
-    )
-    company_name = graphene.String(
-        required=True, description="Company or organization name."
-    )
-    street_address_1 = graphene.String(
-        required=True, description="The first line of the address."
-    )
-    street_address_2 = graphene.String(
-        required=True, description="The second line of the address."
-    )
-    city = graphene.String(required=True, description="The city of the address.")
-    city_area = graphene.String(
-        required=True, description="The district of the address."
-    )
-    postal_code = graphene.String(
-        required=True, description="The postal code of the address."
-    )
-    country = graphene.Field(
-        CountryDisplay, required=True, description="The country of the address."
-    )
-    country_area = graphene.String(
-        required=True, description="The country area of the address."
-    )
-    phone = graphene.String(description="The phone number assigned the address.")
-    is_default_shipping_address = graphene.Boolean(
-        required=False, description="Address is user's default shipping address."
-    )
-    is_default_billing_address = graphene.Boolean(
-        required=False, description="Address is user's default billing address."
-    )
-
-    class Meta:
-        description = "Represents user address data."
-        interfaces = [relay.Node, ObjectWithMetadata]
-        model = models.Address
-        metadata_since = ADDED_IN_310
-
-    @staticmethod
-    def resolve_country(root: models.Address, _info: ResolveInfo):
-        return CountryDisplay(code=root.country.code, country=root.country.name)
-
-    @staticmethod
-    def resolve_is_default_shipping_address(root: models.Address, _info: ResolveInfo):
-        """Look if the address is the default shipping address of the user.
-
-        This field is added through annotation when using the
-        `resolve_addresses` resolver. It's invalid for
-        `resolve_default_shipping_address` and
-        `resolve_default_billing_address`
-        """
-        if not hasattr(root, "user_default_shipping_address_pk"):
-            return None
-
-        user_default_shipping_address_pk = getattr(
-            root, "user_default_shipping_address_pk"
-        )
-        if user_default_shipping_address_pk == root.pk:
-            return True
-        return False
-
-    @staticmethod
-    def resolve_is_default_billing_address(root: models.Address, _info: ResolveInfo):
-        """Look if the address is the default billing address of the user.
-
-        This field is added through annotation when using the
-        `resolve_addresses` resolver. It's invalid for
-        `resolve_default_shipping_address` and
-        `resolve_default_billing_address`
-        """
-        if not hasattr(root, "user_default_billing_address_pk"):
-            return None
-
-        user_default_billing_address_pk = getattr(
-            root, "user_default_billing_address_pk"
-        )
-        if user_default_billing_address_pk == root.pk:
-            return True
-        return False
-
-    @staticmethod
-    def __resolve_references(roots: list["Address"], info: ResolveInfo):
-        from .resolvers import resolve_addresses
-
-        app = get_app_promise(info.context).get()
-
-        root_ids = [root.id for root in roots]
-        addresses = {
-            address.id: address for address in resolve_addresses(info, root_ids, app)
-        }
-
-        result = []
-        for root_id in root_ids:
-            _, root_id = from_global_id_or_error(root_id, Address)
-            result.append(addresses.get(int(root_id)))
-
-        return result
-
-
 class CustomerEvent(ModelObjectType[models.CustomerEvent]):
     id = graphene.GlobalID(required=True, description="The ID of the customer event.")
     date = DateTime(description="Date when event happened at in ISO 8601 format.")
@@ -302,9 +157,6 @@ class User(ModelObjectType[models.User]):
         required=True,
         description="Determines if user has confirmed email." + ADDED_IN_315,
     )
-    addresses = NonNullList(
-        Address, description="List of all user's addresses.", required=True
-    )
     checkout_tokens = NonNullList(
         UUID,
         description="Returns the checkout UUID's assigned to this user.",
@@ -360,12 +212,6 @@ class User(ModelObjectType[models.User]):
     )
     language_code = graphene.Field(
         LanguageCodeEnum, description="User language code.", required=True
-    )
-    default_shipping_address = graphene.Field(
-        Address, description="The default shipping address of the user."
-    )
-    default_billing_address = graphene.Field(
-        Address, description="The default billing address of the user."
     )
     external_reference = graphene.String(
         description=f"External ID of this user. {ADDED_IN_310}", required=False
