@@ -46,8 +46,6 @@ def anonymize_order(order: "Order") -> "Order":
     fake_user = generate_fake_user()
     anonymized_order.user = fake_user
     anonymized_order.user_email = fake_user.email
-    anonymized_order.shipping_address = generate_fake_address()
-    anonymized_order.billing_address = generate_fake_address()
     anonymized_order.customer_note = fake.paragraph()
     anonymized_order.metadata = generate_fake_metadata()
     anonymized_order.private_metadata = generate_fake_metadata()

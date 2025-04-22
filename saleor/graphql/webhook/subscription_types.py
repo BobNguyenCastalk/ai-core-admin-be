@@ -122,10 +122,6 @@ class AccountOperationBase(AbstractType):
         _, data = root
         return data["token"]
 
-    @staticmethod
-    def resolve_shop(root, _info: ResolveInfo):
-        return Shop()
-
 
 class AccountConfirmed(SubscriptionObjectType, AccountOperationBase):
     class Meta:

@@ -35,8 +35,6 @@ from ..utils import (
     get_out_of_scope_users,
 )
 
-BILLING_ADDRESS_FIELD = "default_billing_address"
-SHIPPING_ADDRESS_FIELD = "default_shipping_address"
 INVALID_TOKEN = "Invalid or expired token."
 
 
@@ -148,22 +146,7 @@ class BaseCustomerCreate(ModelMutation, I18nMixin):
     @classmethod
     @traced_atomic_transaction()
     def save(cls, info: ResolveInfo, instance, cleaned_input):
-        default_shipping_address = cleaned_input.get(SHIPPING_ADDRESS_FIELD)
         manager = get_plugin_manager_promise(info.context).get()
-        if default_shipping_address:
-            default_shipping_address = manager.change_user_address(
-                default_shipping_address, "shipping", instance
-            )
-            default_shipping_address.save()
-            instance.default_shipping_address = default_shipping_address
-        default_billing_address = cleaned_input.get(BILLING_ADDRESS_FIELD)
-        if default_billing_address:
-            default_billing_address = manager.change_user_address(
-                default_billing_address, "billing", instance
-            )
-            default_billing_address.save()
-            instance.default_billing_address = default_billing_address
-
         is_creation = instance.pk is None
 
         try:
@@ -190,11 +173,6 @@ class BaseCustomerCreate(ModelMutation, I18nMixin):
             except instance.DoesNotExist:
                 pass
             raise
-
-        if default_billing_address:
-            instance.addresses.add(default_billing_address)
-        if default_shipping_address:
-            instance.addresses.add(default_shipping_address)
 
         instance.search_document = prepare_user_search_document_value(instance)
         instance.save(update_fields=["search_document", "updated_at"])

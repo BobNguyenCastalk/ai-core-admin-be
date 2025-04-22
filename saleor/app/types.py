@@ -12,37 +12,18 @@ class AppExtensionMount:
     CUSTOMER_OVERVIEW_MORE_ACTIONS = "customer_overview_more_actions"
     CUSTOMER_DETAILS_MORE_ACTIONS = "customer_details_more_actions"
 
-    PRODUCT_OVERVIEW_CREATE = "product_overview_create"
-    PRODUCT_OVERVIEW_MORE_ACTIONS = "product_overview_more_actions"
-    PRODUCT_DETAILS_MORE_ACTIONS = "product_details_more_actions"
 
-    NAVIGATION_CATALOG = "navigation_catalog"
-    NAVIGATION_ORDERS = "navigation_orders"
     NAVIGATION_CUSTOMERS = "navigation_customers"
-    NAVIGATION_DISCOUNTS = "navigation_discounts"
     NAVIGATION_TRANSLATIONS = "navigation_translations"
     NAVIGATION_PAGES = "navigation_pages"
-
-    ORDER_DETAILS_MORE_ACTIONS = "order_details_more_actions"
-    ORDER_OVERVIEW_CREATE = "order_overview_create"
-    ORDER_OVERVIEW_MORE_ACTIONS = "order_overview_more_actions"
 
     CHOICES = [
         (CUSTOMER_OVERVIEW_CREATE, "customer_overview_create"),
         (CUSTOMER_OVERVIEW_MORE_ACTIONS, "customer_overview_more_actions"),
         (CUSTOMER_DETAILS_MORE_ACTIONS, "customer_details_more_actions"),
-        (PRODUCT_OVERVIEW_CREATE, "product_overview_create"),
-        (PRODUCT_OVERVIEW_MORE_ACTIONS, "product_overview_more_actions"),
-        (PRODUCT_DETAILS_MORE_ACTIONS, "product_details_more_actions"),
-        (NAVIGATION_CATALOG, "navigation_catalog"),
-        (NAVIGATION_ORDERS, "navigation_orders"),
         (NAVIGATION_CUSTOMERS, "navigation_customers"),
-        (NAVIGATION_DISCOUNTS, "navigation_discounts"),
         (NAVIGATION_TRANSLATIONS, "navigation_translations"),
         (NAVIGATION_PAGES, "navigation_pages"),
-        (ORDER_DETAILS_MORE_ACTIONS, "order_details_more_actions"),
-        (ORDER_OVERVIEW_CREATE, "order_overview_create"),
-        (ORDER_OVERVIEW_MORE_ACTIONS, "order_overview_more_actions"),
     ]
 
 

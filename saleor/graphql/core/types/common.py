@@ -154,16 +154,6 @@ class StaffError(AccountError):
 
 class ChannelError(Error):
     code = ChannelErrorCode(description="The error code.", required=True)
-    shipping_zones = NonNullList(
-        graphene.ID,
-        description="List of shipping zone IDs which causes the error.",
-        required=False,
-    )
-    warehouses = NonNullList(
-        graphene.ID,
-        description="List of warehouses IDs which causes the error.",
-        required=False,
-    )
 
     class Meta:
         doc_category = DOC_CATEGORY_CHANNELS

@@ -140,12 +140,6 @@ class WebhookEventInfo:
     type: str
     description: Optional[str] = None
 
-
-CHECKOUT_CALCULATE_TAXES_MESSAGE = (
-    "Optionally triggered when checkout prices are expired."
-)
-
-
 def message_webhook_events(webhook_events: list[WebhookEventInfo]) -> str:
     description = "\n\nTriggers the following webhook events:"
     for event in webhook_events:
