@@ -354,11 +354,6 @@ def create_pages():
         yield f"Page {page.slug} created"
 
 
-def get_product_list_images_dir(placeholder_dir):
-    product_list_images_dir = os.path.join(placeholder_dir, PRODUCTS_LIST_DIR)
-    return product_list_images_dir
-
-
 def get_image(image_dir, image_name):
     img_path = os.path.join(image_dir, image_name)
     return File(open(img_path, "rb"), name=image_name)
