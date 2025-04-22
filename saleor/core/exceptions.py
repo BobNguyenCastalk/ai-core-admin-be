@@ -1,55 +1,8 @@
 from collections.abc import Iterable
-from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Optional, Union
-from uuid import UUID
+from typing import Optional
 
 from graphql import GraphQLError
-
-
-if TYPE_CHECKING:
-    from ..order.models import OrderLine
-    from ..product.models import ProductVariant
-
-
-@dataclass
-class InsufficientStockData:
-    available_quantity: int
-    variant: Optional["ProductVariant"] = None
-    order_line: Optional["OrderLine"] = None
-    warehouse_pk: Union[UUID, None] = None
-
-
-class NonExistingCheckoutLines(Exception):
-    def __init__(self, line_pks: set[UUID]):
-        self.line_pks = line_pks
-        super().__init__("Checkout lines don't exist.")
-
-
-class InsufficientStock(Exception):
-    def __init__(self, items: list[InsufficientStockData]):
-        details = [str(item.variant or item.order_line) for item in items]
-        super().__init__(f"Insufficient stock for {', '.join(details)}")
-        self.items = items
-
-
-class AllocationError(Exception):
-    def __init__(self, order_lines):
-        lines = [str(line) for line in order_lines]
-        super().__init__(f"Unable to deallocate stock for lines {', '.join(lines)}.")
-        self.order_lines = order_lines
-
-
-class PreorderAllocationError(Exception):
-    def __init__(self, order_line):
-        super().__init__(f"Unable to allocate in stock for line {str(order_line)}.")
-        self.order_line = order_line
-
-
-class ProductNotPublished(Exception):
-    def __init__(self, context=None):
-        super().__init__("Can't add unpublished product.")
-        self.context = context
 
 
 class PermissionDenied(Exception):

@@ -41,10 +41,6 @@ logger = logging.getLogger(__name__)
 task_logger = get_task_logger(f"{__name__}.celery")
 
 
-DEFAULT_TAX_CODE = "UNMAPPED"
-DEFAULT_TAX_DESCRIPTION = "Unmapped Product/Product Type"
-
-
 class WebhookSchemes(str, Enum):
     HTTP = "http"
     HTTPS = "https"

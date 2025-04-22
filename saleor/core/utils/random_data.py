@@ -20,7 +20,6 @@ from ...account.search import (
     generate_user_fields_search_document_value,
 )
 from ...channel.models import Channel
-from ...core.weight import zero_weight
 from ...page.models import Page, PageType
 from ...permission.enums import (
     AccountPermissions,
@@ -107,14 +106,6 @@ def get_sample_data():
         model = item.pop("model")
         types[model].append(item)
     return types
-
-
-def get_weight(weight):
-    if not weight:
-        return zero_weight()
-    value, unit = weight.split(":")
-    return Weight(**{unit: value})
-
 
 def set_field_as_money(defaults, field):
     amount_field = f"{field}_amount"

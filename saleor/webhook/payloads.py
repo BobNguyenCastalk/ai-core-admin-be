@@ -160,9 +160,6 @@ def generate_sample_payload(event_name: str) -> Optional[dict]:
 
 def process_translation_context(context):
     additional_id_fields = [
-        ("product_id", "Product"),
-        ("product_variant_id", "ProductVariant"),
-        ("attribute_id", "Attribute"),
         ("page_id", "Page"),
         ("page_type_id", "PageType"),
     ]

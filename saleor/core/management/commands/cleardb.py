@@ -10,11 +10,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 
 from ....account.models import User
-from ....attribute.models import Attribute
-from ....order.models import Order
 from ....page.models import Page, PageType
-from ....payment.models import Payment, Transaction, TransactionItem
-from ....product.models import Category, Collection, Product, ProductType
 from ....webhook.models import Webhook
 
 
@@ -37,33 +33,6 @@ class Command(BaseCommand):
         force = options.get("force", False)
         if not settings.DEBUG and not force:
             raise CommandError("Cannot clear the database in DEBUG=False mode.")
-
-        TransactionItem.objects.all().delete()
-        self.stdout.write("Removed transaction items")
-
-        Transaction.objects.all().delete()
-        self.stdout.write("Removed transactions")
-
-        Payment.objects.all().delete()
-        self.stdout.write("Removed payments")
-
-        Order.objects.all().delete()
-        self.stdout.write("Removed orders")
-
-        Product.objects.all().delete()
-        self.stdout.write("Removed products")
-
-        ProductType.objects.all().delete()
-        self.stdout.write("Removed product types")
-
-        Attribute.objects.all().delete()
-        self.stdout.write("Removed attributes")
-
-        Category.objects.all().delete()
-        self.stdout.write("Removed categories")
-
-        Collection.objects.all().delete()
-        self.stdout.write("Removed collections")
 
         Page.objects.all().delete()
         self.stdout.write("Removed pages")

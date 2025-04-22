@@ -5,12 +5,6 @@ import graphene
 import pytz
 from graphene.types.generic import GenericScalar
 from graphql.language import ast
-from measurement.measures import Weight
-
-from ...core.weight import (
-    convert_weight_to_default_weight_unit,
-    get_default_weight_unit,
-)
 
 
 class Decimal(graphene.Float):
@@ -71,56 +65,6 @@ class JSON(GenericScalar):
         if isinstance(value, list):
             return [GenericScalar.parse_value(v) for v in value]
         return None
-
-
-class WeightScalar(graphene.Scalar):
-    @staticmethod
-    def parse_value(value):
-        if isinstance(value, dict):
-            weight = Weight(**{value["unit"]: value["value"]})
-        else:
-            weight = WeightScalar.parse_decimal(value)
-        return weight
-
-    @staticmethod
-    def serialize(weight):
-        if isinstance(weight, Weight):
-            weight = convert_weight_to_default_weight_unit(weight)
-            return str(weight)
-        return None
-
-    @staticmethod
-    def parse_literal(node):
-        if isinstance(node, ast.ObjectValue):
-            weight = WeightScalar.parse_literal_object(node)
-        else:
-            weight = WeightScalar.parse_decimal(node.value)
-        return weight
-
-    @staticmethod
-    def parse_decimal(value):
-        try:
-            value = decimal.Decimal(value)
-        except decimal.DecimalException:
-            return None
-        default_unit = get_default_weight_unit()
-        return Weight(**{default_unit: value})
-
-    @staticmethod
-    def parse_literal_object(node):
-        value = decimal.Decimal(0)
-        unit = get_default_weight_unit()
-
-        for field in node.fields:
-            if field.name.value == "value":
-                try:
-                    value = decimal.Decimal(field.value.value)
-                except decimal.DecimalException:
-                    return None
-            if field.name.value == "unit":
-                unit = field.value.value
-        return Weight(**{unit: value})
-
 
 class UUID(graphene.UUID):
     @staticmethod

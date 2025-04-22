@@ -205,7 +205,6 @@ context_processors = [
     "django.template.context_processors.debug",
     "django.template.context_processors.media",
     "django.template.context_processors.static",
-    "saleor.site.context_processors.site",
 ]
 
 loaders = [
@@ -278,16 +277,13 @@ INSTALLED_APPS = [
     "saleor.channel",
     "saleor.core",
     "saleor.graphql",
-    "saleor.menu",
     "saleor.seo",
     "saleor.page",
     "saleor.webhook",
     "saleor.app",
-    "saleor.thumbnail",
     "saleor.schedulers",
     # External apps
     "django_measurement",
-    "django_prices",
     "mptt",
     "django_countries",
     "django_filters",
@@ -570,22 +566,6 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = int(
     os.environ.get("CELERY_WORKER_PREFETCH_MULTIPLIER", 1)
 )
 
-# Expire orders task setting
-BEAT_EXPIRE_ORDERS_AFTER_TIMEDELTA = timedelta(
-    seconds=parse(os.environ.get("BEAT_EXPIRE_ORDERS_AFTER_TIMEDELTA", "5 minutes"))
-)
-
-# Defines after how many seconds should the task triggered by the Celery beat
-# entry 'update-products-search-vectors' expire if it wasn't picked up by a worker.
-BEAT_UPDATE_SEARCH_SEC = parse(
-    os.environ.get("BEAT_UPDATE_SEARCH_FREQUENCY", "20 seconds")
-)
-BEAT_UPDATE_SEARCH_EXPIRE_AFTER_SEC = BEAT_UPDATE_SEARCH_SEC
-
-BEAT_PRICE_RECALCULATION_SCHEDULE = parse(
-    os.environ.get("BEAT_PRICE_RECALCULATION_SCHEDULE", "30 seconds")
-)
-BEAT_PRICE_RECALCULATION_SCHEDULE_EXPIRE_AFTER_SEC = BEAT_PRICE_RECALCULATION_SCHEDULE
 
 # Defines the Celery beat scheduler entries.
 #
@@ -594,52 +574,9 @@ BEAT_PRICE_RECALCULATION_SCHEDULE_EXPIRE_AFTER_SEC = BEAT_PRICE_RECALCULATION_SC
 # the expiration value. This makes sure if the task or scheduling is wrapped
 # by custom code (e.g., a Saleor fork), the expiration is still present.
 CELERY_BEAT_SCHEDULE = {
-    "deactivate-preorder-for-variants": {
-        "task": "saleor.product.tasks.deactivate_preorder_for_variants_task",
-        "schedule": timedelta(hours=1),
-    },
-    "delete_expired_orders": {
-        "task": "saleor.order.tasks.delete_expired_orders_task",
-        "schedule": crontab(hour=2, minute=0),
-    },
-    "delete-outdated-event-data": {
-        "task": "saleor.core.tasks.delete_event_payloads_task",
-        "schedule": timedelta(days=1),
-    },
-    "update-products-search-vectors": {
-        "task": "saleor.product.tasks.update_products_search_vector_task",
-        "schedule": timedelta(seconds=BEAT_UPDATE_SEARCH_SEC),
-        "options": {"expires": BEAT_UPDATE_SEARCH_EXPIRE_AFTER_SEC},
-    },
-    "update-gift-cards-search-vectors": {
-        "task": "saleor.giftcard.tasks.update_gift_cards_search_vector_task",
-        "schedule": timedelta(seconds=BEAT_UPDATE_SEARCH_SEC),
-        "options": {"expires": BEAT_UPDATE_SEARCH_EXPIRE_AFTER_SEC},
-    },
-    "expire-orders": {
-        "task": "saleor.order.tasks.expire_orders_task",
-        "schedule": BEAT_EXPIRE_ORDERS_AFTER_TIMEDELTA,
-    },
     "remove-apps-marked-as-removed": {
         "task": "saleor.app.tasks.remove_apps_task",
         "schedule": crontab(hour=3, minute=0),
-    },
-    "release-funds-for-abandoned-checkouts": {
-        "task": "saleor.payment.tasks.transaction_release_funds_for_checkout_task",
-        "schedule": timedelta(minutes=10),
-    },
-    "recalculate-promotion-rules": {
-        "task": (
-            "saleor.product.tasks"
-            ".update_variant_relations_for_active_promotion_rules_task"
-        ),
-        "schedule": timedelta(seconds=BEAT_PRICE_RECALCULATION_SCHEDULE),
-        "options": {"expires": BEAT_PRICE_RECALCULATION_SCHEDULE_EXPIRE_AFTER_SEC},
-    },
-    "recalculate-discounted-price-for-products": {
-        "task": "saleor.product.tasks.recalculate_discounted_price_for_products_task",
-        "schedule": timedelta(seconds=BEAT_PRICE_RECALCULATION_SCHEDULE),
-        "options": {"expires": BEAT_PRICE_RECALCULATION_SCHEDULE_EXPIRE_AFTER_SEC},
     },
 }
 
@@ -839,16 +776,6 @@ TRANSACTION_BATCH_FOR_RELEASING_FUNDS = os.environ.get(
 # If the count is exceeded, the expression list will be truncated
 INDEX_MAXIMUM_EXPR_COUNT = 4000
 
-# Maximum related objects that can be indexed in an order
-SEARCH_ORDERS_MAX_INDEXED_TRANSACTIONS = 20
-SEARCH_ORDERS_MAX_INDEXED_PAYMENTS = 20
-SEARCH_ORDERS_MAX_INDEXED_DISCOUNTS = 20
-SEARCH_ORDERS_MAX_INDEXED_LINES = 100
-
-# Maximum related objects that can be indexed in a product
-PRODUCT_MAX_INDEXED_ATTRIBUTES = 1000
-PRODUCT_MAX_INDEXED_ATTRIBUTE_VALUES = 100
-PRODUCT_MAX_INDEXED_VARIANTS = 1000
 
 
 # Patch SubscriberExecutionContext class from `graphql-core-legacy` package
@@ -930,12 +857,6 @@ WEBHOOK_WAITING_FOR_RESPONSE_TIMEOUT = 18
 WEBHOOK_TIMEOUT = (REQUESTS_CONN_EST_TIMEOUT, WEBHOOK_WAITING_FOR_RESPONSE_TIMEOUT)
 WEBHOOK_SYNC_TIMEOUT = (REQUESTS_CONN_EST_TIMEOUT, WEBHOOK_WAITING_FOR_RESPONSE_TIMEOUT)
 
-# The max number of rules with order_predicate defined
-ORDER_RULES_LIMIT = os.environ.get("ORDER_RULES_LIMIT", 100)
-
-# The max number of gits assigned to promotion rule
-GIFTS_LIMIT_PER_RULE = os.environ.get("GIFTS_LIMIT_PER_RULE", 500)
-
 # Whether to enable the comparison of pre-save and post-save webhook payloads in
 # mutations, in order to limit sending webhooks where the payload has not changed as
 # a result of the mutation. Note: this works only for subscriptions webhooks; legacy
@@ -943,11 +864,6 @@ GIFTS_LIMIT_PER_RULE = os.environ.get("GIFTS_LIMIT_PER_RULE", 500)
 ENABLE_LIMITING_WEBHOOKS_FOR_IDENTICAL_PAYLOADS = get_bool_from_env(
     "ENABLE_LIMITING_WEBHOOKS_FOR_IDENTICAL_PAYLOADS", False
 )
-
-
-# Transaction items limit for PaymentGatewayInitialize / TransactionInitialize.
-# That setting limits the allowed number of transaction items for single entity.
-TRANSACTION_ITEMS_LIMIT = 100
 
 
 # The manager.perform_mutation method is deprecated and will be removed in Saleor 3.21.
