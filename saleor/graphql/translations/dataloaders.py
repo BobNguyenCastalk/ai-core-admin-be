@@ -1,6 +1,5 @@
 from collections import defaultdict
 
-from ...menu import models as menu_models
 from ...page import models as page_models
 from ..core.dataloaders import DataLoader
 
@@ -34,14 +33,6 @@ class BaseTranslationByIdAndLanguageCodeLoader(DataLoader):
             id = str(getattr(translation, self.relation_name))
             translation_by_language_code_by_id[language_code][id] = translation
         return [translation_by_language_code_by_id[key[1]][str(key[0])] for key in keys]
-
-
-class MenuItemTranslationByIdAndLanguageCodeLoader(
-    BaseTranslationByIdAndLanguageCodeLoader
-):
-    context_key = "menu_item_translation_by_id_and_language_code"
-    model = menu_models.MenuItemTranslation
-    relation_name = "menu_item_id"
 
 
 class PageTranslationByIdAndLanguageCodeLoader(

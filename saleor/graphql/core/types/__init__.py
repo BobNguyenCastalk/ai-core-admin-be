@@ -14,7 +14,6 @@ from .common import (
     IntRangeInput,
     Job,
     LanguageDisplay,
-    MenuError,
     MetadataError,
     NonNullList,
     PageError,

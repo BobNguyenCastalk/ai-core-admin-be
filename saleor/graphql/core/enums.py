@@ -13,11 +13,9 @@ from ...core.units import (
     VolumeUnits,
     WeightUnits,
 )
-from ...menu import error_codes as menu_error_codes
 from ...page import error_codes as page_error_codes
 from ...permission.enums import get_permissions_enum_list
 from ...plugins import error_codes as plugin_error_codes
-from ...translations import error_codes as translatable_error_codes
 from ...webhook import error_codes as webhook_error_codes
 from ..notifications import error_codes as external_notifications_error_codes
 from .doc_category import (
@@ -147,8 +145,6 @@ ExternalNotificationTriggerErrorCode = graphene.Enum.from_enum(
 
 PluginErrorCode = graphene.Enum.from_enum(plugin_error_codes.PluginErrorCode)
 
-MenuErrorCode = graphene.Enum.from_enum(menu_error_codes.MenuErrorCode)
-
 MetadataErrorCode = graphene.Enum.from_enum(core_error_codes.MetadataErrorCode)
 
 PageErrorCode = graphene.Enum.from_enum(page_error_codes.PageErrorCode)
@@ -163,8 +159,6 @@ SendConfirmationEmailErrorCode = graphene.Enum.from_enum(
     account_error_codes.SendConfirmationEmailErrorCode
 )
 SendConfirmationEmailErrorCode.doc_category = DOC_CATEGORY_USERS
-
-ShopErrorCode = graphene.Enum.from_enum(core_error_codes.ShopErrorCode)
 
 UploadErrorCode = graphene.Enum.from_enum(core_error_codes.UploadErrorCode)
 

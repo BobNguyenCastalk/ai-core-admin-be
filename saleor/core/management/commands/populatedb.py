@@ -9,7 +9,6 @@ from django.db import connection
 from ....account.utils import create_superuser
 from ...utils.random_data import (
     create_channels,
-    create_menus,
     create_page_type,
     create_pages,
     create_permission_groups,
@@ -84,8 +83,6 @@ class Command(BaseCommand):
             self.stdout.write(msg)
         self.stdout.write("Created products")
         for msg in create_users(user_password, 20):
-            self.stdout.write(msg)
-        for msg in create_menus():
             self.stdout.write(msg)
 
         if options["createsuperuser"]:

@@ -6,13 +6,11 @@ from rx import Observable
 from ... import __version__
 from ...account.models import User
 from ...channel.models import Channel
-from ...menu.models import MenuItemTranslation
 from ...page.models import PageTranslation
 from ...webhook.const import MAX_FILTERABLE_CHANNEL_SLUGS_LIMIT
-from ...webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
+from ...webhook.event_types import WebhookEventAsyncType
 from ..account.types import User as UserType
 from ..app.types import App as AppType
-from ..channel import ChannelContext
 from ..core import ResolveInfo
 from ..core.context import get_database_connection_name
 from ..core.descriptions import (

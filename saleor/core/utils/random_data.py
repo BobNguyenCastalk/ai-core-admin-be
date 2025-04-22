@@ -23,7 +23,6 @@ from ...account.search import (
 )
 from ...channel.models import Channel
 from ...core.weight import zero_weight
-from ...menu.models import Menu, MenuItem
 from ...page.models import Page, PageType
 from ...permission.enums import (
     AccountPermissions,
@@ -353,32 +352,6 @@ def create_pages():
         defaults["page_type_id"] = defaults.pop("page_type")
         page, _ = Page.objects.update_or_create(pk=pk, defaults=defaults)
         yield f"Page {page.slug} created"
-
-
-def create_menus():
-    types = get_sample_data()
-
-    menu_data = types["menu.menu"]
-    menu_item_data = types["menu.menuitem"]
-    for menu in menu_data:
-        pk = menu["pk"]
-        defaults = menu["fields"]
-        menu, _ = Menu.objects.update_or_create(pk=pk, defaults=defaults)
-        yield f"Menu {menu.name} created"
-    for menu_item in menu_item_data:
-        pk = menu_item["pk"]
-        defaults = dict(menu_item["fields"])
-        defaults["category_id"] = defaults.pop("category")
-        defaults["collection_id"] = defaults.pop("collection")
-        defaults["menu_id"] = defaults.pop("menu")
-        defaults["page_id"] = defaults.pop("page")
-        defaults.pop("parent")
-        menu_item, _ = MenuItem.objects.update_or_create(pk=pk, defaults=defaults)
-        yield f"MenuItem {menu_item.name} created"
-    for menu_item in menu_item_data:
-        pk = menu_item["pk"]
-        defaults = dict(menu_item["fields"])
-        MenuItem.objects.filter(pk=pk).update(parent_id=defaults["parent"])
 
 
 def get_product_list_images_dir(placeholder_dir):

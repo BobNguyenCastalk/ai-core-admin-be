@@ -23,7 +23,6 @@ from ..enums import (
     ExternalNotificationTriggerErrorCode,
     JobStatusEnum,
     LanguageCodeEnum,
-    MenuErrorCode,
     MetadataErrorCode,
     PageErrorCode,
     PermissionEnum,
@@ -177,12 +176,6 @@ class ExternalNotificationError(Error):
         description="The error code.", required=True
     )
 
-
-class MenuError(Error):
-    code = MenuErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_MENU
 
 class MetadataError(Error):
     code = MetadataErrorCode(description="The error code.", required=True)

@@ -1,6 +1,5 @@
 import graphene
 
-from ...menu.models import MenuItem
 from ...page.models import Page
 from ..core import ResolveInfo
 from ..core.connection import CountableConnection
@@ -33,7 +32,6 @@ class TranslatableItemConnection(CountableConnection):
 
 
 class TranslatableKinds(graphene.Enum):
-    MENU_ITEM = "MenuItem"
     PAGE = "Page"
     SALE = "Sale"
 
@@ -68,7 +66,6 @@ class TranslationQueries(graphene.ObjectType):
             return None
         models = {
             TranslatableKinds.PAGE.value: Page,  # type: ignore[attr-defined]
-            TranslatableKinds.MENU_ITEM.value: MenuItem,  # type: ignore[attr-defined]
         }
         return (
             models[kind]
