@@ -43,11 +43,7 @@ type Query {
     eventType: WebhookSampleEventTypeEnum!
   ): JSONString @doc(category: "Webhooks")
 
-  """
-  Returns a list of all translatable items of a given kind.
-  
-  Requires one of the following permissions: MANAGE_TRANSLATIONS.
-  """
+  """Returns a list of all translatable items of a given kind."""
   translations(
     """Kind of objects to retrieve."""
     kind: TranslatableKinds!
@@ -69,11 +65,7 @@ type Query {
     last: Int
   ): TranslatableItemConnection
 
-  """
-  Lookup a translatable item by ID.
-  
-  Requires one of the following permissions: MANAGE_TRANSLATIONS.
-  """
+  """Lookup a translatable item by ID."""
   translation(
     """ID of the object to retrieve."""
     id: ID!
@@ -81,90 +73,6 @@ type Query {
     """Kind of the object to retrieve."""
     kind: TranslatableKinds!
   ): TranslatableItem
-
-  """Look up a navigation menu by ID or name."""
-  menu(
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-
-    """ID of the menu."""
-    id: ID
-
-    """The menu's name."""
-    name: String
-
-    """The menu's slug."""
-    slug: String
-  ): Menu
-
-  """List of the storefront's menus."""
-  menus(
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-
-    """Sort menus."""
-    sortBy: MenuSortingInput
-
-    """
-    Filtering options for menus. 
-    
-    `slug`: This field will be removed in Saleor 4.0. Use `slugs` instead.
-    """
-    filter: MenuFilterInput
-
-    """Return the elements in the list that come before the specified cursor."""
-    before: String
-
-    """Return the elements in the list that come after the specified cursor."""
-    after: String
-
-    """
-    Retrieve the first n elements from the list. Note that the system only allows fetching a maximum of 100 objects in a single query.
-    """
-    first: Int
-
-    """
-    Retrieve the last n elements from the list. Note that the system only allows fetching a maximum of 100 objects in a single query.
-    """
-    last: Int
-  ): MenuCountableConnection @doc(category: "Menu")
-
-  """Look up a menu item by ID."""
-  menuItem(
-    """ID of the menu item."""
-    id: ID!
-
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-  ): MenuItem
-
-  """List of the storefronts's menu items."""
-  menuItems(
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-
-    """Sort menus items."""
-    sortBy: MenuItemSortingInput
-
-    """Filtering options for menu items."""
-    filter: MenuItemFilterInput
-
-    """Return the elements in the list that come before the specified cursor."""
-    before: String
-
-    """Return the elements in the list that come after the specified cursor."""
-    after: String
-
-    """
-    Retrieve the first n elements from the list. Note that the system only allows fetching a maximum of 100 objects in a single query.
-    """
-    first: Int
-
-    """
-    Retrieve the last n elements from the list. Note that the system only allows fetching a maximum of 100 objects in a single query.
-    """
-    last: Int
-  ): MenuItemCountableConnection @doc(category: "Menu")
 
   """
   List of all apps installations
@@ -253,35 +161,6 @@ type Query {
   ): AppExtension @doc(category: "Apps")
 
   """
-  List of the shop's customers. This list includes all users who registered through the accountRegister mutation. Additionally, staff users who have placed an order using their account will also appear in this list.
-  
-  Requires one of the following permissions: MANAGE_ORDERS, MANAGE_USERS.
-  """
-  customers(
-    """Filtering options for customers."""
-    filter: CustomerFilterInput
-
-    """Sort customers."""
-    sortBy: UserSortingInput
-
-    """Return the elements in the list that come before the specified cursor."""
-    before: String
-
-    """Return the elements in the list that come after the specified cursor."""
-    after: String
-
-    """
-    Retrieve the first n elements from the list. Note that the system only allows fetching a maximum of 100 objects in a single query.
-    """
-    first: Int
-
-    """
-    Retrieve the last n elements from the list. Note that the system only allows fetching a maximum of 100 objects in a single query.
-    """
-    last: Int
-  ): UserCountableConnection @doc(category: "Users")
-
-  """
   List of permission groups.
   
   Requires one of the following permissions: MANAGE_STAFF.
@@ -355,7 +234,7 @@ type Query {
   """
   Look up a user by ID or email address.
   
-  Requires one of the following permissions: MANAGE_STAFF, MANAGE_USERS, MANAGE_ORDERS.
+  Requires one of the following permissions: MANAGE_STAFF, MANAGE_USERS.
   """
   user(
     """ID of the user."""
@@ -485,23 +364,11 @@ enum WebhookEventTypeEnum @doc(category: "Webhooks") {
 
   """A channel metadata is updated."""
   CHANNEL_METADATA_UPDATED
-
-  """A new menu created."""
   MENU_CREATED
-
-  """A menu is updated."""
   MENU_UPDATED
-
-  """A menu is deleted."""
   MENU_DELETED
-
-  """A new menu item created."""
   MENU_ITEM_CREATED
-
-  """A menu item is updated."""
   MENU_ITEM_UPDATED
-
-  """A menu item is deleted."""
   MENU_ITEM_DELETED
 
   """A new customer account is created."""
@@ -617,23 +484,11 @@ enum WebhookEventTypeAsyncEnum @doc(category: "Webhooks") {
 
   """A channel metadata is updated."""
   CHANNEL_METADATA_UPDATED
-
-  """A new menu created."""
   MENU_CREATED
-
-  """A menu is updated."""
   MENU_UPDATED
-
-  """A menu is deleted."""
   MENU_DELETED
-
-  """A new menu item created."""
   MENU_ITEM_CREATED
-
-  """A menu item is updated."""
   MENU_ITEM_UPDATED
-
-  """A menu item is deleted."""
   MENU_ITEM_DELETED
 
   """A new customer account is created."""
@@ -882,25 +737,11 @@ enum PermissionEnum @doc(category: "Users") {
   IMPERSONATE_USER
   MANAGE_APPS
   MANAGE_OBSERVABILITY
-  MANAGE_CHECKOUTS
-  HANDLE_CHECKOUTS
-  HANDLE_TAXES
-  MANAGE_TAXES
   MANAGE_CHANNELS
-  MANAGE_DISCOUNTS
-  MANAGE_GIFT_CARD
   MANAGE_MENUS
-  MANAGE_ORDERS
-  MANAGE_ORDERS_IMPORT
   MANAGE_PAGES
   MANAGE_PAGE_TYPES_AND_ATTRIBUTES
-  HANDLE_PAYMENTS
   MANAGE_PLUGINS
-  MANAGE_PRODUCTS
-  MANAGE_PRODUCT_TYPES_AND_ATTRIBUTES
-  MANAGE_SHIPPING
-  MANAGE_SETTINGS
-  MANAGE_TRANSLATIONS
 }
 
 """
@@ -967,18 +808,9 @@ enum AppExtensionMountEnum @doc(category: "Apps") {
   CUSTOMER_OVERVIEW_CREATE
   CUSTOMER_OVERVIEW_MORE_ACTIONS
   CUSTOMER_DETAILS_MORE_ACTIONS
-  PRODUCT_OVERVIEW_CREATE
-  PRODUCT_OVERVIEW_MORE_ACTIONS
-  PRODUCT_DETAILS_MORE_ACTIONS
-  NAVIGATION_CATALOG
-  NAVIGATION_ORDERS
   NAVIGATION_CUSTOMERS
-  NAVIGATION_DISCOUNTS
   NAVIGATION_TRANSLATIONS
   NAVIGATION_PAGES
-  ORDER_DETAILS_MORE_ACTIONS
-  ORDER_OVERVIEW_CREATE
-  ORDER_OVERVIEW_MORE_ACTIONS
 }
 
 """
@@ -1066,7 +898,7 @@ type TranslatableItemEdge {
   cursor: String!
 }
 
-union TranslatableItem = PageTranslatableContent | MenuItemTranslatableContent
+union TranslatableItem = PageTranslatableContent
 
 """
 Represents page's original translatable fields and related translations.
@@ -1941,274 +1773,9 @@ enum LanguageCodeEnum {
   ZU_ZA
 }
 
-"""
-Represents menu item's original translatable fields and related translations.
-"""
-type MenuItemTranslatableContent implements Node {
-  """The ID of the menu item translatable content."""
-  id: ID!
-
-  """
-  The ID of the menu item to translate.
-  
-  Added in Saleor 3.14.
-  """
-  menuItemId: ID!
-
-  """Name of the menu item to translate."""
-  name: String!
-
-  """Returns translated menu item fields for the given language code."""
-  translation(
-    """A language code to return the translation for menu item."""
-    languageCode: LanguageCodeEnum!
-  ): MenuItemTranslation
-
-  """
-  Represents a single item of the related menu. Can store categories, collection or pages.
-  """
-  menuItem: MenuItem @deprecated(reason: "This field will be removed in Saleor 4.0. Get model fields from the root level queries.")
-}
-
-"""Represents menu item translations."""
-type MenuItemTranslation implements Node {
-  """The ID of the menu item translation."""
-  id: ID!
-
-  """Translation language."""
-  language: LanguageDisplay!
-
-  """Translated menu item name."""
-  name: String!
-
-  """
-  Represents the menu item fields to translate.
-  
-  Added in Saleor 3.14.
-  """
-  translatableContent: MenuItemTranslatableContent
-}
-
-"""
-Represents a single item of the related menu. Can store categories, collection or pages.
-"""
-type MenuItem implements Node & ObjectWithMetadata {
-  """The ID of the menu item."""
-  id: ID!
-
-  """List of private metadata items. Requires staff permissions to access."""
-  privateMetadata: [MetadataItem!]!
-
-  """
-  A single key from private metadata. Requires staff permissions to access.
-  
-  Tip: Use GraphQL aliases to fetch multiple keys.
-  
-  Added in Saleor 3.3.
-  """
-  privateMetafield(key: String!): String
-
-  """
-  Private metadata. Requires staff permissions to access. Use `keys` to control which fields you want to include. The default is to include everything.
-  
-  Added in Saleor 3.3.
-  """
-  privateMetafields(keys: [String!]): Metadata
-
-  """List of public metadata items. Can be accessed without permissions."""
-  metadata: [MetadataItem!]!
-
-  """
-  A single key from public metadata.
-  
-  Tip: Use GraphQL aliases to fetch multiple keys.
-  
-  Added in Saleor 3.3.
-  """
-  metafield(key: String!): String
-
-  """
-  Public metadata. Use `keys` to control which fields you want to include. The default is to include everything.
-  
-  Added in Saleor 3.3.
-  """
-  metafields(keys: [String!]): Metadata
-
-  """The name of the menu item."""
-  name: String!
-
-  """Represents the menu to which the menu item belongs."""
-  menu: Menu!
-
-  """ID of parent menu item. If empty, menu will be top level menu."""
-  parent: MenuItem
-
-  """Indicates the position of the menu item within the menu structure."""
-  level: Int!
-
-  """Represents the child items of the current menu item."""
-  children: [MenuItem!]
-
-  """URL to the menu item."""
-  url: String
-
-  """Returns translated menu item fields for the given language code."""
-  translation(
-    """A language code to return the translation for menu item."""
-    languageCode: LanguageCodeEnum!
-  ): MenuItemTranslation
-}
-
-"""
-Represents a single menu - an object that is used to help navigate through the store.
-"""
-type Menu implements Node & ObjectWithMetadata {
-  """The ID of the menu."""
-  id: ID!
-
-  """List of private metadata items. Requires staff permissions to access."""
-  privateMetadata: [MetadataItem!]!
-
-  """
-  A single key from private metadata. Requires staff permissions to access.
-  
-  Tip: Use GraphQL aliases to fetch multiple keys.
-  
-  Added in Saleor 3.3.
-  """
-  privateMetafield(key: String!): String
-
-  """
-  Private metadata. Requires staff permissions to access. Use `keys` to control which fields you want to include. The default is to include everything.
-  
-  Added in Saleor 3.3.
-  """
-  privateMetafields(keys: [String!]): Metadata
-
-  """List of public metadata items. Can be accessed without permissions."""
-  metadata: [MetadataItem!]!
-
-  """
-  A single key from public metadata.
-  
-  Tip: Use GraphQL aliases to fetch multiple keys.
-  
-  Added in Saleor 3.3.
-  """
-  metafield(key: String!): String
-
-  """
-  Public metadata. Use `keys` to control which fields you want to include. The default is to include everything.
-  
-  Added in Saleor 3.3.
-  """
-  metafields(keys: [String!]): Metadata
-
-  """The name of the menu."""
-  name: String!
-
-  """Slug of the menu."""
-  slug: String!
-
-  """Menu items associated with this menu."""
-  items: [MenuItem!]
-}
-
 enum TranslatableKinds {
-  MENU_ITEM
   PAGE
   SALE
-}
-
-type MenuCountableConnection @doc(category: "Menu") {
-  """Pagination data for this connection."""
-  pageInfo: PageInfo!
-  edges: [MenuCountableEdge!]!
-
-  """A total count of items in the collection."""
-  totalCount: Int
-}
-
-type MenuCountableEdge @doc(category: "Menu") {
-  """The item at the end of the edge."""
-  node: Menu!
-
-  """A cursor for use in pagination."""
-  cursor: String!
-}
-
-input MenuSortingInput {
-  """Specifies the direction in which to sort menus."""
-  direction: OrderDirection!
-
-  """Sort menus by the selected field."""
-  field: MenuSortField!
-}
-
-enum OrderDirection {
-  """Specifies an ascending sort order."""
-  ASC
-
-  """Specifies a descending sort order."""
-  DESC
-}
-
-enum MenuSortField {
-  """Sort menus by name."""
-  NAME
-
-  """Sort menus by items count."""
-  ITEMS_COUNT
-}
-
-input MenuFilterInput {
-  search: String
-  slug: [String!]
-  metadata: [MetadataFilter!]
-  slugs: [String!]
-}
-
-input MetadataFilter {
-  """Key of a metadata item."""
-  key: String!
-
-  """Value of a metadata item."""
-  value: String
-}
-
-type MenuItemCountableConnection @doc(category: "Menu") {
-  """Pagination data for this connection."""
-  pageInfo: PageInfo!
-  edges: [MenuItemCountableEdge!]!
-
-  """A total count of items in the collection."""
-  totalCount: Int
-}
-
-type MenuItemCountableEdge @doc(category: "Menu") {
-  """The item at the end of the edge."""
-  node: MenuItem!
-
-  """A cursor for use in pagination."""
-  cursor: String!
-}
-
-input MenuItemSortingInput {
-  """Specifies the direction in which to sort menu items."""
-  direction: OrderDirection!
-
-  """Sort menu items by the selected field."""
-  field: MenuItemsSortField!
-}
-
-enum MenuItemsSortField {
-  """Sort menu items by name."""
-  NAME
-}
-
-input MenuItemFilterInput {
-  search: String
-  metadata: [MetadataFilter!]
 }
 
 """Represents ongoing installation of app."""
@@ -2287,6 +1854,14 @@ input AppSortingInput @doc(category: "Apps") {
   field: AppSortField!
 }
 
+enum OrderDirection {
+  """Specifies an ascending sort order."""
+  ASC
+
+  """Specifies a descending sort order."""
+  DESC
+}
+
 enum AppSortField @doc(category: "Apps") {
   """Sort apps by name."""
   NAME
@@ -2317,21 +1892,63 @@ input AppExtensionFilterInput @doc(category: "Apps") {
   target: AppExtensionTargetEnum
 }
 
-type UserCountableConnection @doc(category: "Users") {
+type GroupCountableConnection @doc(category: "Users") {
   """Pagination data for this connection."""
   pageInfo: PageInfo!
-  edges: [UserCountableEdge!]!
+  edges: [GroupCountableEdge!]!
 
   """A total count of items in the collection."""
   totalCount: Int
 }
 
-type UserCountableEdge @doc(category: "Users") {
+type GroupCountableEdge @doc(category: "Users") {
   """The item at the end of the edge."""
-  node: User!
+  node: Group!
 
   """A cursor for use in pagination."""
   cursor: String!
+}
+
+"""Represents permission group data."""
+type Group implements Node {
+  """The ID of the group."""
+  id: ID!
+
+  """The name of the group."""
+  name: String!
+
+  """
+  List of group users
+  
+  Requires one of the following permissions: MANAGE_STAFF.
+  """
+  users: [User!]
+
+  """List of group permissions"""
+  permissions: [Permission!]
+
+  """
+  True, if the currently authenticated user has rights to manage a group.
+  """
+  userCanManage: Boolean!
+
+  """
+  List of channels the group has access to.
+  
+  Added in Saleor 3.14.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  accessibleChannels: [Channel!]
+
+  """
+  Determine if the group have restricted access to channels.
+  
+  Added in Saleor 3.14.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  restrictedAccessToChannels: Boolean!
 }
 
 """Represents user data."""
@@ -2489,48 +2106,6 @@ type UserPermission @doc(category: "Users") {
   ): [Group!]
 }
 
-"""Represents permission group data."""
-type Group implements Node {
-  """The ID of the group."""
-  id: ID!
-
-  """The name of the group."""
-  name: String!
-
-  """
-  List of group users
-  
-  Requires one of the following permissions: MANAGE_STAFF.
-  """
-  users: [User!]
-
-  """List of group permissions"""
-  permissions: [Permission!]
-
-  """
-  True, if the currently authenticated user has rights to manage a group.
-  """
-  userCanManage: Boolean!
-
-  """
-  List of channels the group has access to.
-  
-  Added in Saleor 3.14.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  accessibleChannels: [Channel!]
-
-  """
-  Determine if the group have restricted access to channels.
-  
-  Added in Saleor 3.14.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  restrictedAccessToChannels: Boolean!
-}
-
 """Represents channel."""
 type Channel implements Node & ObjectWithMetadata {
   """The ID of the channel."""
@@ -2590,261 +2165,6 @@ type Channel implements Node & ObjectWithMetadata {
   Requires one of the following permissions: AUTHENTICATED_APP, AUTHENTICATED_STAFF_USER.
   """
   isActive: Boolean!
-
-  """
-  A currency that is assigned to the channel.
-  
-  Requires one of the following permissions: AUTHENTICATED_APP, AUTHENTICATED_STAFF_USER.
-  """
-  currencyCode: String!
-
-  """
-  Whether a channel has associated orders.
-  
-  Requires one of the following permissions: MANAGE_CHANNELS.
-  """
-  hasOrders: Boolean!
-
-  """
-  Default country for the channel. Default country can be used in checkout to determine the stock quantities or calculate taxes when the country was not explicitly provided.
-  
-  Added in Saleor 3.1.
-  
-  Requires one of the following permissions: AUTHENTICATED_APP, AUTHENTICATED_STAFF_USER.
-  """
-  defaultCountry: CountryDisplay!
-
-  """
-  List of shippable countries for the channel.
-  
-  Added in Saleor 3.6.
-  """
-  countries: [CountryDisplay!]
-
-  """
-  Define the stock setting for this channel.
-  
-  Added in Saleor 3.7.
-  
-  Requires one of the following permissions: AUTHENTICATED_APP, AUTHENTICATED_STAFF_USER.
-  """
-  stockSettings: StockSettings!
-
-  """
-  Channel-specific order settings.
-  
-  Added in Saleor 3.12.
-  
-  Requires one of the following permissions: MANAGE_CHANNELS, MANAGE_ORDERS.
-  """
-  orderSettings: OrderSettings!
-
-  """
-  Channel-specific checkout settings.
-  
-  Added in Saleor 3.15.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  
-  Requires one of the following permissions: MANAGE_CHANNELS, MANAGE_CHECKOUTS.
-  """
-  checkoutSettings: CheckoutSettings!
-
-  """
-  Channel-specific payment settings.
-  
-  Added in Saleor 3.16.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  
-  Requires one of the following permissions: MANAGE_CHANNELS, HANDLE_PAYMENTS.
-  """
-  paymentSettings: PaymentSettings!
-}
-
-type CountryDisplay {
-  """Country code."""
-  code: String!
-
-  """Country name."""
-  country: String!
-
-  """Country tax."""
-  vat: VAT @deprecated(reason: "This field will be removed in Saleor 4.0. Always returns `null`. Use `TaxClassCountryRate` type to manage tax rates per country.")
-}
-
-"""Represents a VAT rate for a country."""
-type VAT @doc(category: "Taxes") {
-  """Country code."""
-  countryCode: String!
-
-  """Standard VAT rate in percent."""
-  standardRate: Float
-
-  """Country's VAT rate exceptions for specific types of goods."""
-  reducedRates: [ReducedRate!]!
-}
-
-"""Represents a reduced VAT rate for a particular type of goods."""
-type ReducedRate @doc(category: "Taxes") {
-  """Reduced VAT rate in percent."""
-  rate: Float!
-
-  """A type of goods."""
-  rateType: String!
-}
-
-"""
-Represents the channel stock settings.
-
-Added in Saleor 3.7.
-"""
-type StockSettings @doc(category: "Products") {
-  """
-  Allocation strategy defines the preference of warehouses for allocations and reservations.
-  """
-  allocationStrategy: AllocationStrategyEnum!
-}
-
-"""
-Determine the allocation strategy for the channel.
-
-    PRIORITIZE_SORTING_ORDER - allocate stocks according to the warehouses' order
-    within the channel
-
-    PRIORITIZE_HIGH_STOCK - allocate stock in a warehouse with the most stock
-"""
-enum AllocationStrategyEnum @doc(category: "Products") {
-  PRIORITIZE_SORTING_ORDER
-  PRIORITIZE_HIGH_STOCK
-}
-
-"""Represents the channel-specific order settings."""
-type OrderSettings {
-  """
-  When disabled, all new orders from checkout will be marked as unconfirmed. When enabled orders from checkout will become unfulfilled immediately.
-  """
-  automaticallyConfirmAllNewOrders: Boolean!
-
-  """
-  When enabled, all non-shippable gift card orders will be fulfilled automatically.
-  """
-  automaticallyFulfillNonShippableGiftCard: Boolean!
-
-  """
-  Expiration time in minutes. Default null - means do not expire any orders.
-  
-  Added in Saleor 3.13.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  expireOrdersAfter: Minute
-
-  """
-  Determine what strategy will be used to mark the order as paid. Based on the chosen option, the proper object will be created and attached to the order when it's manually marked as paid.
-  `PAYMENT_FLOW` - [default option] creates the `Payment` object.
-  `TRANSACTION_FLOW` - creates the `TransactionItem` object.
-  
-  Added in Saleor 3.13.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  markAsPaidStrategy: MarkAsPaidStrategyEnum!
-
-  """
-  The time in days after expired orders will be deleted.
-  
-  Added in Saleor 3.14.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  deleteExpiredOrdersAfter: Day!
-
-  """
-  Determine if it is possible to place unpaid order by calling `checkoutComplete` mutation.
-  
-  Added in Saleor 3.15.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  allowUnpaidOrders: Boolean!
-
-  """
-  Determine if voucher applied on draft order should be count toward voucher usage.
-  
-  Added in Saleor 3.18.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  includeDraftOrderInVoucherUsage: Boolean!
-}
-
-"""
-The `Minute` scalar type represents number of minutes by integer value.
-"""
-scalar Minute
-
-"""
-Determine the mark as paid strategy for the channel.
-
-    TRANSACTION_FLOW - new orders marked as paid will receive a
-    `TransactionItem` object, that will cover the `order.total`.
-
-    PAYMENT_FLOW - new orders marked as paid will receive a
-    `Payment` object, that will cover the `order.total`.
-"""
-enum MarkAsPaidStrategyEnum @doc(category: "Channels") {
-  TRANSACTION_FLOW
-  PAYMENT_FLOW
-}
-
-"""The `Day` scalar type represents number of days by integer value."""
-scalar Day
-
-"""
-Represents the channel-specific checkout settings.
-
-Added in Saleor 3.15.
-
-Note: this API is currently in Feature Preview and can be subject to changes at later point.
-"""
-type CheckoutSettings {
-  """
-  Default `true`. Determines if the checkout mutations should use legacy error flow. In legacy flow, all mutations can raise an exception unrelated to the requested action - (e.g. out-of-stock exception when updating checkoutShippingAddress.) If `false`, the errors will be aggregated in `checkout.problems` field. Some of the `problems` can block the finalizing checkout process. The legacy flow will be removed in Saleor 4.0. The flow with `checkout.problems` will be the default one.
-  
-  Added in Saleor 3.15.This field will be removed in Saleor 4.0.
-  """
-  useLegacyErrorFlow: Boolean!
-
-  """
-  Default `false`. Determines if the paid checkouts should be automatically completed. This setting applies only to checkouts where payment was processed through transactions.When enabled, the checkout will be automatically completed once the checkout `charge_status` reaches `FULL`. This occurs when the total sum of charged and authorized transaction amounts equals or exceeds the checkout's total amount.
-  
-  Added in Saleor 3.20.
-  """
-  automaticallyCompleteFullyPaidCheckouts: Boolean!
-}
-
-"""Represents the channel-specific payment settings."""
-type PaymentSettings {
-  """
-  Determine the transaction flow strategy to be used. Include the selected option in the payload sent to the payment app, as a requested action for the transaction.
-  
-  Added in Saleor 3.16.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  defaultTransactionFlowStrategy: TransactionFlowStrategyEnum!
-}
-
-"""
-Determine the transaction flow strategy.
-
-    AUTHORIZATION - the processed transaction should be only authorized
-    CHARGE - the processed transaction should be charged.
-"""
-enum TransactionFlowStrategyEnum @doc(category: "Payments") {
-  AUTHORIZATION
-  CHARGE
 }
 
 """History log of the customer."""
@@ -2880,8 +2200,6 @@ enum CustomerEventsEnum @doc(category: "Users") {
   EMAIL_CHANGED_REQUEST
   PASSWORD_CHANGED
   EMAIL_CHANGED
-  PLACED_ORDER
-  NOTE_ADDED_TO_ORDER
   DIGITAL_LINK_DOWNLOADED
   CUSTOMER_DELETED
   NAME_ASSIGNED
@@ -2889,51 +2207,55 @@ enum CustomerEventsEnum @doc(category: "Users") {
   NOTE_ADDED
 }
 
-input CustomerFilterInput @doc(category: "Users") {
-  dateJoined: DateRangeInput
-  numberOfOrders: IntRangeInput
-  placedOrders: DateRangeInput
+input PermissionGroupFilterInput @doc(category: "Users") {
   search: String
-  metadata: [MetadataFilter!]
-
-  """
-  Filter by ids. 
-  
-  Added in Saleor 3.8.
-  """
   ids: [ID!]
-  updatedAt: DateTimeRangeInput
 }
 
-input DateRangeInput {
-  """Start date."""
-  gte: Date
+input PermissionGroupSortingInput @doc(category: "Users") {
+  """Specifies the direction in which to sort permission group."""
+  direction: OrderDirection!
 
-  """End date."""
-  lte: Date
+  """Sort permission group by the selected field."""
+  field: PermissionGroupSortField!
 }
 
-"""
-The `Date` scalar type represents a Date
-value as specified by
-[iso8601](https://en.wikipedia.org/wiki/ISO_8601).
-"""
-scalar Date
-
-input IntRangeInput {
-  """Value greater than or equal to."""
-  gte: Int
-
-  """Value less than or equal to."""
-  lte: Int
+"""Sorting options for permission groups."""
+enum PermissionGroupSortField @doc(category: "Users") {
+  """Sort permission group accounts by name."""
+  NAME
 }
 
-input DateTimeRangeInput {
-  """Start date."""
-  gte: DateTime
+type UserCountableConnection @doc(category: "Users") {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+  edges: [UserCountableEdge!]!
 
-  """End date."""
-  lte: DateTime
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type UserCountableEdge @doc(category: "Users") {
+  """The item at the end of the edge."""
+  node: User!
+
+  """A cursor for use in pagination."""
+  cursor: String!
+}
+
+input StaffUserInput @doc(category: "Users") {
+  status: StaffMemberStatus
+  search: String
+  ids: [ID!]
+}
+
+"""Represents status of a staff account."""
+enum StaffMemberStatus @doc(category: "Users") {
+  """User account has been activated."""
+  ACTIVE
+
+  """User account has not been activated yet."""
+  DEACTIVATED
 }
 
 input UserSortingInput @doc(category: "Users") {
@@ -2964,191 +2286,7 @@ enum UserSortField @doc(category: "Users") {
   LAST_MODIFIED_AT
 }
 
-type GroupCountableConnection @doc(category: "Users") {
-  """Pagination data for this connection."""
-  pageInfo: PageInfo!
-  edges: [GroupCountableEdge!]!
-
-  """A total count of items in the collection."""
-  totalCount: Int
-}
-
-type GroupCountableEdge @doc(category: "Users") {
-  """The item at the end of the edge."""
-  node: Group!
-
-  """A cursor for use in pagination."""
-  cursor: String!
-}
-
-input PermissionGroupFilterInput @doc(category: "Users") {
-  search: String
-  ids: [ID!]
-}
-
-input PermissionGroupSortingInput @doc(category: "Users") {
-  """Specifies the direction in which to sort permission group."""
-  direction: OrderDirection!
-
-  """Sort permission group by the selected field."""
-  field: PermissionGroupSortField!
-}
-
-"""Sorting options for permission groups."""
-enum PermissionGroupSortField @doc(category: "Users") {
-  """Sort permission group accounts by name."""
-  NAME
-}
-
-input StaffUserInput @doc(category: "Users") {
-  status: StaffMemberStatus
-  search: String
-  ids: [ID!]
-}
-
-"""Represents status of a staff account."""
-enum StaffMemberStatus @doc(category: "Users") {
-  """User account has been activated."""
-  ACTIVE
-
-  """User account has not been activated yet."""
-  DEACTIVATED
-}
-
 type Mutation {
-  """
-  Assigns storefront's navigation menus. 
-  
-  Requires one of the following permissions: MANAGE_MENUS, MANAGE_SETTINGS.
-  """
-  assignNavigation(
-    """ID of the menu."""
-    menu: ID
-
-    """Type of the navigation bar to assign the menu to."""
-    navigationType: NavigationType!
-  ): AssignNavigation @doc(category: "Menu")
-
-  """
-  Creates a new Menu. 
-  
-  Requires one of the following permissions: MANAGE_MENUS.
-  
-  Triggers the following webhook events:
-  - MENU_CREATED (async): A menu was created.
-  """
-  menuCreate(
-    """Fields required to create a menu."""
-    input: MenuCreateInput!
-  ): MenuCreate @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_CREATED], syncEvents: [])
-
-  """
-  Deletes a menu. 
-  
-  Requires one of the following permissions: MANAGE_MENUS.
-  
-  Triggers the following webhook events:
-  - MENU_DELETED (async): A menu was deleted.
-  """
-  menuDelete(
-    """ID of a menu to delete."""
-    id: ID!
-  ): MenuDelete @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_DELETED], syncEvents: [])
-
-  """
-  Updates a menu. 
-  
-  Requires one of the following permissions: MANAGE_MENUS.
-  
-  Triggers the following webhook events:
-  - MENU_UPDATED (async): A menu was updated.
-  """
-  menuUpdate(
-    """ID of a menu to update."""
-    id: ID!
-
-    """Fields required to update a menu."""
-    input: MenuInput!
-  ): MenuUpdate @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_UPDATED], syncEvents: [])
-
-  """
-  Creates a new menu item. 
-  
-  Requires one of the following permissions: MANAGE_MENUS.
-  
-  Triggers the following webhook events:
-  - MENU_ITEM_CREATED (async): A menu item was created.
-  """
-  menuItemCreate(
-    """
-    Fields required to update a menu item. Only one of `url`, `category`, `page`, `collection` is allowed per item.
-    """
-    input: MenuItemCreateInput!
-  ): MenuItemCreate @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_ITEM_CREATED], syncEvents: [])
-
-  """
-  Deletes a menu item. 
-  
-  Requires one of the following permissions: MANAGE_MENUS.
-  
-  Triggers the following webhook events:
-  - MENU_ITEM_DELETED (async): A menu item was deleted.
-  """
-  menuItemDelete(
-    """ID of a menu item to delete."""
-    id: ID!
-  ): MenuItemDelete @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_ITEM_DELETED], syncEvents: [])
-
-  """
-  Updates a menu item. 
-  
-  Requires one of the following permissions: MANAGE_MENUS.
-  
-  Triggers the following webhook events:
-  - MENU_ITEM_UPDATED (async): A menu item was updated.
-  """
-  menuItemUpdate(
-    """ID of a menu item to update."""
-    id: ID!
-
-    """
-    Fields required to update a menu item. Only one of `url`, `category`, `page`, `collection` is allowed per item.
-    """
-    input: MenuItemInput!
-  ): MenuItemUpdate @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_ITEM_UPDATED], syncEvents: [])
-
-  """
-  Creates/updates translations for a menu item. 
-  
-  Requires one of the following permissions: MANAGE_TRANSLATIONS.
-  """
-  menuItemTranslate(
-    """MenuItem ID or MenuItemTranslatableContent ID."""
-    id: ID!
-
-    """Fields required to update menu item translations."""
-    input: NameTranslationInput!
-
-    """Translation language code."""
-    languageCode: LanguageCodeEnum!
-  ): MenuItemTranslate @doc(category: "Menu")
-
-  """
-  Moves items of menus. 
-  
-  Requires one of the following permissions: MANAGE_MENUS.
-  
-  Triggers the following webhook events:
-  - MENU_ITEM_UPDATED (async): Optionally triggered when sort order or parent changed for menu item.
-  """
-  menuItemMove(
-    """ID of the menu."""
-    menu: ID!
-
-    """The menu position data."""
-    moves: [MenuItemMoveInput!]!
-  ): MenuItemMove @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_ITEM_UPDATED], syncEvents: [])
-
   """
   Upload a file. This mutation must be sent as a `multipart` request. More detailed specs of the upload format can be found here: https://github.com/jaydenseric/graphql-multipart-request-spec 
   
@@ -3619,257 +2757,6 @@ type Mutation {
 }
 
 """
-Assigns storefront's navigation menus. 
-
-Requires one of the following permissions: MANAGE_MENUS, MANAGE_SETTINGS.
-"""
-type AssignNavigation @doc(category: "Menu") {
-  """Assigned navigation menu."""
-  menu: Menu
-  menuErrors: [MenuError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
-  errors: [MenuError!]!
-}
-
-type MenuError @doc(category: "Menu") {
-  """
-  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-  """
-  field: String
-
-  """The error message."""
-  message: String
-
-  """The error code."""
-  code: MenuErrorCode!
-}
-
-enum MenuErrorCode {
-  CANNOT_ASSIGN_NODE
-  GRAPHQL_ERROR
-  INVALID
-  INVALID_MENU_ITEM
-  NO_MENU_ITEM_PROVIDED
-  NOT_FOUND
-  REQUIRED
-  TOO_MANY_MENU_ITEMS
-  UNIQUE
-}
-
-enum NavigationType {
-  """Main storefront navigation."""
-  MAIN
-
-  """Secondary storefront navigation."""
-  SECONDARY
-}
-
-"""
-Creates a new Menu. 
-
-Requires one of the following permissions: MANAGE_MENUS.
-
-Triggers the following webhook events:
-- MENU_CREATED (async): A menu was created.
-"""
-type MenuCreate @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_CREATED], syncEvents: []) {
-  menuErrors: [MenuError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
-  errors: [MenuError!]!
-  menu: Menu
-}
-
-input MenuCreateInput {
-  """Name of the menu."""
-  name: String!
-
-  """Slug of the menu. Will be generated if not provided."""
-  slug: String
-
-  """List of menu items."""
-  items: [MenuItemInput!]
-}
-
-input MenuItemInput {
-  """Name of the menu item."""
-  name: String
-
-  """URL of the pointed item."""
-  url: String
-
-  """Category to which item points."""
-  category: ID
-
-  """Collection to which item points."""
-  collection: ID
-
-  """Page to which item points."""
-  page: ID
-}
-
-"""
-Deletes a menu. 
-
-Requires one of the following permissions: MANAGE_MENUS.
-
-Triggers the following webhook events:
-- MENU_DELETED (async): A menu was deleted.
-"""
-type MenuDelete @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_DELETED], syncEvents: []) {
-  menuErrors: [MenuError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
-  errors: [MenuError!]!
-  menu: Menu
-}
-
-"""
-Updates a menu. 
-
-Requires one of the following permissions: MANAGE_MENUS.
-
-Triggers the following webhook events:
-- MENU_UPDATED (async): A menu was updated.
-"""
-type MenuUpdate @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_UPDATED], syncEvents: []) {
-  menuErrors: [MenuError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
-  errors: [MenuError!]!
-  menu: Menu
-}
-
-input MenuInput {
-  """Name of the menu."""
-  name: String
-
-  """Slug of the menu."""
-  slug: String
-}
-
-"""
-Creates a new menu item. 
-
-Requires one of the following permissions: MANAGE_MENUS.
-
-Triggers the following webhook events:
-- MENU_ITEM_CREATED (async): A menu item was created.
-"""
-type MenuItemCreate @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_ITEM_CREATED], syncEvents: []) {
-  menuErrors: [MenuError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
-  errors: [MenuError!]!
-  menuItem: MenuItem
-}
-
-input MenuItemCreateInput {
-  """Name of the menu item."""
-  name: String!
-
-  """URL of the pointed item."""
-  url: String
-
-  """Category to which item points."""
-  category: ID
-
-  """Collection to which item points."""
-  collection: ID
-
-  """Page to which item points."""
-  page: ID
-
-  """Menu to which item belongs."""
-  menu: ID!
-
-  """ID of the parent menu. If empty, menu will be top level menu."""
-  parent: ID
-}
-
-"""
-Deletes a menu item. 
-
-Requires one of the following permissions: MANAGE_MENUS.
-
-Triggers the following webhook events:
-- MENU_ITEM_DELETED (async): A menu item was deleted.
-"""
-type MenuItemDelete @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_ITEM_DELETED], syncEvents: []) {
-  menuErrors: [MenuError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
-  errors: [MenuError!]!
-  menuItem: MenuItem
-}
-
-"""
-Updates a menu item. 
-
-Requires one of the following permissions: MANAGE_MENUS.
-
-Triggers the following webhook events:
-- MENU_ITEM_UPDATED (async): A menu item was updated.
-"""
-type MenuItemUpdate @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_ITEM_UPDATED], syncEvents: []) {
-  menuErrors: [MenuError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
-  errors: [MenuError!]!
-  menuItem: MenuItem
-}
-
-"""
-Creates/updates translations for a menu item. 
-
-Requires one of the following permissions: MANAGE_TRANSLATIONS.
-"""
-type MenuItemTranslate @doc(category: "Menu") {
-  translationErrors: [TranslationError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
-  errors: [TranslationError!]!
-  menuItem: MenuItem
-}
-
-type TranslationError {
-  """
-  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
-  """
-  field: String
-
-  """The error message."""
-  message: String
-
-  """The error code."""
-  code: TranslationErrorCode!
-}
-
-enum TranslationErrorCode {
-  GRAPHQL_ERROR
-  INVALID
-  NOT_FOUND
-  REQUIRED
-}
-
-input NameTranslationInput {
-  name: String
-}
-
-"""
-Moves items of menus. 
-
-Requires one of the following permissions: MANAGE_MENUS.
-
-Triggers the following webhook events:
-- MENU_ITEM_UPDATED (async): Optionally triggered when sort order or parent changed for menu item.
-"""
-type MenuItemMove @doc(category: "Menu") @webhookEventsInfo(asyncEvents: [MENU_ITEM_UPDATED], syncEvents: []) {
-  """Assigned menu to move within."""
-  menu: Menu
-  menuErrors: [MenuError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
-  errors: [MenuError!]!
-}
-
-input MenuItemMoveInput {
-  """The menu item ID to move."""
-  itemId: ID!
-
-  """ID of the parent menu. If empty, menu will be top level menu."""
-  parentId: ID
-
-  """
-  The new relative sorting position of the item (from -inf to +inf). 1 moves the item one position forward, -1 moves the item one position backward, 0 leaves the item unchanged.
-  """
-  sortOrder: Int
-}
-
-"""
 Upload a file. This mutation must be sent as a `multipart` request. More detailed specs of the upload format can be found here: https://github.com/jaydenseric/graphql-multipart-request-spec 
 
 Requires one of the following permissions: AUTHENTICATED_APP, AUTHENTICATED_STAFF_USER.
@@ -3992,8 +2879,6 @@ enum AddressTypeEnum {
   EMAIL_CHANGED_REQUEST
   PASSWORD_CHANGED
   EMAIL_CHANGED
-  PLACED_ORDER
-  NOTE_ADDED_TO_ORDER
   DIGITAL_LINK_DOWNLOADED
   CUSTOMER_DELETED
   NAME_ASSIGNED
@@ -5258,156 +4143,6 @@ type ChannelMetadataUpdated implements Event @doc(category: "Channels") {
 
   """The channel the event relates to."""
   channel: Channel
-}
-
-"""
-Event sent when new menu is created.
-
-Added in Saleor 3.4.
-"""
-type MenuCreated implements Event @doc(category: "Menu") {
-  """Time of the event."""
-  issuedAt: DateTime
-
-  """Saleor version that triggered the event."""
-  version: String
-
-  """The user or application that triggered the event."""
-  issuingPrincipal: IssuingPrincipal
-
-  """The application receiving the webhook."""
-  recipient: App
-
-  """The menu the event relates to."""
-  menu(
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-  ): Menu
-}
-
-"""
-Event sent when menu is updated.
-
-Added in Saleor 3.4.
-"""
-type MenuUpdated implements Event @doc(category: "Menu") {
-  """Time of the event."""
-  issuedAt: DateTime
-
-  """Saleor version that triggered the event."""
-  version: String
-
-  """The user or application that triggered the event."""
-  issuingPrincipal: IssuingPrincipal
-
-  """The application receiving the webhook."""
-  recipient: App
-
-  """The menu the event relates to."""
-  menu(
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-  ): Menu
-}
-
-"""
-Event sent when menu is deleted.
-
-Added in Saleor 3.4.
-"""
-type MenuDeleted implements Event @doc(category: "Menu") {
-  """Time of the event."""
-  issuedAt: DateTime
-
-  """Saleor version that triggered the event."""
-  version: String
-
-  """The user or application that triggered the event."""
-  issuingPrincipal: IssuingPrincipal
-
-  """The application receiving the webhook."""
-  recipient: App
-
-  """The menu the event relates to."""
-  menu(
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-  ): Menu
-}
-
-"""
-Event sent when new menu item is created.
-
-Added in Saleor 3.4.
-"""
-type MenuItemCreated implements Event @doc(category: "Menu") {
-  """Time of the event."""
-  issuedAt: DateTime
-
-  """Saleor version that triggered the event."""
-  version: String
-
-  """The user or application that triggered the event."""
-  issuingPrincipal: IssuingPrincipal
-
-  """The application receiving the webhook."""
-  recipient: App
-
-  """The menu item the event relates to."""
-  menuItem(
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-  ): MenuItem
-}
-
-"""
-Event sent when menu item is updated.
-
-Added in Saleor 3.4.
-"""
-type MenuItemUpdated implements Event @doc(category: "Menu") {
-  """Time of the event."""
-  issuedAt: DateTime
-
-  """Saleor version that triggered the event."""
-  version: String
-
-  """The user or application that triggered the event."""
-  issuingPrincipal: IssuingPrincipal
-
-  """The application receiving the webhook."""
-  recipient: App
-
-  """The menu item the event relates to."""
-  menuItem(
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-  ): MenuItem
-}
-
-"""
-Event sent when menu item is deleted.
-
-Added in Saleor 3.4.
-"""
-type MenuItemDeleted implements Event @doc(category: "Menu") {
-  """Time of the event."""
-  issuedAt: DateTime
-
-  """Saleor version that triggered the event."""
-  version: String
-
-  """The user or application that triggered the event."""
-  issuingPrincipal: IssuingPrincipal
-
-  """The application receiving the webhook."""
-  recipient: App
-
-  """The menu item the event relates to."""
-  menuItem(
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-  ): MenuItem
 }
 
 """

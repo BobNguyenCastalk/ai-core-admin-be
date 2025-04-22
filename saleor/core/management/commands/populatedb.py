@@ -69,11 +69,7 @@ class Command(BaseCommand):
         user_password = options["user_password"]
         staff_password = options["staff_password"]
         superuser_password = options["superuser_password"]
-        settings.PLUGINS = [
-            "saleor.payment.gateways.dummy.plugin.DummyGatewayPlugin",
-            "saleor.payment.gateways.dummy_credit_card.plugin."
-            "DummyCreditCardGatewayPlugin",
-        ]
+        settings.PLUGINS = []
         for msg in create_channels():
             self.stdout.write(msg)
         self.stdout.write("Created warehouses")
