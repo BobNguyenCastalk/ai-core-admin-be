@@ -8,7 +8,6 @@ from ..core.descriptions import DEPRECATED_IN_3X_FIELD
 from ..core.fields import FilterConnectionField
 from ..core.utils import from_global_id_or_error
 from ..translations.mutations import MenuItemTranslate
-from .bulk_mutations import MenuBulkDelete, MenuItemBulkDelete
 from .filters import MenuFilterInput, MenuItemFilterInput
 from .mutations import (
     AssignNavigation,
@@ -125,12 +124,10 @@ class MenuMutations(graphene.ObjectType):
 
     menu_create = MenuCreate.Field()
     menu_delete = MenuDelete.Field()
-    menu_bulk_delete = MenuBulkDelete.Field()
     menu_update = MenuUpdate.Field()
 
     menu_item_create = MenuItemCreate.Field()
     menu_item_delete = MenuItemDelete.Field()
-    menu_item_bulk_delete = MenuItemBulkDelete.Field()
     menu_item_update = MenuItemUpdate.Field()
     menu_item_translate = MenuItemTranslate.Field()
     menu_item_move = MenuItemMove.Field()
