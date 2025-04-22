@@ -12,7 +12,6 @@ from ...core.types import MenuError, NonNullList
 from ...core.utils import WebhookEventInfo
 from ...core.validators import validate_slug_and_generate_if_needed
 from ...plugins.dataloaders import get_plugin_manager_promise
-from ...product.types import Category, Collection
 from ..types import Menu
 from .menu_item_create import MenuItemInput
 
@@ -59,11 +58,9 @@ class MenuCreate(ModelMutation):
 
         items = []
         for item in cleaned_input.get("items", []):
-            category = item.get("category")
-            collection = item.get("collection")
             page = item.get("page")
             url = item.get("url")
-            if len([i for i in [category, collection, page, url] if i]) > 1:
+            if len([i for i in [page, url] if i]) > 1:
                 raise ValidationError(
                     {
                         "items": ValidationError(
@@ -73,17 +70,7 @@ class MenuCreate(ModelMutation):
                     }
                 )
 
-            if category:
-                category = cls.get_node_or_error(
-                    info, category, field="items", only_type=Category
-                )
-                item["category"] = category
-            elif collection:
-                collection = cls.get_node_or_error(
-                    info, collection, field="items", only_type=Collection
-                )
-                item["collection"] = collection
-            elif not url:
+            if not url:
                 raise ValidationError(
                     {
                         "items": ValidationError(

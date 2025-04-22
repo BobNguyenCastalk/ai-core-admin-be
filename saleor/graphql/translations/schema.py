@@ -11,21 +11,11 @@ from ..core.context import get_database_connection_name
 from ..core.fields import ConnectionField, PermissionsField
 from ..core.utils import from_global_id_or_error
 from ..menu.resolvers import resolve_menu_items
-from ..product.resolvers import resolve_categories
 from ..translations import types as translation_types
-from .resolvers import (
-    resolve_collections,
-    resolve_product_variants,
-    resolve_products,
-)
 
 TYPES_TRANSLATIONS_MAP = {
-    Product: translation_types.ProductTranslatableContent,
-    Collection: translation_types.CollectionTranslatableContent,
-    Category: translation_types.CategoryTranslatableContent,
     Attribute: translation_types.AttributeTranslatableContent,
     AttributeValue: translation_types.AttributeValueTranslatableContent,
-    ProductVariant: translation_types.ProductVariantTranslatableContent,
     Page: translation_types.PageTranslatableContent,
     MenuItem: translation_types.MenuItemTranslatableContent,
 }
@@ -88,15 +78,7 @@ class TranslationQueries(graphene.ObjectType):
 
     @staticmethod
     def resolve_translations(_root, info: ResolveInfo, *, kind, **kwargs):
-        if kind == TranslatableKinds.PRODUCT:
-            qs = resolve_products(info)
-        elif kind == TranslatableKinds.COLLECTION:
-            qs = resolve_collections(info)
-        elif kind == TranslatableKinds.CATEGORY:
-            qs = resolve_categories(info)
-        elif kind == TranslatableKinds.VARIANT:
-            qs = resolve_product_variants(info)
-        elif kind == TranslatableKinds.MENU_ITEM:
+        if kind == TranslatableKinds.MENU_ITEM:
             qs = resolve_menu_items(info)
 
         return create_connection_slice(qs, info, kwargs, TranslatableItemConnection)

@@ -11,7 +11,6 @@ from ....attribute import models as attribute_models
 from ....core.tracing import traced_atomic_transaction
 from ....menu import models as menu_models
 from ....page import models as page_models
-from ....product import models as product_models
 from ....webhook.event_types import WebhookEventAsyncType
 from ....webhook.utils import get_webhooks_for_event
 from ...core import ResolveInfo
@@ -26,23 +25,11 @@ from .. import types as translation_types
 
 TRANSLATABLE_CONTENT_TO_MODEL = {
     str(
-        translation_types.ProductTranslatableContent
-    ): product_models.Product._meta.object_name,
-    str(
-        translation_types.CollectionTranslatableContent
-    ): product_models.Collection._meta.object_name,
-    str(
-        translation_types.CategoryTranslatableContent
-    ): product_models.Category._meta.object_name,
-    str(
         translation_types.AttributeTranslatableContent
     ): attribute_models.Attribute._meta.object_name,
     str(
         translation_types.AttributeValueTranslatableContent
     ): attribute_models.AttributeValue._meta.object_name,
-    str(
-        translation_types.ProductVariantTranslatableContent
-    ): product_models.ProductVariant._meta.object_name,
     # Page Translation mutation reverses model and TranslatableContent
     page_models.Page._meta.object_name: str(translation_types.PageTranslatableContent),
     str(

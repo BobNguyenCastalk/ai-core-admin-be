@@ -45,28 +45,21 @@ from ..core.descriptions import (
     ADDED_IN_314,
     ADDED_IN_315,
     ADDED_IN_316,
-    ADDED_IN_320,
     PREVIEW_FEATURE,
 )
 from ..core.doc_category import (
     DOC_CATEGORY_MISC,
-    DOC_CATEGORY_ORDERS,
     DOC_CATEGORY_PAYMENTS,
     DOC_CATEGORY_TAXES,
     DOC_CATEGORY_USERS,
 )
-from ..core.fields import BaseField
 from ..core.scalars import JSON, DateTime, PositiveDecimal
 from ..core.types import NonNullList, SubscriptionObjectType
 from ..translations import types as translation_types
 
 TRANSLATIONS_TYPES_MAP = {
-    ProductTranslation: translation_types.ProductTranslation,
-    CollectionTranslation: translation_types.CollectionTranslation,
-    CategoryTranslation: translation_types.CategoryTranslation,
     AttributeTranslation: translation_types.AttributeTranslation,
     AttributeValueTranslation: translation_types.AttributeValueTranslation,
-    ProductVariantTranslation: translation_types.ProductVariantTranslation,
     PageTranslation: translation_types.PageTranslation,
     MenuItemTranslation: translation_types.MenuItemTranslation,
 }
@@ -329,42 +322,6 @@ class AppStatusChanged(SubscriptionObjectType, AppBase):
         description = "Event sent when app status has changed." + ADDED_IN_34
 
 
-class CategoryBase(AbstractType):
-    category = graphene.Field(
-        "saleor.graphql.product.types.Category",
-        description="The category the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_category(root, info: ResolveInfo):
-        _, category = root
-        return category
-
-
-class CategoryCreated(SubscriptionObjectType, CategoryBase):
-    class Meta:
-        root_type = "Category"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new category is created." + ADDED_IN_32
-
-
-class CategoryUpdated(SubscriptionObjectType, CategoryBase):
-    class Meta:
-        root_type = "Category"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when category is updated." + ADDED_IN_32
-
-
-class CategoryDeleted(SubscriptionObjectType, CategoryBase):
-    class Meta:
-        root_type = "Category"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when category is deleted." + ADDED_IN_32
-
-
 class ChannelBase(AbstractType):
     channel = graphene.Field(
         "saleor.graphql.channel.types.Channel",
@@ -495,147 +452,6 @@ class MenuItemDeleted(SubscriptionObjectType, MenuItemBase):
         description = "Event sent when menu item is deleted." + ADDED_IN_34
 
 
-class ProductBase(AbstractType):
-    product = graphene.Field(
-        "saleor.graphql.product.types.Product",
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-        description="The product the event relates to.",
-    )
-    category = graphene.Field(
-        "saleor.graphql.product.types.categories.Category",
-        description="The category of the product.",
-    )
-
-    @staticmethod
-    def resolve_product(root, info: ResolveInfo, channel=None):
-        _, product = root
-        return ChannelContext(node=product, channel_slug=channel)
-
-    @staticmethod
-    def resolve_category(root, _info: ResolveInfo):
-        _, product = root
-        return product.category
-
-
-class ProductCreated(SubscriptionObjectType, ProductBase):
-    class Meta:
-        root_type = "Product"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new product is created." + ADDED_IN_32
-
-
-class ProductUpdated(SubscriptionObjectType, ProductBase):
-    class Meta:
-        root_type = "Product"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when product is updated." + ADDED_IN_32
-
-
-class ProductDeleted(SubscriptionObjectType, ProductBase):
-    class Meta:
-        root_type = "Product"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when product is deleted." + ADDED_IN_32
-
-
-class ProductMetadataUpdated(SubscriptionObjectType, ProductBase):
-    class Meta:
-        root_type = "Product"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when product metadata is updated." + ADDED_IN_38
-
-
-class ProductMediaBase(AbstractType):
-    product_media = graphene.Field(
-        "saleor.graphql.product.types.ProductMedia",
-        description="The product media the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_product_media(root, info: ResolveInfo):
-        _, media = root
-        return media
-
-
-class ProductMediaCreated(SubscriptionObjectType, ProductMediaBase):
-    class Meta:
-        root_type = "ProductMedia"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new product media is created."
-
-
-class ProductMediaUpdated(SubscriptionObjectType, ProductMediaBase):
-    class Meta:
-        root_type = "ProductMedia"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when product media is updated."
-
-
-class ProductMediaDeleted(SubscriptionObjectType, ProductMediaBase):
-    class Meta:
-        root_type = "ProductMedia"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when product media is deleted."
-
-
-class ProductVariantBase(AbstractType):
-    product_variant = graphene.Field(
-        "saleor.graphql.product.types.ProductVariant",
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-        description="The product variant the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_product_variant(root, _info: ResolveInfo, channel=None):
-        _, variant = root
-        return ChannelContext(node=variant, channel_slug=channel)
-
-
-class ProductVariantCreated(SubscriptionObjectType, ProductVariantBase):
-    class Meta:
-        root_type = "Product"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new product variant is created." + ADDED_IN_32
-
-
-class ProductVariantUpdated(SubscriptionObjectType, ProductVariantBase):
-    class Meta:
-        root_type = "Product"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when product variant is updated." + ADDED_IN_32
-
-
-class ProductVariantDeleted(SubscriptionObjectType, ProductVariantBase):
-    class Meta:
-        root_type = "Product"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when product variant is deleted." + ADDED_IN_32
-
-
-class ProductVariantMetadataUpdated(SubscriptionObjectType, ProductVariantBase):
-    class Meta:
-        root_type = "Product"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = (
-            "Event sent when product variant metadata is updated." + ADDED_IN_38
-        )
-
-
 class UserBase(AbstractType):
     user = graphene.Field(
         "saleor.graphql.account.types.User",
@@ -670,53 +486,6 @@ class CustomerMetadataUpdated(SubscriptionObjectType, UserBase):
         enable_dry_run = True
         interfaces = (Event,)
         description = "Event sent when customer user metadata is updated." + ADDED_IN_38
-
-
-class CollectionBase(AbstractType):
-    collection = graphene.Field(
-        "saleor.graphql.product.types.collections.Collection",
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-        description="The collection the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_collection(root, _info: ResolveInfo, channel=None):
-        _, collection = root
-        return ChannelContext(node=collection, channel_slug=channel)
-
-
-class CollectionCreated(SubscriptionObjectType, CollectionBase):
-    class Meta:
-        root_type = "Collection"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new collection is created." + ADDED_IN_32
-
-
-class CollectionUpdated(SubscriptionObjectType, CollectionBase):
-    class Meta:
-        root_type = "Collection"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when collection is updated." + ADDED_IN_32
-
-
-class CollectionDeleted(SubscriptionObjectType, CollectionBase):
-    class Meta:
-        root_type = "Collection"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when collection is deleted." + ADDED_IN_32
-
-
-class CollectionMetadataUpdated(SubscriptionObjectType, CollectionBase):
-    class Meta:
-        root_type = "Collection"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when collection metadata is updated." + ADDED_IN_38
 
 
 class PermissionGroupBase(AbstractType):
@@ -1449,9 +1218,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.APP_UPDATED: AppUpdated,
     WebhookEventAsyncType.APP_DELETED: AppDeleted,
     WebhookEventAsyncType.APP_STATUS_CHANGED: AppStatusChanged,
-    WebhookEventAsyncType.CATEGORY_CREATED: CategoryCreated,
-    WebhookEventAsyncType.CATEGORY_UPDATED: CategoryUpdated,
-    WebhookEventAsyncType.CATEGORY_DELETED: CategoryDeleted,
     WebhookEventAsyncType.CHANNEL_CREATED: ChannelCreated,
     WebhookEventAsyncType.CHANNEL_UPDATED: ChannelUpdated,
     WebhookEventAsyncType.CHANNEL_DELETED: ChannelDeleted,
@@ -1463,26 +1229,9 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.MENU_ITEM_CREATED: MenuItemCreated,
     WebhookEventAsyncType.MENU_ITEM_UPDATED: MenuItemUpdated,
     WebhookEventAsyncType.MENU_ITEM_DELETED: MenuItemDeleted,
-    WebhookEventAsyncType.PRODUCT_CREATED: ProductCreated,
-    WebhookEventAsyncType.PRODUCT_UPDATED: ProductUpdated,
-    WebhookEventAsyncType.PRODUCT_DELETED: ProductDeleted,
-    WebhookEventAsyncType.PRODUCT_METADATA_UPDATED: ProductMetadataUpdated,
-    WebhookEventAsyncType.PRODUCT_MEDIA_CREATED: ProductMediaCreated,
-    WebhookEventAsyncType.PRODUCT_MEDIA_UPDATED: ProductMediaUpdated,
-    WebhookEventAsyncType.PRODUCT_MEDIA_DELETED: ProductMediaDeleted,
-    WebhookEventAsyncType.PRODUCT_VARIANT_CREATED: ProductVariantCreated,
-    WebhookEventAsyncType.PRODUCT_VARIANT_UPDATED: ProductVariantUpdated,
-    WebhookEventAsyncType.PRODUCT_VARIANT_DELETED: ProductVariantDeleted,
-    WebhookEventAsyncType.PRODUCT_VARIANT_METADATA_UPDATED: (
-        ProductVariantMetadataUpdated
-    ),
     WebhookEventAsyncType.CUSTOMER_CREATED: CustomerCreated,
     WebhookEventAsyncType.CUSTOMER_UPDATED: CustomerUpdated,
     WebhookEventAsyncType.CUSTOMER_METADATA_UPDATED: CustomerMetadataUpdated,
-    WebhookEventAsyncType.COLLECTION_CREATED: CollectionCreated,
-    WebhookEventAsyncType.COLLECTION_UPDATED: CollectionUpdated,
-    WebhookEventAsyncType.COLLECTION_DELETED: CollectionDeleted,
-    WebhookEventAsyncType.COLLECTION_METADATA_UPDATED: CollectionMetadataUpdated,
     WebhookEventAsyncType.PERMISSION_GROUP_CREATED: PermissionGroupCreated,
     WebhookEventAsyncType.PERMISSION_GROUP_UPDATED: PermissionGroupUpdated,
     WebhookEventAsyncType.PERMISSION_GROUP_DELETED: PermissionGroupDeleted,

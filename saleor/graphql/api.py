@@ -18,12 +18,10 @@ from graphql.execution import ExecutionResult
 from ..core.utils.cache import CacheDict
 from .account.schema import AccountMutations, AccountQueries
 from .app.schema import AppQueries
-from .channel.schema import ChannelQueries
 from .core.enums import unit_enums
 from .core.federation.schema import build_federated_schema
 from .core.schema import CoreMutations, CoreQueries
 from .menu.schema import MenuMutations, MenuQueries
-from .product.schema import ProductMutations, ProductQueries
 from .translations.schema import TranslationQueries
 from .webhook.schema import WebhookMutations, WebhookQueries
 from .webhook.subscription_types import WEBHOOK_TYPES_MAP, Subscription
@@ -34,10 +32,8 @@ API_PATH = SimpleLazyObject(lambda: reverse("api"))
 class Query(
     AccountQueries,
     AppQueries,
-    ChannelQueries,
     CoreQueries,
     MenuQueries,
-    ProductQueries,
     TranslationQueries,
     WebhookQueries,
 ):
@@ -48,7 +44,6 @@ class Mutation(
     AccountMutations,
     CoreMutations,
     MenuMutations,
-    ProductMutations,
     WebhookMutations,
 ):
     pass

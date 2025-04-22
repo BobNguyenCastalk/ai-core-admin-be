@@ -15,12 +15,6 @@ from ..core.connection import CountableConnection
 from ..core.doc_category import DOC_CATEGORY_MENU
 from ..core.types import NonNullList
 from ..meta.types import ObjectWithMetadata
-from ..product.dataloaders import (
-    CategoryByIdLoader,
-    CollectionByIdLoader,
-    CollectionChannelListingByCollectionIdAndChannelSlugLoader,
-)
-from ..product.types import Category, Collection
 from ..translations.fields import TranslationField
 from ..translations.types import MenuItemTranslation
 from ..utils import get_user_or_app_from_context
@@ -78,17 +72,6 @@ class MenuItem(ChannelContextTypeWithMetadata[models.MenuItem]):
         lambda: MenuItem,
         description="ID of parent menu item. If empty, menu will be top level menu.",
     )
-    category = graphene.Field(
-        Category, description="Category associated with the menu item."
-    )
-    collection = graphene.Field(
-        Collection,
-        description=(
-            "A collection associated with this menu item. Requires one of the "
-            "following permissions to include the unpublished items: "
-            f"{', '.join([p.name for p in ALL_PRODUCTS_PERMISSIONS])}."
-        ),
-    )
     level = graphene.Int(
         required=True,
         description="Indicates the position of the menu item within the menu "
@@ -115,12 +98,6 @@ class MenuItem(ChannelContextTypeWithMetadata[models.MenuItem]):
         model = models.MenuItem
 
     @staticmethod
-    def resolve_category(root: ChannelContext[models.MenuItem], info: ResolveInfo):
-        if root.node.category_id:
-            return CategoryByIdLoader(info.context).load(root.node.category_id)
-        return None
-
-    @staticmethod
     def resolve_children(root: ChannelContext[models.MenuItem], info: ResolveInfo):
         menus = MenuItemChildrenLoader(info.context).load(root.node.id)
         return menus.then(
@@ -128,65 +105,6 @@ class MenuItem(ChannelContextTypeWithMetadata[models.MenuItem]):
                 ChannelContext(node=menu, channel_slug=root.channel_slug)
                 for menu in menus
             ]
-        )
-
-    @staticmethod
-    def resolve_collection(root: ChannelContext[models.MenuItem], info: ResolveInfo):
-        if not root.node.collection_id:
-            return None
-
-        requestor = get_user_or_app_from_context(info.context)
-
-        has_required_permission = has_one_of_permissions(
-            requestor, ALL_PRODUCTS_PERMISSIONS
-        )
-        if has_required_permission:
-            return (
-                CollectionByIdLoader(info.context)
-                .load(root.node.collection_id)
-                .then(
-                    lambda collection: ChannelContext(
-                        node=collection, channel_slug=root.channel_slug
-                    )
-                    if collection
-                    else None
-                )
-            )
-
-        # If it's a non-staff user with proper permission we should check that
-        # channel is active and collection is visible in this channel
-        channel_slug = str(root.channel_slug)
-        channel = ChannelBySlugLoader(info.context).load(channel_slug)
-
-        def calculate_collection_availability(collection_channel_listing):
-            def calculate_collection_availability_with_channel(channel):
-                if not channel:
-                    return None
-                collection_is_visible = (
-                    collection_channel_listing.is_visible
-                    if collection_channel_listing
-                    else False
-                )
-                if not channel.is_active or not collection_is_visible:
-                    return None
-                return (
-                    CollectionByIdLoader(info.context)
-                    .load(root.node.collection_id)
-                    .then(
-                        lambda collection: ChannelContext(
-                            node=collection, channel_slug=channel_slug
-                        )
-                        if collection
-                        else None
-                    )
-                )
-
-            return channel.then(calculate_collection_availability_with_channel)
-
-        return (
-            CollectionChannelListingByCollectionIdAndChannelSlugLoader(info.context)
-            .load((root.node.collection_id, channel_slug))
-            .then(calculate_collection_availability)
         )
 
     @staticmethod
