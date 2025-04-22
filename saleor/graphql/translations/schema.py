@@ -4,7 +4,6 @@ from ...attribute.models import Attribute, AttributeValue
 from ...menu.models import MenuItem
 from ...page.models import Page
 from ...permission.enums import SitePermissions
-from ...product.models import Category, Collection, Product, ProductVariant
 from ..core import ResolveInfo
 from ..core.connection import CountableConnection, create_connection_slice
 from ..core.context import get_database_connection_name
@@ -42,13 +41,9 @@ class TranslatableItemConnection(CountableConnection):
 class TranslatableKinds(graphene.Enum):
     ATTRIBUTE = "Attribute"
     ATTRIBUTE_VALUE = "AttributeValue"
-    CATEGORY = "Category"
-    COLLECTION = "Collection"
     MENU_ITEM = "MenuItem"
     PAGE = "Page"
-    PRODUCT = "Product"
     SALE = "Sale"
-    VARIANT = "ProductVariant"
 
 
 class TranslationQueries(graphene.ObjectType):
@@ -89,12 +84,8 @@ class TranslationQueries(graphene.ObjectType):
         if not _type == kind:
             return None
         models = {
-            TranslatableKinds.PRODUCT.value: Product,  # type: ignore[attr-defined]
-            TranslatableKinds.COLLECTION.value: Collection,  # type: ignore[attr-defined] # noqa: E501
-            TranslatableKinds.CATEGORY.value: Category,  # type: ignore[attr-defined]
             TranslatableKinds.ATTRIBUTE.value: Attribute,  # type: ignore[attr-defined]
             TranslatableKinds.ATTRIBUTE_VALUE.value: AttributeValue,  # type: ignore[attr-defined] # noqa: E501
-            TranslatableKinds.VARIANT.value: ProductVariant,  # type: ignore[attr-defined] # noqa: E501
             TranslatableKinds.PAGE.value: Page,  # type: ignore[attr-defined]
             TranslatableKinds.MENU_ITEM.value: MenuItem,  # type: ignore[attr-defined]
         }

@@ -2,9 +2,6 @@ import graphene
 from graphene import relay
 
 from ...menu import models
-from ...permission.utils import has_one_of_permissions
-from ...product.models import ALL_PRODUCTS_PERMISSIONS
-from ..channel.dataloaders import ChannelBySlugLoader
 from ..channel.types import (
     ChannelContext,
     ChannelContextType,
@@ -17,7 +14,6 @@ from ..core.types import NonNullList
 from ..meta.types import ObjectWithMetadata
 from ..translations.fields import TranslationField
 from ..translations.types import MenuItemTranslation
-from ..utils import get_user_or_app_from_context
 from .dataloaders import (
     MenuByIdLoader,
     MenuItemByIdLoader,

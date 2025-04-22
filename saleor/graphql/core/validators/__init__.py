@@ -9,7 +9,6 @@ from graphene.utils.str_converters import to_camel_case
 from graphql.error import GraphQLError
 
 from ....core.utils import generate_unique_slug
-from ....product.models import ProductVariantChannelListing
 
 if TYPE_CHECKING:
     from decimal import Decimal
@@ -93,53 +92,6 @@ def validate_decimal_max_value(value: "Decimal", max_value=10**9):
     """
     if value >= max_value:
         raise ValidationError(f"Value must be lower than {max_value}.")
-
-
-def get_not_available_variants_in_channel(
-    variants_id: set,
-    channel_id: int,
-    database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
-) -> tuple[set[int], set[str]]:
-    available_variants = (
-        ProductVariantChannelListing.objects.using(database_connection_name)
-        .filter(
-            variant__id__in=variants_id,
-            channel_id=channel_id,
-            price_amount__isnull=False,
-        )
-        .values_list("variant_id", flat=True)
-    )
-    not_available_variants = variants_id - set(available_variants)
-    not_available_graphql_ids = {
-        graphene.Node.to_global_id("ProductVariant", pk)
-        for pk in not_available_variants
-    }
-    return not_available_variants, not_available_graphql_ids
-
-
-def validate_variants_available_in_channel(
-    variants_id: set,
-    channel_id: int,
-    error_code: str,
-    database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
-):
-    """Validate available variants in specific channel."""
-    (
-        not_available_variants,
-        not_available_graphql_ids,
-    ) = get_not_available_variants_in_channel(
-        variants_id, channel_id, database_connection_name
-    )
-    if not_available_variants:
-        raise ValidationError(
-            {
-                "lines": ValidationError(
-                    "Cannot add lines with unavailable variants.",
-                    code=error_code,
-                    params={"variants": not_available_graphql_ids},
-                )
-            }
-        )
 
 
 def validate_end_is_after_start(start_date, end_date):

@@ -11,8 +11,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("product", "0170_rewrite_digitalcontenturl_orderline_relation"),
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [

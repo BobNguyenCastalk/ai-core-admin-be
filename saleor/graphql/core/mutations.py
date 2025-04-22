@@ -22,7 +22,6 @@ from graphene.types.mutation import MutationOptions
 from graphql.error import GraphQLError
 
 from ...core.db.connection import allow_writer
-from ...core.error_codes import MetadataErrorCode
 from ...core.exceptions import PermissionDenied
 from ...core.utils.events import call_event
 from ...permission.auth_filters import AuthorizationFilters

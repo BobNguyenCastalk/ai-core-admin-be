@@ -3,7 +3,6 @@ from django.db import models
 
 from ..account.models import User
 from ..app.models import App, AppInstallation
-from ..product.models import Category, Collection, ProductMedia
 from . import THUMBNAIL_SIZES, ThumbnailFormat
 
 
@@ -20,27 +19,6 @@ class Thumbnail(models.Model):
     size = models.PositiveIntegerField(validators=[validate_thumbnail_size])
     format = models.CharField(
         max_length=32, null=True, blank=True, choices=ThumbnailFormat.CHOICES
-    )
-    category = models.ForeignKey(
-        Category,
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="thumbnails",
-    )
-    collection = models.ForeignKey(
-        Collection,
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="thumbnails",
-    )
-    product_media = models.ForeignKey(
-        ProductMedia,
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="thumbnails",
     )
     user = models.ForeignKey(
         User, null=True, blank=True, on_delete=models.CASCADE, related_name="thumbnails"

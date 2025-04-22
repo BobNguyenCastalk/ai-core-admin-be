@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("product", "0186_remove_product_charge_taxes"),
         ("attribute", "0029_alter_attribute_unit"),
     ]
 

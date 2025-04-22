@@ -104,7 +104,6 @@ def flatten_users_metadata(apps, _schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("account", "0039_auto_20200221_0257"),
-        ("product", "0115_auto_20200221_0257"),
     ]
 
     run_before = [("attribute", "0001_initial")]

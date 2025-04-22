@@ -38,7 +38,6 @@ from ..enums import (
     AttributeTranslateErrorCode,
     AttributeValueTranslateErrorCode,
     ChannelErrorCode,
-    CollectionErrorCode,
     ExternalNotificationTriggerErrorCode,
     GiftCardSettingsErrorCode,
     IconThumbnailFormatEnum,
@@ -51,11 +50,6 @@ from ..enums import (
     PermissionEnum,
     PermissionGroupErrorCode,
     PluginErrorCode,
-    ProductBulkCreateErrorCode,
-    ProductErrorCode,
-    ProductTranslateErrorCode,
-    ProductVariantBulkErrorCode,
-    ProductVariantTranslateErrorCode,
     SendConfirmationEmailErrorCode,
     ShopErrorCode,
     ThumbnailFormatEnum,
@@ -285,57 +279,6 @@ class PermissionGroupError(Error):
         doc_category = DOC_CATEGORY_USERS
 
 
-class ProductError(Error):
-    code = ProductErrorCode(description="The error code.", required=True)
-    attributes = NonNullList(
-        graphene.ID,
-        description="List of attributes IDs which causes the error.",
-        required=False,
-    )
-    values = NonNullList(
-        graphene.ID,
-        description="List of attribute values IDs which causes the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
-
-
-class CollectionError(ProductWithoutVariantError):
-    code = CollectionErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
-
-
-class ProductChannelListingError(ProductError):
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channels IDs which causes the error.",
-        required=False,
-    )
-    variants = NonNullList(
-        graphene.ID,
-        description="List of variants IDs which causes the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
-
-
-class CollectionChannelListingError(ProductError):
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channels IDs which causes the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
-
-
 class AttributeBulkCreateError(BulkError):
     code = AttributeBulkCreateErrorCode(description="The error code.", required=True)
 
@@ -348,96 +291,6 @@ class AttributeBulkUpdateError(BulkError):
 
     class Meta:
         doc_category = DOC_CATEGORY_ATTRIBUTES
-
-
-class BulkProductError(ProductError):
-    index = graphene.Int(
-        description="Index of an input list item that caused the error."
-    )
-    warehouses = NonNullList(
-        graphene.ID,
-        description="List of warehouse IDs which causes the error.",
-        required=False,
-    )
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channel IDs which causes the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
-
-
-class ProductBulkCreateError(BulkError):
-    code = ProductBulkCreateErrorCode(description="The error code.", required=True)
-    attributes = NonNullList(
-        graphene.ID,
-        description="List of attributes IDs which causes the error.",
-        required=False,
-    )
-    values = NonNullList(
-        graphene.ID,
-        description="List of attribute values IDs which causes the error.",
-        required=False,
-    )
-    warehouses = NonNullList(
-        graphene.ID,
-        description="List of warehouse IDs which causes the error.",
-        required=False,
-    )
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channel IDs which causes the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
-
-
-class ProductVariantBulkError(Error):
-    code = ProductVariantBulkErrorCode(description="The error code.", required=True)
-    path = graphene.String(
-        description=(
-            "Path to field that caused the error. A value of `null` indicates that "
-            "the error isn't associated with a particular field." + ADDED_IN_314
-        ),
-        required=False,
-    )
-    attributes = NonNullList(
-        graphene.ID,
-        description="List of attributes IDs which causes the error.",
-        required=False,
-    )
-    values = NonNullList(
-        graphene.ID,
-        description="List of attribute values IDs which causes the error.",
-        required=False,
-    )
-    warehouses = NonNullList(
-        graphene.ID,
-        description="List of warehouse IDs which causes the error.",
-        required=False,
-    )
-    stocks = NonNullList(
-        graphene.ID,
-        description="List of stocks IDs which causes the error." + ADDED_IN_312,
-        required=False,
-    )
-    channels = NonNullList(
-        graphene.ID,
-        description="List of channel IDs which causes the error." + ADDED_IN_312,
-        required=False,
-    )
-    channel_listings = NonNullList(
-        graphene.ID,
-        description="List of channel listings IDs which causes the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
 
 
 class ShopError(Error):
@@ -463,27 +316,8 @@ class PageError(Error):
         doc_category = DOC_CATEGORY_PAGES
 
 
-class ProductBulkTranslateError(BulkError):
-    code = ProductTranslateErrorCode(description="The error code.", required=True)
-
-
-class ProductVariantBulkTranslateError(BulkError):
-    code = ProductVariantTranslateErrorCode(
-        description="The error code.", required=True
-    )
-
-
 class PluginError(Error):
     code = PluginErrorCode(description="The error code.", required=True)
-
-
-class BulkStockError(ProductError):
-    index = graphene.Int(
-        description="Index of an input list item that caused the error."
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
 
 
 class UploadError(Error):

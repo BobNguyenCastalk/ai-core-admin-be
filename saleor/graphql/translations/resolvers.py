@@ -1,7 +1,6 @@
 from ...attribute import models as attribute_models
 from ...menu import models as menu_models
 from ...page import models as page_models
-from ...product import models as product_models
 from ...site import models as site_models
 from ..core import ResolveInfo
 from ..core.context import get_database_connection_name
@@ -14,16 +13,8 @@ TYPE_TO_TRANSLATION_LOADER_MAP = {
     attribute_models.AttributeValue: (
         dataloaders.AttributeValueTranslationByIdAndLanguageCodeLoader
     ),
-    product_models.Category: (dataloaders.CategoryTranslationByIdAndLanguageCodeLoader),
-    product_models.Collection: (
-        dataloaders.CollectionTranslationByIdAndLanguageCodeLoader
-    ),
     menu_models.MenuItem: (dataloaders.MenuItemTranslationByIdAndLanguageCodeLoader),
     page_models.Page: dataloaders.PageTranslationByIdAndLanguageCodeLoader,
-    product_models.Product: (dataloaders.ProductTranslationByIdAndLanguageCodeLoader),
-    product_models.ProductVariant: (
-        dataloaders.ProductVariantTranslationByIdAndLanguageCodeLoader
-    ),
     site_models.SiteSettings: (
         dataloaders.SiteSettingsTranslationByIdAndLanguageCodeLoader
     ),

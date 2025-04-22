@@ -7,7 +7,6 @@ from ...channel import models as channel_models
 from ...core.exceptions import PermissionDenied
 from ...core.models import ModelWithMetadata
 from ...permission.utils import one_of_permissions_or_auth_filter_required
-from ...product import models as product_models
 from ...site import models as site_models
 from ..core import ResolveInfo
 from ..utils import get_user_or_app_from_context
@@ -21,11 +20,7 @@ def resolve_object_with_metadata_type(instance):
     from ..app import types as app_types
     from ..attribute import types as attribute_types
     from ..channel import types as channel_types
-    from ..checkout import types as checkout_types
     from ..menu import types as menu_types
-    from ..order import types as order_types
-    from ..payment import types as payment_types
-    from ..product import types as product_types
     from ..shop import types as shop_types
 
     if isinstance(instance, ModelWithMetadata):
@@ -37,13 +32,6 @@ def resolve_object_with_metadata_type(instance):
             channel_models.Channel: channel_types.Channel,
             menu_models.Menu: menu_types.Menu,
             menu_models.MenuItem: menu_types.MenuItem,
-            product_models.Category: product_types.Category,
-            product_models.Collection: product_types.Collection,
-            product_models.DigitalContent: product_types.DigitalContent,
-            product_models.Product: product_types.Product,
-            product_models.ProductMedia: product_types.ProductMedia,
-            product_models.ProductType: product_types.ProductType,
-            product_models.ProductVariant: product_types.ProductVariant,
             site_models.SiteSettings: shop_types.Shop,
         }
         return MODEL_TO_TYPE_MAP.get(instance.__class__, None), instance.pk

@@ -1,42 +1,33 @@
-import datetime
-import itertools
 import json
 import os
-import random
 import unicodedata
-import uuid
 from collections import defaultdict
-from decimal import Decimal
 from functools import lru_cache
-from typing import Any, Union, cast
+from typing import Any, cast
 from unittest.mock import patch
 
 from django.conf import settings
 from django.core.files import File
 from django.db import connection
-from django.db.models import F
 from django.utils import timezone
 from django.utils.text import slugify
 from faker import Factory
 from faker.providers import BaseProvider
 from measurement.measures import Weight
-from prices import Money, TaxedMoney
+from prices import Money
 
 from ...account.models import Address, Group, User
 from ...account.search import (
     generate_address_search_document_value,
     generate_user_fields_search_document_value,
 )
-from ...account.utils import store_user_address
 from ...attribute.models import (
     AssignedProductAttributeValue,
     AssignedVariantAttribute,
     AssignedVariantAttributeValue,
     Attribute,
     AttributePage,
-    AttributeProduct,
     AttributeValue,
-    AttributeVariant,
 )
 from ...channel.models import Channel
 from ...core.weight import zero_weight
@@ -49,21 +40,6 @@ from ...permission.enums import (
     get_permissions,
 )
 from ...permission.models import Permission
-from ...product.models import (
-    Category,
-    Collection,
-    CollectionChannelListing,
-    CollectionProduct,
-    Product,
-    ProductChannelListing,
-    ProductMedia,
-    ProductType,
-    ProductVariant,
-    ProductVariantChannelListing,
-    VariantMedia,
-)
-from ...product.search import update_products_search_vector
-from ..postgres import FlatConcatSearchVector
 
 fake = cast(Any, Factory.create())
 fake.seed(0)
@@ -153,62 +129,6 @@ def get_weight(weight):
     return Weight(**{unit: value})
 
 
-def create_product_types(product_type_data):
-    for product_type in product_type_data:
-        pk = product_type["pk"]
-        defaults = product_type["fields"]
-        defaults["weight"] = get_weight(defaults["weight"])
-        ProductType.objects.update_or_create(pk=pk, defaults=defaults)
-
-
-def create_categories(categories_data, placeholder_dir):
-    placeholder_dir = get_product_list_images_dir(placeholder_dir)
-    for category in categories_data:
-        pk = category["pk"]
-        defaults = category["fields"]
-        parent = defaults["parent"]
-        image_name = CATEGORY_IMAGES.get(pk)
-        if image_name:
-            background_image = get_image(placeholder_dir, image_name)
-            defaults["background_image"] = background_image
-        if parent:
-            defaults["parent"] = Category.objects.get(pk=parent)
-        Category.objects.update_or_create(pk=pk, defaults=defaults)
-
-
-def create_collection_channel_listings(collection_channel_listings_data):
-    channel_USD = Channel.objects.get(slug=settings.DEFAULT_CHANNEL_SLUG)
-    channel_PLN = Channel.objects.get(slug="channel-pln")
-    for collection_channel_listing in collection_channel_listings_data:
-        pk = collection_channel_listing["pk"]
-        defaults = dict(collection_channel_listing["fields"])
-        defaults["collection_id"] = defaults.pop("collection")
-        channel = defaults.pop("channel")
-        defaults["channel_id"] = channel_USD.pk if channel == 1 else channel_PLN.pk
-        CollectionChannelListing.objects.update_or_create(pk=pk, defaults=defaults)
-
-
-def create_collections(data, placeholder_dir):
-    placeholder_dir = get_product_list_images_dir(placeholder_dir)
-    for collection in data:
-        pk = collection["pk"]
-        defaults = collection["fields"]
-        image_name = COLLECTION_IMAGES.get(pk)
-        if image_name:
-            background_image = get_image(placeholder_dir, image_name)
-            defaults["background_image"] = background_image
-        Collection.objects.update_or_create(pk=pk, defaults=defaults)
-
-
-def assign_products_to_collections(associations: list):
-    for value in associations:
-        pk = value["pk"]
-        defaults = dict(value["fields"])
-        defaults["collection_id"] = defaults.pop("collection")
-        defaults["product_id"] = defaults.pop("product")
-        CollectionProduct.objects.update_or_create(pk=pk, defaults=defaults)
-
-
 def create_attributes(attributes_data):
     for attribute in attributes_data:
         pk = attribute["pk"]
@@ -222,88 +142,6 @@ def create_attributes_values(values_data):
         defaults = dict(value["fields"])
         defaults["attribute_id"] = defaults.pop("attribute")
         AttributeValue.objects.update_or_create(pk=pk, defaults=defaults)
-
-
-def create_products(products_data, placeholder_dir, create_images):
-    for product in products_data:
-        pk = product["pk"]
-        # We are skipping products without images
-        if pk not in IMAGES_MAPPING:
-            continue
-
-        defaults = dict(product["fields"])
-        defaults["weight"] = get_weight(defaults["weight"])
-        defaults["category_id"] = defaults.pop("category")
-        defaults["product_type_id"] = defaults.pop("product_type")
-        if default_variant := defaults.pop("default_variant", None):
-            defaults["default_variant_id"] = default_variant
-
-        product, _ = Product.objects.update_or_create(pk=pk, defaults=defaults)
-
-        if create_images:
-            images = IMAGES_MAPPING.get(pk, [])
-            for image_name in images:
-                create_product_image(product, placeholder_dir, image_name)
-
-
-def create_product_channel_listings(product_channel_listings_data):
-    channel_USD = Channel.objects.get(slug=settings.DEFAULT_CHANNEL_SLUG)
-    channel_PLN = Channel.objects.get(slug="channel-pln")
-    for product_channel_listing in product_channel_listings_data:
-        pk = product_channel_listing["pk"]
-        defaults = dict(product_channel_listing["fields"])
-        defaults["product_id"] = defaults.pop("product")
-        channel = defaults.pop("channel")
-        defaults["channel_id"] = channel_USD.pk if channel == 1 else channel_PLN.pk
-        ProductChannelListing.objects.update_or_create(pk=pk, defaults=defaults)
-
-def create_product_variants(variants_data, create_images):
-    for variant in variants_data:
-        pk = variant["pk"]
-        defaults = dict(variant["fields"])
-        defaults["weight"] = get_weight(defaults["weight"])
-        product_id = defaults.pop("product")
-        # We have not created products without images
-        if product_id not in IMAGES_MAPPING:
-            continue
-        defaults["product_id"] = product_id
-        set_field_as_money(defaults, "price_override")
-        set_field_as_money(defaults, "cost_price")
-        is_default_variant = defaults.pop("default", False)
-        variant, _ = ProductVariant.objects.update_or_create(pk=pk, defaults=defaults)
-        if is_default_variant:
-            product = variant.product
-            product.default_variant = variant
-            product.save(update_fields=["default_variant", "updated_at"])
-        if create_images:
-            image = variant.product.get_first_image()
-            VariantMedia.objects.get_or_create(variant=variant, media=image)
-        quantity = random.randint(100, 500)
-
-
-def create_product_variant_channel_listings(product_variant_channel_listings_data):
-    channel_USD = Channel.objects.get(slug=settings.DEFAULT_CHANNEL_SLUG)
-    channel_PLN = Channel.objects.get(slug="channel-pln")
-    for variant_channel_listing in product_variant_channel_listings_data:
-        pk = variant_channel_listing["pk"]
-        defaults = dict(variant_channel_listing["fields"])
-
-        defaults["variant_id"] = defaults.pop("variant")
-        channel = defaults.pop("channel")
-        defaults["channel_id"] = channel_USD.pk if channel == 1 else channel_PLN.pk
-        ProductVariantChannelListing.objects.update_or_create(pk=pk, defaults=defaults)
-
-
-def assign_attributes_to_product_types(
-    association_model: Union[type[AttributeProduct], type[AttributeVariant]],
-    attributes: list,
-):
-    for value in attributes:
-        pk = value["pk"]
-        defaults = dict(value["fields"])
-        defaults["attribute_id"] = defaults.pop("attribute")
-        defaults["product_type_id"] = defaults.pop("product_type")
-        association_model.objects.update_or_create(pk=pk, defaults=defaults)
 
 
 def assign_attributes_to_page_types(
@@ -351,62 +189,6 @@ def set_field_as_money(defaults, field):
         defaults[field] = Money(defaults[amount_field], DEFAULT_CURRENCY)
 
 
-def create_products_by_schema(placeholder_dir, create_images):
-    types = get_sample_data()
-
-    create_product_types(product_type_data=types["product.producttype"])
-    create_categories(
-        categories_data=types["product.category"], placeholder_dir=placeholder_dir
-    )
-    create_attributes(attributes_data=types["attribute.attribute"])
-    create_attributes_values(values_data=types["attribute.attributevalue"])
-
-    create_products(
-        products_data=types["product.product"],
-        placeholder_dir=placeholder_dir,
-        create_images=create_images,
-    )
-    create_product_channel_listings(
-        product_channel_listings_data=types["product.productchannellisting"],
-    )
-    create_product_variants(
-        variants_data=types["product.productvariant"], create_images=create_images
-    )
-    create_product_variant_channel_listings(
-        product_variant_channel_listings_data=types[
-            "product.productvariantchannellisting"
-        ],
-    )
-    assign_attributes_to_product_types(
-        AttributeProduct, attributes=types["attribute.attributeproduct"]
-    )
-    assign_attributes_to_product_types(
-        AttributeVariant, attributes=types["attribute.attributevariant"]
-    )
-    assign_attributes_to_page_types(
-        AttributePage, attributes=types["attribute.attributepage"]
-    )
-    assign_attribute_values_to_products(
-        types["attribute.assignedproductattributevalue"]
-    )
-    assign_attributes_to_variants(
-        variant_attributes=types["attribute.assignedvariantattribute"]
-    )
-    assign_attribute_values_to_variants(
-        types["attribute.assignedvariantattributevalue"]
-    )
-    create_collections(
-        data=types["product.collection"], placeholder_dir=placeholder_dir
-    )
-    create_collection_channel_listings(
-        collection_channel_listings_data=types["product.collectionchannellisting"],
-    )
-    assign_products_to_collections(associations=types["product.collectionproduct"])
-
-    all_products_qs = Product.objects.all()
-    update_products_search_vector(all_products_qs.values_list("id", flat=True))
-
-
 class SaleorProvider(BaseProvider):
     def money(self):
         return Money(fake.pydecimal(2, 2, positive=True), DEFAULT_CURRENCY)
@@ -424,16 +206,6 @@ def get_email(first_name, last_name):
     decoded_first = _first.lower().decode("utf-8")
     decoded_last = _last.lower().decode("utf-8")
     return f"{decoded_first}.{decoded_last}@example.com"
-
-
-def create_product_image(product, placeholder_dir, image_name):
-    image = get_image(placeholder_dir, image_name)
-    # We don't want to create duplicated product images
-    if product.media.count() >= len(IMAGES_MAPPING.get(product.pk, [])):
-        return None
-    product_image = ProductMedia(product=product, image=image)
-    product_image.save()
-    return product_image
 
 
 def create_address(save=True, **kwargs):

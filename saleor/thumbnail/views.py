@@ -17,7 +17,6 @@ from ..core.db.connection import allow_writer
 from ..core.utils.events import call_event
 from ..graphql.core.utils import from_global_id_or_error
 from ..plugins.manager import get_plugins_manager
-from ..product.models import Category, Collection, ProductMedia
 from ..thumbnail.models import Thumbnail
 from . import ALLOWED_ICON_THUMBNAIL_FORMATS, ALLOWED_THUMBNAIL_FORMATS
 from .utils import (
@@ -39,9 +38,6 @@ ICON_TYPE_TO_MODEL_DATA_MAPPING = {
 }
 TYPE_TO_MODEL_DATA_MAPPING = {
     "User": ModelData(User, "avatar", "user"),
-    "Category": ModelData(Category, "background_image", "category"),
-    "Collection": ModelData(Collection, "background_image", "collection"),
-    "ProductMedia": ModelData(ProductMedia, "image", "product_media"),
     **ICON_TYPE_TO_MODEL_DATA_MAPPING,
 }
 UUID_IDENTIFIABLE_TYPES = ["User", "App", "AppInstallation"]

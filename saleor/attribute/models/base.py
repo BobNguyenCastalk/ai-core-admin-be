@@ -12,7 +12,6 @@ from ...core.utils.translations import Translation
 from ...page.models import Page, PageType
 from ...permission.enums import PageTypePermissions, ProductTypePermissions
 from ...permission.utils import has_one_of_permissions
-from ...product.models import Product, ProductType, ProductVariant
 from .. import AttributeEntityType, AttributeInputType, AttributeType
 
 if TYPE_CHECKING:
@@ -127,20 +126,6 @@ class Attribute(ModelWithMetadata, ModelWithExternalReference):
         max_length=50, choices=AttributeEntityType.CHOICES, blank=True, null=True
     )
 
-    product_types = models.ManyToManyField(
-        ProductType,
-        blank=True,
-        related_name="product_attributes",
-        through="attribute.AttributeProduct",
-        through_fields=("attribute", "product_type"),
-    )
-    product_variant_types = models.ManyToManyField(
-        ProductType,
-        blank=True,
-        related_name="variant_attributes",
-        through="attribute.AttributeVariant",
-        through_fields=("attribute", "product_type"),
-    )
     page_types = models.ManyToManyField(
         PageType,
         blank=True,
@@ -355,22 +340,6 @@ class AttributeValue(ModelWithExternalReference):
     )
     boolean = models.BooleanField(blank=True, null=True)
     date_time = models.DateTimeField(blank=True, null=True)
-
-    reference_product = models.ForeignKey(
-        Product,
-        related_name="references",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
-
-    reference_variant = models.ForeignKey(
-        ProductVariant,
-        related_name="references",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
 
     reference_page = models.ForeignKey(
         Page, related_name="references", on_delete=models.CASCADE, null=True, blank=True

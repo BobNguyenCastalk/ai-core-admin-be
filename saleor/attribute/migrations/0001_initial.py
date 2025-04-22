@@ -10,7 +10,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("product", "0136_add_attribute_type_and_page_to_attribute_relation"),
         ("page", "0017_pagetype"),
     ]
 

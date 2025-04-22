@@ -13,7 +13,6 @@ from ...utils.random_data import (
     create_page_type,
     create_pages,
     create_permission_groups,
-    create_products_by_schema,
     create_staffs,
     create_users,
 )
@@ -76,7 +75,6 @@ class Command(BaseCommand):
             "saleor.payment.gateways.dummy_credit_card.plugin."
             "DummyCreditCardGatewayPlugin",
         ]
-        create_images = not options["withoutimages"]
         for msg in create_channels():
             self.stdout.write(msg)
         self.stdout.write("Created warehouses")
@@ -84,7 +82,6 @@ class Command(BaseCommand):
             self.stdout.write(msg)
         for msg in create_pages():
             self.stdout.write(msg)
-        create_products_by_schema(self.placeholders_dir, create_images)
         self.stdout.write("Created products")
         for msg in create_users(user_password, 20):
             self.stdout.write(msg)

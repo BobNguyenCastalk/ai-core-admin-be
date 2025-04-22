@@ -3,7 +3,6 @@ from collections import defaultdict
 from ...attribute import models as attribute_models
 from ...menu import models as menu_models
 from ...page import models as page_models
-from ...product import models as product_models
 from ...site import models as site_models
 from ..core.dataloaders import DataLoader
 
@@ -55,22 +54,6 @@ class AttributeValueTranslationByIdAndLanguageCodeLoader(
     relation_name = "attribute_value_id"
 
 
-class CategoryTranslationByIdAndLanguageCodeLoader(
-    BaseTranslationByIdAndLanguageCodeLoader
-):
-    context_key = "category_translation_by_id_and_language_code"
-    model = product_models.CategoryTranslation
-    relation_name = "category_id"
-
-
-class CollectionTranslationByIdAndLanguageCodeLoader(
-    BaseTranslationByIdAndLanguageCodeLoader
-):
-    context_key = "collection_translation_by_id_and_language_code"
-    model = product_models.CollectionTranslation
-    relation_name = "collection_id"
-
-
 class MenuItemTranslationByIdAndLanguageCodeLoader(
     BaseTranslationByIdAndLanguageCodeLoader
 ):
@@ -86,21 +69,6 @@ class PageTranslationByIdAndLanguageCodeLoader(
     model = page_models.PageTranslation
     relation_name = "page_id"
 
-
-class ProductTranslationByIdAndLanguageCodeLoader(
-    BaseTranslationByIdAndLanguageCodeLoader
-):
-    context_key = "product_translation_by_id_and_language_code"
-    model = product_models.ProductTranslation
-    relation_name = "product_id"
-
-
-class ProductVariantTranslationByIdAndLanguageCodeLoader(
-    BaseTranslationByIdAndLanguageCodeLoader
-):
-    context_key = "product_variant_translation_by_id_and_language_code"
-    model = product_models.ProductVariantTranslation
-    relation_name = "product_variant_id"
 
 class SiteSettingsTranslationByIdAndLanguageCodeLoader(
     BaseTranslationByIdAndLanguageCodeLoader

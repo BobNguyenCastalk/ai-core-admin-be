@@ -77,7 +77,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("product", "0118_populate_product_variant_price"),
     ]
 
     operations = [

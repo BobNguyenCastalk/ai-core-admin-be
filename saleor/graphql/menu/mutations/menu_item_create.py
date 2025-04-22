@@ -6,7 +6,6 @@ from ....menu import models
 from ....menu.error_codes import MenuErrorCode
 from ....page import models as page_models
 from ....permission.enums import MenuPermissions
-from ....product import models as product_models
 from ....webhook.event_types import WebhookEventAsyncType
 from ...channel import ChannelContext
 from ...core import ResolveInfo
@@ -79,16 +78,10 @@ class MenuItemCreate(ModelMutation):
         cleaned_input = super().clean_input(info, instance, data, **kwargs)
 
         _validate_menu_item_instance(cleaned_input, "page", page_models.Page)
-        _validate_menu_item_instance(
-            cleaned_input, "collection", product_models.Collection
-        )
-        _validate_menu_item_instance(cleaned_input, "category", product_models.Category)
 
         items = [
             cleaned_input.get("page"),
-            cleaned_input.get("collection"),
             cleaned_input.get("url"),
-            cleaned_input.get("category"),
         ]
         items = [item for item in items if item is not None]
         if len(items) > 1:

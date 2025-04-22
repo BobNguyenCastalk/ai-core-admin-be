@@ -7,7 +7,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Optional,
-    Union,
 )
 
 import graphene
@@ -20,32 +19,24 @@ from ..account.models import User
 from ..attribute.models import AttributeValueTranslation
 from ..core.db.connection import allow_writer
 from ..core.prices import quantize_price, quantize_price_fields
-from ..core.utils import build_absolute_uri
 from ..core.utils.anonymization import (
-    anonymize_order,
     generate_fake_user,
 )
 from ..core.utils.json_serializer import CustomJsonEncoder
 from ..page.models import Page
-from ..product import ProductMediaTypes
-from ..product.models import Collection, Product, ProductMedia, ProductVariant
 from ..thumbnail.models import Thumbnail
 from . import traced_payload_generator
 from .event_types import WebhookEventAsyncType
 from .payload_serializers import PayloadSerializer
 from .serializers import (
     serialize_checkout_lines,
-    serialize_product_attributes,
-    serialize_variant_attributes,
 )
 
 if TYPE_CHECKING:
     from ..discount.models import Promotion
     from ..payment.interface import (
         PaymentData,
-        PaymentGatewayData,
         TransactionActionData,
-        TransactionProcessActionData,
     )
     from ..plugins.base_plugin import RequestorOrLazyObject
     from ..translation.models import Translation
@@ -359,31 +350,6 @@ def generate_customer_payload(
     return data
 
 
-@allow_writer()
-@traced_payload_generator
-def generate_collection_payload(
-    collection: "Collection", requestor: Optional["RequestorOrLazyObject"] = None
-):
-    serializer = PayloadSerializer()
-    data = serializer.serialize(
-        [collection],
-        fields=[
-            "name",
-            "description",
-            "background_image_alt",
-            "private_metadata",
-            "metadata",
-        ],
-        extra_dict_data={
-            "background_image": build_absolute_uri(collection.background_image.url)
-            if collection.background_image
-            else None,
-            "meta": generate_meta(requestor_data=generate_requestor(requestor)),
-        },
-    )
-    return data
-
-
 PRODUCT_FIELDS = (
     "name",
     "description",
@@ -419,77 +385,6 @@ def serialize_product_channel_listing_payload(channel_listings):
     return channel_listing_payload
 
 
-def _get_charge_taxes_for_product(product: "Product") -> bool:
-    charge_taxes = False
-    return charge_taxes
-
-
-@allow_writer()
-@traced_payload_generator
-def generate_product_payload(
-    product: "Product", requestor: Optional["RequestorOrLazyObject"] = None
-):
-    product = Product.objects.prefetched_for_webhook().get(pk=product.pk)
-    serializer = PayloadSerializer(
-        extra_model_fields={"ProductVariant": ("quantity", "quantity_allocated")}
-    )
-    product_payload = serializer.serialize(
-        [product],
-        fields=PRODUCT_FIELDS,
-        additional_fields={
-            "category": (lambda p: p.category, ("name", "slug")),
-            "collections": (lambda p: p.collections.all(), ("name", "slug")),
-        },
-        extra_dict_data={
-            "meta": generate_meta(requestor_data=generate_requestor(requestor)),
-            "attributes": serialize_product_attributes(product),
-            "media": [
-                {
-                    "alt": media_obj.alt,
-                    "url": (
-                        build_absolute_uri(media_obj.image.url)
-                        if media_obj.type == ProductMediaTypes.IMAGE
-                        else media_obj.external_url
-                    ),
-                }
-                for media_obj in product.media.all()
-            ],
-            "charge_taxes": _get_charge_taxes_for_product(product),
-            "channel_listings": json.loads(
-                serialize_product_channel_listing_payload(
-                    product.channel_listings.all()
-                )
-            ),
-            "variants": lambda x: json.loads(
-                generate_product_variant_payload(x, with_meta=False)
-            ),
-        },
-    )
-    return product_payload
-
-
-@allow_writer()
-@traced_payload_generator
-def generate_product_deleted_payload(
-    product: "Product", variants_id, requestor: Optional["RequestorOrLazyObject"] = None
-):
-    serializer = PayloadSerializer()
-    product_fields = PRODUCT_FIELDS
-    product_variant_ids = [
-        graphene.Node.to_global_id("ProductVariant", pk) for pk in variants_id
-    ]
-    product_payload = serializer.serialize(
-        [product],
-        fields=product_fields,
-        extra_dict_data={
-            "charge_taxes": _get_charge_taxes_for_product(product),
-            "meta": generate_meta(requestor_data=generate_requestor(requestor)),
-            "variants": list(product_variant_ids),
-        },
-    )
-    return product_payload
-
-
 PRODUCT_VARIANT_FIELDS = (
     "sku",
     "name",
@@ -514,86 +409,6 @@ def generate_product_variant_listings_payload(variant_channel_listings):
         extra_dict_data={"channel_slug": lambda vch: vch.channel.slug},
     )
     return channel_listing_payload
-
-
-@allow_writer()
-@traced_payload_generator
-def generate_product_variant_media_payload(product_variant):
-    return [
-        {
-            "alt": media_obj.media.alt,
-            "url": (
-                build_absolute_uri(media_obj.media.image.url)
-                if media_obj.media.type == ProductMediaTypes.IMAGE
-                else media_obj.media.external_url
-            ),
-        }
-        for media_obj in product_variant.variant_media.all()
-    ]
-
-
-@allow_writer()
-@traced_payload_generator
-def generate_product_variant_with_stock_payload(
-    stocks, requestor: Optional["RequestorOrLazyObject"] = None
-):
-    serializer = PayloadSerializer()
-    extra_dict_data = {
-        "product_id": lambda v: graphene.Node.to_global_id(
-            "Product", v.product_variant.product_id
-        ),
-        "product_variant_id": lambda v: graphene.Node.to_global_id(
-            "ProductVariant", v.product_variant_id
-        ),
-        "product_slug": lambda v: v.product_variant.product.slug,
-        "meta": generate_meta(requestor_data=generate_requestor(requestor)),
-    }
-    return serializer.serialize(stocks, fields=[], extra_dict_data=extra_dict_data)
-
-
-@allow_writer()
-@traced_payload_generator
-def generate_product_variant_payload(
-    product_variants: Iterable["ProductVariant"],
-    requestor: Optional["RequestorOrLazyObject"] = None,
-    with_meta: bool = True,
-):
-    if (
-        product_variants_with_prefetch
-        := ProductVariant.objects.prefetched_for_webhook().filter(
-            pk__in=[variant.pk for variant in product_variants]
-        )
-    ):
-        product_variants = product_variants_with_prefetch
-
-    extra_dict_data = {
-        "id": lambda v: v.get_global_id(),
-        "attributes": lambda v: serialize_variant_attributes(v),
-        "product_id": lambda v: graphene.Node.to_global_id("Product", v.product_id),
-        "media": lambda v: generate_product_variant_media_payload(v),
-        "channel_listings": lambda v: json.loads(
-            generate_product_variant_listings_payload(v.channel_listings.all())
-        ),
-    }
-
-    if with_meta:
-        extra_dict_data["meta"] = generate_meta(
-            requestor_data=generate_requestor(requestor)
-        )
-
-    serializer = PayloadSerializer()
-    payload = serializer.serialize(
-        product_variants,
-        fields=PRODUCT_VARIANT_FIELDS,
-        extra_dict_data=extra_dict_data,
-    )
-    return payload
-
-
-@allow_writer()
-@traced_payload_generator
-def generate_product_variant_stocks_payload(product_variant: "ProductVariant"):
-    return product_variant.stocks.aggregate(Sum("quantity"))["quantity__sum"] or 0
 
 
 @allow_writer()
@@ -677,9 +492,6 @@ def generate_sample_payload(event_name: str) -> Optional[dict]:
     if event_name in user_events:
         user = generate_fake_user()
         payload = generate_customer_payload(user)
-    elif event_name == WebhookEventAsyncType.PRODUCT_CREATED:
-        product = _get_sample_object(Product.objects.all())
-        payload = generate_product_payload(product) if product else None
     elif event_name in pages_events:
         page = _get_sample_object(Page.objects.all())
         if page:
@@ -792,10 +604,3 @@ def generate_transaction_action_request_payload(
 def generate_thumbnail_payload(thumbnail: Thumbnail):
     thumbnail_id = graphene.Node.to_global_id("Thumbnail", thumbnail.id)
     return json.dumps({"id": thumbnail_id})
-
-
-@allow_writer()
-@traced_payload_generator
-def generate_product_media_payload(media: ProductMedia):
-    product_media_id = graphene.Node.to_global_id("ProductMedia", media.id)
-    return json.dumps({"id": product_media_id})

@@ -18,7 +18,6 @@ from ...menu import error_codes as menu_error_codes
 from ...page import error_codes as page_error_codes
 from ...permission.enums import get_permissions_enum_list
 from ...plugins import error_codes as plugin_error_codes
-from ...product import error_codes as product_error_codes
 from ...site import error_codes as site_error_codes
 from ...thumbnail import IconThumbnailFormat, ThumbnailFormat
 from ...translations import error_codes as translatable_error_codes
@@ -220,22 +219,6 @@ PermissionGroupErrorCode = graphene.Enum.from_enum(
     account_error_codes.PermissionGroupErrorCode
 )
 PermissionGroupErrorCode.doc_category = DOC_CATEGORY_USERS
-
-ProductErrorCode = graphene.Enum.from_enum(product_error_codes.ProductErrorCode)
-ProductErrorCode.doc_category = DOC_CATEGORY_PRODUCTS
-
-ProductBulkCreateErrorCode = graphene.Enum.from_enum(
-    product_error_codes.ProductBulkCreateErrorCode
-)
-ProductBulkCreateErrorCode.doc_category = DOC_CATEGORY_PRODUCTS
-
-ProductVariantBulkErrorCode = graphene.Enum.from_enum(
-    product_error_codes.ProductVariantBulkErrorCode
-)
-ProductVariantBulkErrorCode.doc_category = DOC_CATEGORY_PRODUCTS
-
-CollectionErrorCode = graphene.Enum.from_enum(product_error_codes.CollectionErrorCode)
-CollectionErrorCode.doc_category = DOC_CATEGORY_PRODUCTS
 
 SendConfirmationEmailErrorCode = graphene.Enum.from_enum(
     account_error_codes.SendConfirmationEmailErrorCode
