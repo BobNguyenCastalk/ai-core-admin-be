@@ -23,7 +23,6 @@ from ..core.utils.anonymization import (
 )
 from ..core.utils.json_serializer import CustomJsonEncoder
 from ..page.models import Page
-from ..thumbnail.models import Thumbnail
 from . import traced_payload_generator
 from .event_types import WebhookEventAsyncType
 from .payload_serializers import PayloadSerializer
@@ -594,10 +593,3 @@ def generate_transaction_action_request_payload(
         "meta": generate_meta(requestor_data=generate_requestor(requestor)),
     }
     return json.dumps(payload, cls=CustomJsonEncoder)
-
-
-@allow_writer()
-@traced_payload_generator
-def generate_thumbnail_payload(thumbnail: Thumbnail):
-    thumbnail_id = graphene.Node.to_global_id("Thumbnail", thumbnail.id)
-    return json.dumps({"id": thumbnail_id})

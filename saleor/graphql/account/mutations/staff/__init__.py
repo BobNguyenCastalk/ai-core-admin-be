@@ -7,8 +7,6 @@ from .customer_update import CustomerUpdate
 from .staff_create import StaffCreate
 from .staff_delete import StaffDelete
 from .staff_update import StaffUpdate
-from .user_avatar_delete import UserAvatarDelete
-from .user_avatar_update import UserAvatarUpdate
 
 __all__ = [
     "AddressCreate",
@@ -20,6 +18,4 @@ __all__ = [
     "StaffCreate",
     "StaffDelete",
     "StaffUpdate",
-    "UserAvatarDelete",
-    "UserAvatarUpdate",
 ]

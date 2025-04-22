@@ -17,18 +17,13 @@ from ...menu import error_codes as menu_error_codes
 from ...page import error_codes as page_error_codes
 from ...permission.enums import get_permissions_enum_list
 from ...plugins import error_codes as plugin_error_codes
-from ...thumbnail import IconThumbnailFormat, ThumbnailFormat
 from ...translations import error_codes as translatable_error_codes
 from ...webhook import error_codes as webhook_error_codes
 from ..notifications import error_codes as external_notifications_error_codes
 from .doc_category import (
     DOC_CATEGORY_APPS,
-    DOC_CATEGORY_ATTRIBUTES,
     DOC_CATEGORY_CHANNELS,
-    DOC_CATEGORY_GIFT_CARDS,
-    DOC_CATEGORY_ORDERS,
     DOC_CATEGORY_PAGES,
-    DOC_CATEGORY_PRODUCTS,
     DOC_CATEGORY_USERS,
     DOC_CATEGORY_WEBHOOKS,
 )
@@ -94,12 +89,6 @@ PermissionEnum = graphene.Enum("PermissionEnum", get_permissions_enum_list())
 PermissionEnum.doc_category = DOC_CATEGORY_USERS
 
 TimePeriodTypeEnum = to_enum(TimePeriodType)
-ThumbnailFormatEnum = to_enum(ThumbnailFormat)
-IconThumbnailFormatEnum = to_enum(
-    IconThumbnailFormat,
-    type_name="IconThumbnailFormatEnum",
-    description=IconThumbnailFormat.__doc__,
-)
 
 # unit enums
 MeasurementUnitsEnum = to_enum(MeasurementUnits)
@@ -164,18 +153,6 @@ MetadataErrorCode = graphene.Enum.from_enum(core_error_codes.MetadataErrorCode)
 
 PageErrorCode = graphene.Enum.from_enum(page_error_codes.PageErrorCode)
 PageErrorCode.doc_category = DOC_CATEGORY_PAGES
-
-
-ProductTranslateErrorCode = graphene.Enum.from_enum(
-    translatable_error_codes.ProductTranslateErrorCode
-)
-ProductTranslateErrorCode.doc_category = DOC_CATEGORY_PRODUCTS
-
-
-ProductVariantTranslateErrorCode = graphene.Enum.from_enum(
-    translatable_error_codes.ProductVariantTranslateErrorCode
-)
-ProductVariantTranslateErrorCode.doc_category = DOC_CATEGORY_PRODUCTS
 
 PermissionGroupErrorCode = graphene.Enum.from_enum(
     account_error_codes.PermissionGroupErrorCode

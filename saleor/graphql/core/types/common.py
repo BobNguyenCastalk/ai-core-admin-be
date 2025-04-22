@@ -19,7 +19,6 @@ from ...core.doc_category import (
 from ...core.scalars import DateTime, Decimal
 from ..descriptions import (
     ADDED_IN_36,
-    ADDED_IN_312,
     ADDED_IN_314,
     DEPRECATED_IN_3X_FIELD,
     PREVIEW_FEATURE,
@@ -29,7 +28,6 @@ from ..enums import (
     AppErrorCode,
     ChannelErrorCode,
     ExternalNotificationTriggerErrorCode,
-    IconThumbnailFormatEnum,
     JobStatusEnum,
     LanguageCodeEnum,
     MenuErrorCode,
@@ -39,8 +37,6 @@ from ..enums import (
     PermissionGroupErrorCode,
     PluginErrorCode,
     SendConfirmationEmailErrorCode,
-    ShopErrorCode,
-    ThumbnailFormatEnum,
     TimePeriodTypeEnum,
     TranslationErrorCode,
     UploadErrorCode,
@@ -405,38 +401,6 @@ class Job(graphene.Interface):
 class TimePeriod(graphene.ObjectType):
     amount = graphene.Int(description="The length of the period.", required=True)
     type = TimePeriodTypeEnum(description="The type of the period.", required=True)
-
-
-class ThumbnailField(graphene.Field):
-    size = graphene.Int(
-        description=(
-            "Desired longest side the image in pixels. Defaults to 4096. "
-            "Images are never cropped. "
-            "Pass 0 to retrieve the original size (not recommended)."
-        ),
-    )
-    format = ThumbnailFormatEnum(
-        default_value="ORIGINAL",
-        description=(
-            "The format of the image. When not provided, format of the original "
-            "image will be used." + ADDED_IN_36
-        ),
-    )
-
-    def __init__(self, of_type=Image, *args, **kwargs):
-        kwargs["size"] = self.size
-        kwargs["format"] = self.format
-        super().__init__(of_type, *args, **kwargs)
-
-
-class IconThumbnailField(ThumbnailField):
-    format = IconThumbnailFormatEnum(
-        default_value="ORIGINAL",
-        description=(
-            "The format of the image. When not provided, format of the original "
-            "image will be used." + ADDED_IN_314 + PREVIEW_FEATURE
-        ),
-    )
 
 
 class MediaInput(graphene.InputObjectType):

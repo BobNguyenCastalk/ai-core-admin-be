@@ -8,7 +8,6 @@ from ...account.models import User
 from ...channel.models import Channel
 from ...menu.models import MenuItemTranslation
 from ...page.models import PageTranslation
-from ...thumbnail.views import TYPE_TO_MODEL_DATA_MAPPING
 from ...webhook.const import MAX_FILTERABLE_CHANNEL_SLUGS_LIMIT
 from ...webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
 from ..account.types import User as UserType
@@ -25,9 +24,7 @@ from ..core.descriptions import (
     ADDED_IN_37,
     ADDED_IN_38,
     ADDED_IN_313,
-    ADDED_IN_314,
     ADDED_IN_315,
-    ADDED_IN_316,
     PREVIEW_FEATURE,
 )
 from ..core.doc_category import (
@@ -706,14 +703,6 @@ class ThumbnailCreated(SubscriptionObjectType):
         _, thumbnail = root
         type = thumbnail.instance.__class__.__name__
         return graphene.Node.to_global_id(type, thumbnail.instance.id)
-
-    @staticmethod
-    def resolve_media_url(root, info: ResolveInfo):
-        _, thumbnail = root
-        type = thumbnail.instance.__class__.__name__
-        image_field = TYPE_TO_MODEL_DATA_MAPPING[type].image_field
-        image = getattr(thumbnail.instance, image_field, None)
-        return image.url if image else None
 
 
 SYNC_WEBHOOK_TYPES_MAP = {

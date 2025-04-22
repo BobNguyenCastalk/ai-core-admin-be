@@ -14,7 +14,6 @@ from promise.promise import Promise
 
 from ..core.models import EventDelivery
 from ..graphql.core import ResolveInfo, SaleorContext
-from ..thumbnail.models import Thumbnail
 from .models import PluginConfiguration
 
 if TYPE_CHECKING:
@@ -1106,12 +1105,6 @@ class BasePlugin:
     # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
     # Webhook-related functionality will be moved from the plugin to core modules.
     staff_set_password_requested: Callable[["User", str, str, str, None], None]
-
-    # Trigger when thumbnail is updated.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    thumbnail_created: Callable[["Thumbnail", Any], Any]
 
     # Trigger when tracking number is updated.
     tracking_number_updated: Callable[["Fulfillment", Any], Any]

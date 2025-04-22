@@ -12,7 +12,6 @@ from .plugins.views import (
     handle_plugin_per_channel_webhook,
     handle_plugin_webhook,
 )
-from .thumbnail.views import handle_thumbnail
 
 urlpatterns = [
     re_path(
@@ -35,14 +34,6 @@ urlpatterns = [
         r"^plugins/(?P<plugin_id>[.0-9A-Za-z_\-]+)/",
         handle_plugin_webhook,
         name="plugins",
-    ),
-    re_path(
-        (
-            r"^thumbnail/(?P<instance_id>[.0-9A-Za-z_=\-]+)/(?P<size>\d+)/"
-            r"(?:(?P<format>[a-zA-Z]+)/)?"
-        ),
-        handle_thumbnail,
-        name="thumbnail",
     ),
     re_path(r"^\.well-known/jwks.json$", jwks, name="jwks"),
 ]

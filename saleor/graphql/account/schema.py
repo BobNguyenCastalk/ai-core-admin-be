@@ -61,8 +61,6 @@ from .mutations.staff import (
     StaffCreate,
     StaffDelete,
     StaffUpdate,
-    UserAvatarDelete,
-    UserAvatarUpdate,
 )
 from .resolvers import (
     resolve_address,
@@ -303,8 +301,6 @@ class AccountMutations(graphene.ObjectType):
     staff_delete = StaffDelete.Field()
     staff_bulk_delete = StaffBulkDelete.Field()
 
-    user_avatar_update = UserAvatarUpdate.Field()
-    user_avatar_delete = UserAvatarDelete.Field()
     user_bulk_set_active = UserBulkSetActive.Field()
 
     # Permission group mutations

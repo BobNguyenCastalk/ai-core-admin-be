@@ -15,11 +15,6 @@ from ...permission.enums import (
     AccountPermissions,
     AppPermission,
 )
-from ...thumbnail.utils import (
-    get_image_or_proxy_url,
-    get_thumbnail_format,
-    get_thumbnail_size,
-)
 from ..account.utils import check_is_owner_or_has_one_of_perms
 from ..app.dataloaders import AppByIdLoader, get_app_promise
 from ..app.types import App
@@ -39,18 +34,16 @@ from ..core.descriptions import (
 from ..core.doc_category import DOC_CATEGORY_USERS
 from ..core.enums import LanguageCodeEnum
 from ..core.federation import federated_entity, resolve_federation_references
-from ..core.fields import ConnectionField, PermissionsField
+from ..core.fields import PermissionsField
 from ..core.scalars import UUID, DateTime
 from ..core.tracing import traced_resolver
 from ..core.types import (
     BaseInputObjectType,
     BaseObjectType,
     CountryDisplay,
-    Image,
     ModelObjectType,
     NonNullList,
     Permission,
-    ThumbnailField,
 )
 from ..core.utils import from_global_id_or_error, str_to_enum, to_global_id_or_none
 from ..meta.types import ObjectWithMetadata
@@ -62,7 +55,6 @@ from .dataloaders import (
     AddressByIdLoader,
     CustomerEventsByUserLoader,
     RestrictedChannelAccessByUserIdLoader,
-    ThumbnailByUserIdSizeAndFormatLoader,
 )
 from .enums import CountryCodeEnum, CustomerEventsEnum
 from .utils import can_user_manage_group, get_groups_which_user_can_manage
@@ -361,7 +353,6 @@ class User(ModelObjectType[models.User]):
         + ADDED_IN_314
         + PREVIEW_FEATURE,
     )
-    avatar = ThumbnailField(description="The avatar of the user.")
     events = PermissionsField(
         NonNullList(CustomerEvent),
         description="List of events associated with the user.",
@@ -435,34 +426,6 @@ class User(ModelObjectType[models.User]):
     @staticmethod
     def resolve_events(root: models.User, info: ResolveInfo):
         return CustomerEventsByUserLoader(info.context).load(root.id)
-
-    @staticmethod
-    def resolve_avatar(
-        root: models.User,
-        info: ResolveInfo,
-        size: Optional[int] = None,
-        format: Optional[str] = None,
-    ):
-        if not root.avatar:
-            return
-
-        if size == 0:
-            return Image(url=root.avatar.url, alt=None)
-
-        format = get_thumbnail_format(format)
-        selected_size = get_thumbnail_size(size)
-
-        def _resolve_avatar(thumbnail):
-            url = get_image_or_proxy_url(
-                thumbnail, str(root.uuid), "User", selected_size, format
-            )
-            return Image(url=url, alt=None)
-
-        return (
-            ThumbnailByUserIdSizeAndFormatLoader(info.context)
-            .load((root.id, selected_size, format))
-            .then(_resolve_avatar)
-        )
 
     @staticmethod
     def resolve_stored_payment_sources(

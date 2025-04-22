@@ -4,7 +4,6 @@ import re
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
-from ..thumbnail import ICON_MIME_TYPES
 from .error_codes import AppErrorCode
 
 
@@ -38,9 +37,3 @@ def brand_validator(brand):
             "Missing required field: logo.default.", code=AppErrorCode.REQUIRED.value
         )
     image_url_validator(logo_url)
-    filetype = mimetypes.guess_type(logo_url)[0]
-    if filetype not in ICON_MIME_TYPES:
-        raise ValidationError(
-            "Invalid file type for field: logo.default.",
-            code=AppErrorCode.INVALID_URL_FORMAT.value,
-        )
