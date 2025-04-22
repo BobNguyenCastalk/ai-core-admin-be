@@ -8,16 +8,11 @@ from ....core.utils import build_absolute_uri
 from ...account.enums import AddressTypeEnum
 from ...core.doc_category import (
     DOC_CATEGORY_APPS,
-    DOC_CATEGORY_ATTRIBUTES,
     DOC_CATEGORY_AUTH,
     DOC_CATEGORY_CHANNELS,
-    DOC_CATEGORY_GIFT_CARDS,
     DOC_CATEGORY_MENU,
-    DOC_CATEGORY_ORDERS,
     DOC_CATEGORY_PAGES,
     DOC_CATEGORY_PRODUCTS,
-    DOC_CATEGORY_SHOP,
-    DOC_CATEGORY_TAXES,
     DOC_CATEGORY_USERS,
     DOC_CATEGORY_WEBHOOKS,
 )
@@ -32,11 +27,6 @@ from ..descriptions import (
 from ..enums import (
     AccountErrorCode,
     AppErrorCode,
-    AttributeBulkCreateErrorCode,
-    AttributeBulkUpdateErrorCode,
-    AttributeErrorCode,
-    AttributeTranslateErrorCode,
-    AttributeValueTranslateErrorCode,
     ChannelErrorCode,
     ExternalNotificationTriggerErrorCode,
     IconThumbnailFormatEnum,
@@ -170,13 +160,6 @@ class AppError(Error):
         doc_category = DOC_CATEGORY_APPS
 
 
-class AttributeError(Error):
-    code = AttributeErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_ATTRIBUTES
-
-
 class StaffError(AccountError):
     permissions = NonNullList(
         PermissionEnum,
@@ -261,27 +244,6 @@ class PermissionGroupError(Error):
     class Meta:
         doc_category = DOC_CATEGORY_USERS
 
-
-class AttributeBulkCreateError(BulkError):
-    code = AttributeBulkCreateErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_ATTRIBUTES
-
-
-class AttributeBulkUpdateError(BulkError):
-    code = AttributeBulkUpdateErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_ATTRIBUTES
-
-
-class ShopError(Error):
-    code = ShopErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_SHOP
-
 class PageError(Error):
     code = PageErrorCode(description="The error code.", required=True)
     attributes = NonNullList(
@@ -339,16 +301,6 @@ class TranslationBulkError(BulkError):
 class SeoInput(graphene.InputObjectType):
     title = graphene.String(description="SEO title.")
     description = graphene.String(description="SEO description.")
-
-
-class AttributeBulkTranslateError(BulkError):
-    code = AttributeTranslateErrorCode(description="The error code.", required=True)
-
-
-class AttributeValueBulkTranslateError(BulkError):
-    code = AttributeValueTranslateErrorCode(
-        description="The error code.", required=True
-    )
 
 
 class Weight(graphene.ObjectType):
@@ -432,19 +384,6 @@ class IntRangeInput(graphene.InputObjectType):
 class TimePeriodInputType(graphene.InputObjectType):
     amount = graphene.Int(description="The length of the period.", required=True)
     type = TimePeriodTypeEnum(description="The type of the period.", required=True)
-
-
-class TaxType(BaseObjectType):
-    """Representation of tax types fetched from tax gateway."""
-
-    description = graphene.String(description="Description of the tax type.")
-    tax_code = graphene.String(
-        description="External tax code used to identify given tax group."
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_TAXES
-
 
 class Job(graphene.Interface):
     status = JobStatusEnum(description="Job status.", required=True)

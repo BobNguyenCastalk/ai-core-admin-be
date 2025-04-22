@@ -1,6 +1,5 @@
 import graphene
 
-from ...attribute.models import Attribute, AttributeValue
 from ...menu.models import MenuItem
 from ...page.models import Page
 from ...permission.enums import SitePermissions
@@ -13,8 +12,6 @@ from ..menu.resolvers import resolve_menu_items
 from ..translations import types as translation_types
 
 TYPES_TRANSLATIONS_MAP = {
-    Attribute: translation_types.AttributeTranslatableContent,
-    AttributeValue: translation_types.AttributeValueTranslatableContent,
     Page: translation_types.PageTranslatableContent,
     MenuItem: translation_types.MenuItemTranslatableContent,
 }
@@ -39,8 +36,6 @@ class TranslatableItemConnection(CountableConnection):
 
 
 class TranslatableKinds(graphene.Enum):
-    ATTRIBUTE = "Attribute"
-    ATTRIBUTE_VALUE = "AttributeValue"
     MENU_ITEM = "MenuItem"
     PAGE = "Page"
     SALE = "Sale"
@@ -84,8 +79,6 @@ class TranslationQueries(graphene.ObjectType):
         if not _type == kind:
             return None
         models = {
-            TranslatableKinds.ATTRIBUTE.value: Attribute,  # type: ignore[attr-defined]
-            TranslatableKinds.ATTRIBUTE_VALUE.value: AttributeValue,  # type: ignore[attr-defined] # noqa: E501
             TranslatableKinds.PAGE.value: Page,  # type: ignore[attr-defined]
             TranslatableKinds.MENU_ITEM.value: MenuItem,  # type: ignore[attr-defined]
         }

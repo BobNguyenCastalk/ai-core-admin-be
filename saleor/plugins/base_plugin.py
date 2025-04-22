@@ -10,7 +10,6 @@ from django.utils.functional import SimpleLazyObject
 from graphene import Mutation
 from graphql import GraphQLError
 from graphql.execution import ExecutionResult
-from prices import TaxedMoney
 from promise.promise import Promise
 
 from ..core.models import EventDelivery
@@ -21,33 +20,27 @@ from .models import PluginConfiguration
 if TYPE_CHECKING:
     from ..account.models import Address, Group, User
     from ..app.models import App
-    from ..attribute.models import Attribute, AttributeValue
     from ..channel.models import Channel
     from ..checkout.fetch import CheckoutInfo, CheckoutLineInfo
     from ..checkout.models import Checkout
     from ..core.middleware import Requestor
     from ..core.notify import NotifyEventType
-    from ..core.taxes import TaxData, TaxType
     from ..core.utils.translations import Translation
     from ..csv.models import ExportFile
     from ..discount.models import Promotion, PromotionRule, Voucher, VoucherCode
-    from ..giftcard.models import GiftCard
     from ..menu.models import Menu, MenuItem
-    from ..order.models import Fulfillment, Order, OrderLine
-    from ..payment.interface import PaymentGatewayData, TransactionSessionData
+    from ..order.models import Fulfillment, Order
+    from ..payment.interface import PaymentGatewayData
     from ..payment.models import TransactionItem
     from ..product.models import (
-        Category,
         Collection,
         Product,
         ProductMedia,
-        ProductType,
         ProductVariant,
     )
     from ..shipping.interface import ShippingMethodData
     from ..shipping.models import ShippingMethod, ShippingZone
     from ..site.models import SiteSettings
-    from ..tax.models import TaxClass
     from ..warehouse.models import Stock, Warehouse
 
 PluginConfigurationType = list[dict]
@@ -264,123 +257,10 @@ class BasePlugin:
     # Webhook-related functionality will be moved from the plugin to core modules.
     app_status_changed: Callable[["App", None], None]
 
-    # Trigger when attribute is created.
-    #
-    # Overwrite this method if you need to trigger specific logic after an attribute is
-    # installed.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    attribute_created: Callable[["Attribute", None, None], None]
-
-    # Trigger when attribute is deleted.
-    #
-    # Overwrite this method if you need to trigger specific logic after an attribute is
-    # deleted.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    attribute_deleted: Callable[["Attribute", None, None], None]
-
-    # Trigger when attribute is updated.
-    #
-    # Overwrite this method if you need to trigger specific logic after an attribute is
-    # updated.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    attribute_updated: Callable[["Attribute", None, None], None]
-
-    # Trigger when attribute value is created.
-    #
-    # Overwrite this method if you need to trigger specific logic after an attribute
-    # value is installed.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    attribute_value_created: Callable[["AttributeValue", None], None]
-
-    # Trigger when attribute value is deleted.
-    #
-    # Overwrite this method if you need to trigger specific logic after an attribute
-    # value is deleted.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    attribute_value_deleted: Callable[["AttributeValue", None, None], None]
-
-    # Trigger when attribute value is updated.
-    #
-    # Overwrite this method if you need to trigger specific logic after an attribute
-    # value is updated.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    attribute_value_updated: Callable[["AttributeValue", None], None]
-
     # Authenticate user which should be assigned to the request.
     #
     # Overwrite this method if the plugin handles authentication flow.
     authenticate_user: Callable[[SaleorContext, Optional["User"]], Union["User", None]]
-
-    # Calculate order line total.
-    #
-    # Overwrite this method if you need to apply specific logic for the calculation
-    # of a order line total. Return TaxedMoney.
-    calculate_order_line_total: Callable[
-        ["Order", "OrderLine", "ProductVariant", "Product", TaxedMoney], TaxedMoney
-    ]
-
-    # Calculate order line unit price.
-    #
-    # Update order line unit price in the order in case of changes in draft order.
-    # Return TaxedMoney.
-    # Overwrite this method if you need to apply specific logic for the calculation
-    # of an order line unit price.
-    calculate_order_line_unit: Callable[
-        ["Order", "OrderLine", "ProductVariant", "Product", TaxedMoney], TaxedMoney
-    ]
-
-    # Calculate the shipping costs for the order.
-    #
-    # Update shipping costs in the order in case of changes in shipping address or
-    # changes in draft order. Return TaxedMoney.
-    calculate_order_shipping: Callable[["Order", TaxedMoney], TaxedMoney]
-
-    # Calculate order total.
-    #
-    # Overwrite this method if you need to apply specific logic for the calculation
-    # of a order total. Return TaxedMoney.
-    calculate_order_total: Callable[
-        ["Order", list["OrderLine"], TaxedMoney], TaxedMoney
-    ]
-
-    # Trigger when category is created.
-    #
-    # Overwrite this method if you need to trigger specific logic after a category is
-    # created.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    category_created: Callable[["Category", None], None]
-
-    # Trigger when category is deleted.
-    #
-    # Overwrite this method if you need to trigger specific logic after a category is
-    # deleted.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    category_deleted: Callable[["Category", None, None], None]
-
-    # Trigger when category is updated.
-    #
-    # Overwrite this method if you need to trigger specific logic after a category is
-    # updated.
-    #
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    category_updated: Callable[["Category", None], None]
 
     # Trigger when channel is created.
     #

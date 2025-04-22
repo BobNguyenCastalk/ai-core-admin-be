@@ -4,9 +4,6 @@ import graphene
 from django.conf import settings
 from django.db.models import Model
 
-from ...attribute import AttributeInputType
-from ...attribute import models as attribute_models
-from ...attribute.models import AttributeValue
 from ...menu import models as menu_models
 from ...page import models as page_models
 from ..channel import ChannelContext
@@ -24,19 +21,6 @@ from ..core.types import LanguageDisplay, ModelObjectType, NonNullList
 from ..core.utils import str_to_enum
 from ..menu.dataloaders import MenuItemByIdLoader
 from .fields import TranslationField
-
-
-def get_translatable_attribute_values(attributes: list) -> list[AttributeValue]:
-    """Filter the list of passed attributes.
-
-    Return those which are translatable attributes.
-    """
-    translatable_values: list[AttributeValue] = []
-    for assignment in attributes:
-        attr = assignment["attribute"]
-        if attr.input_type in AttributeInputType.TRANSLATABLE_ATTRIBUTES:
-            translatable_values.extend(assignment["values"])
-    return translatable_values
 
 
 T = TypeVar("T", bound=Model)
@@ -64,112 +48,6 @@ class BaseTranslationType(ModelObjectType[T]):
         return LanguageDisplay(
             code=LanguageCodeEnum[str_to_enum(root.language_code)], language=language
         )
-
-
-class AttributeValueTranslation(
-    BaseTranslationType[attribute_models.AttributeValueTranslation]
-):
-    id = graphene.GlobalID(
-        required=True, description="The ID of the attribute value translation."
-    )
-    name = graphene.String(
-        required=True, description="Translated attribute value name."
-    )
-    rich_text = JSONString(
-        description="Translated rich-text attribute value." + RICH_CONTENT
-    )
-    plain_text = graphene.String(description="Translated plain text attribute value .")
-    translatable_content = graphene.Field(
-        "saleor.graphql.translations.types.AttributeValueTranslatableContent",
-        description="Represents the attribute value fields to translate."
-        + ADDED_IN_314,
-    )
-
-    class Meta:
-        model = attribute_models.AttributeValueTranslation
-        interfaces = [graphene.relay.Node]
-        description = "Represents attribute value translations."
-
-
-
-class AttributeTranslation(BaseTranslationType[attribute_models.AttributeTranslation]):
-    id = graphene.GlobalID(
-        required=True, description="The ID of the attribute translation."
-    )
-    name = graphene.String(required=True, description="Translated attribute name.")
-    translatable_content = graphene.Field(
-        "saleor.graphql.translations.types.AttributeTranslatableContent",
-        description="Represents the attribute fields to translate." + ADDED_IN_314,
-    )
-
-    class Meta:
-        model = attribute_models.AttributeTranslation
-        interfaces = [graphene.relay.Node]
-        description = "Represents attribute translations."
-
-
-class AttributeTranslatableContent(ModelObjectType[attribute_models.Attribute]):
-    id = graphene.GlobalID(
-        required=True, description="The ID of the attribute translatable content."
-    )
-    attribute_id = graphene.ID(
-        required=True,
-        description="The ID of the attribute to translate." + ADDED_IN_314,
-    )
-    name = graphene.String(
-        required=True, description="Name of the attribute to translate."
-    )
-    translation = TranslationField(AttributeTranslation, type_name="attribute")
-
-
-    @staticmethod
-    def resolve_attribute(root: attribute_models.Attribute, _info):
-        return root
-
-    @staticmethod
-    def resolve_attribute_id(root: attribute_models.Attribute, _info):
-        return graphene.Node.to_global_id("Attribute", root.id)
-
-
-class AttributeValueTranslatableContent(
-    ModelObjectType[attribute_models.AttributeValue]
-):
-    id = graphene.GlobalID(
-        required=True, description="The ID of the attribute value translatable content."
-    )
-    attribute_value_id = graphene.ID(
-        required=True,
-        description="The ID of the attribute value to translate." + ADDED_IN_314,
-    )
-    name = graphene.String(
-        required=True,
-        description="Name of the attribute value to translate.",
-    )
-    rich_text = JSONString(description="Attribute value." + RICH_CONTENT)
-    plain_text = graphene.String(description="Attribute plain text value.")
-    translation = TranslationField(
-        AttributeValueTranslation, type_name="attribute value"
-    )
-    attribute = graphene.Field(
-        AttributeTranslatableContent,
-        description="Associated attribute that can be translated." + ADDED_IN_39,
-    )
-
-    class Meta:
-        model = attribute_models.AttributeValue
-        interfaces = [graphene.relay.Node]
-        description = (
-            "Represents attribute value's original translatable fields "
-            "and related translations."
-        )
-
-    @staticmethod
-    def resolve_attribute_value(root: attribute_models.AttributeValue, _info):
-        return root
-
-    @staticmethod
-    def resolve_attribute_value_id(root: attribute_models.AttributeValue, _info):
-        return graphene.Node.to_global_id("AttributeValue", root.id)
 
 
 class PageTranslation(BaseTranslationType[page_models.PageTranslation]):
@@ -214,11 +92,6 @@ class PageTranslatableContent(ModelObjectType[page_models.Page]):
         deprecation_reason=f"{DEPRECATED_IN_3X_FIELD} Use the `content` field instead.",
     )
     translation = TranslationField(PageTranslation, type_name="page")
-    attribute_values = NonNullList(
-        AttributeValueTranslatableContent,
-        required=True,
-        description="List of page content attribute values that can be translated.",
-    )
 
     class Meta:
         model = page_models.Page

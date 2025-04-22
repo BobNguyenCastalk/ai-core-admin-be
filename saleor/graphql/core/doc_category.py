@@ -32,7 +32,6 @@ DOC_CATEGORY_MAP = {
     "attribute.Attribute": DOC_CATEGORY_ATTRIBUTES,
     "attribute.AttributeTranslation": DOC_CATEGORY_ATTRIBUTES,
     "attribute.AttributeValue": DOC_CATEGORY_ATTRIBUTES,
-    "attribute.AttributeValueTranslation": DOC_CATEGORY_ATTRIBUTES,
     "channel.Channel": DOC_CATEGORY_CHANNELS,
     "checkout.Checkout": DOC_CATEGORY_CHECKOUT,
     "checkout.CheckoutLine": DOC_CATEGORY_CHECKOUT,

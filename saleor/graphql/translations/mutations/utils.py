@@ -7,7 +7,6 @@ from graphene.types.mutation import MutationOptions
 from graphene.utils.str_converters import to_camel_case
 from graphql import GraphQLError
 
-from ....attribute import models as attribute_models
 from ....core.tracing import traced_atomic_transaction
 from ....menu import models as menu_models
 from ....page import models as page_models
@@ -24,12 +23,6 @@ from ...plugins.dataloaders import get_plugin_manager_promise
 from .. import types as translation_types
 
 TRANSLATABLE_CONTENT_TO_MODEL = {
-    str(
-        translation_types.AttributeTranslatableContent
-    ): attribute_models.Attribute._meta.object_name,
-    str(
-        translation_types.AttributeValueTranslatableContent
-    ): attribute_models.AttributeValue._meta.object_name,
     # Page Translation mutation reverses model and TranslatableContent
     page_models.Page._meta.object_name: str(translation_types.PageTranslatableContent),
     str(

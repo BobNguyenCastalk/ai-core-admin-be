@@ -21,14 +21,6 @@ from ...account.search import (
     generate_address_search_document_value,
     generate_user_fields_search_document_value,
 )
-from ...attribute.models import (
-    AssignedProductAttributeValue,
-    AssignedVariantAttribute,
-    AssignedVariantAttributeValue,
-    Attribute,
-    AttributePage,
-    AttributeValue,
-)
 from ...channel.models import Channel
 from ...core.weight import zero_weight
 from ...menu.models import Menu, MenuItem
@@ -127,60 +119,6 @@ def get_weight(weight):
         return zero_weight()
     value, unit = weight.split(":")
     return Weight(**{unit: value})
-
-
-def create_attributes(attributes_data):
-    for attribute in attributes_data:
-        pk = attribute["pk"]
-        defaults = attribute["fields"]
-        attr, _ = Attribute.objects.update_or_create(pk=pk, defaults=defaults)
-
-
-def create_attributes_values(values_data):
-    for value in values_data:
-        pk = value["pk"]
-        defaults = dict(value["fields"])
-        defaults["attribute_id"] = defaults.pop("attribute")
-        AttributeValue.objects.update_or_create(pk=pk, defaults=defaults)
-
-
-def assign_attributes_to_page_types(
-    association_model: type[AttributePage],
-    attributes: list,
-):
-    for value in attributes:
-        pk = value["pk"]
-        defaults = dict(value["fields"])
-        defaults["attribute_id"] = defaults.pop("attribute")
-        defaults["page_type_id"] = defaults.pop("page_type")
-        association_model.objects.update_or_create(pk=pk, defaults=defaults)
-
-
-def assign_attribute_values_to_products(values):
-    for value in values:
-        pk = value["pk"]
-        defaults = dict(value["fields"])
-        defaults["value_id"] = defaults.pop("value")
-        defaults["product_id"] = defaults.pop("product")
-        AssignedProductAttributeValue.objects.update_or_create(pk=pk, defaults=defaults)
-
-
-def assign_attributes_to_variants(variant_attributes):
-    for value in variant_attributes:
-        pk = value["pk"]
-        defaults = dict(value["fields"])
-        defaults["variant_id"] = defaults.pop("variant")
-        defaults["assignment_id"] = defaults.pop("assignment")
-        AssignedVariantAttribute.objects.update_or_create(pk=pk, defaults=defaults)
-
-
-def assign_attribute_values_to_variants(variant_attribute_values):
-    for value in variant_attribute_values:
-        pk = value["pk"]
-        defaults = dict(value["fields"])
-        defaults["value_id"] = defaults.pop("value")
-        defaults["assignment_id"] = defaults.pop("assignment")
-        AssignedVariantAttributeValue.objects.update_or_create(pk=pk, defaults=defaults)
 
 
 def set_field_as_money(defaults, field):

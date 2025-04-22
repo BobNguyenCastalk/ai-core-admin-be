@@ -16,7 +16,6 @@ from graphene.utils.str_converters import to_camel_case
 
 from .. import __version__
 from ..account.models import User
-from ..attribute.models import AttributeValueTranslation
 from ..core.db.connection import allow_writer
 from ..core.prices import quantize_price, quantize_price_fields
 from ..core.utils.anonymization import (
@@ -528,8 +527,6 @@ def generate_translation_payload(
     ]
 
     context = None
-    if isinstance(translation, AttributeValueTranslation):
-        context = process_translation_context(translation.get_translation_context())
 
     translation_data = {
         "id": graphene.Node.to_global_id(object_type, object_id),

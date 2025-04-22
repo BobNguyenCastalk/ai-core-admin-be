@@ -2,7 +2,6 @@ from operator import itemgetter
 
 from ...account import models as account_models
 from ...app import models as app_models
-from ...attribute import models as attribute_models
 from ...channel import models as channel_models
 from ...core.exceptions import PermissionDenied
 from ...core.models import ModelWithMetadata
@@ -26,7 +25,6 @@ def resolve_object_with_metadata_type(instance):
             account_models.Address: account_types.Address,
             account_models.User: account_types.User,
             app_models.App: app_types.App,
-            attribute_models.Attribute: attribute_types.Attribute,
             channel_models.Channel: channel_types.Channel,
             menu_models.Menu: menu_types.Menu,
             menu_models.MenuItem: menu_types.MenuItem,

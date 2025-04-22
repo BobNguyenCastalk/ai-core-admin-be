@@ -3,7 +3,6 @@ from django.conf import settings
 
 from ...account import error_codes as account_error_codes
 from ...app import error_codes as app_error_codes
-from ...attribute import error_codes as attribute_error_codes
 from ...channel import error_codes as channel_error_codes
 from ...core import JobStatus, TimePeriodType
 from ...core import error_codes as core_error_codes
@@ -143,32 +142,6 @@ AccountErrorCode.doc_category = DOC_CATEGORY_USERS
 
 AppErrorCode = graphene.Enum.from_enum(app_error_codes.AppErrorCode)
 AppErrorCode.doc_category = DOC_CATEGORY_APPS
-
-AttributeErrorCode = graphene.Enum.from_enum(attribute_error_codes.AttributeErrorCode)
-AttributeErrorCode.doc_category = DOC_CATEGORY_ATTRIBUTES
-
-
-AttributeBulkCreateErrorCode = graphene.Enum.from_enum(
-    attribute_error_codes.AttributeBulkCreateErrorCode
-)
-AttributeBulkCreateErrorCode.doc_category = DOC_CATEGORY_ATTRIBUTES
-
-
-AttributeBulkUpdateErrorCode = graphene.Enum.from_enum(
-    attribute_error_codes.AttributeBulkUpdateErrorCode
-)
-AttributeBulkCreateErrorCode.doc_category = DOC_CATEGORY_ATTRIBUTES
-
-
-AttributeTranslateErrorCode = graphene.Enum.from_enum(
-    translatable_error_codes.AttributeTranslateErrorCode
-)
-AttributeTranslateErrorCode.doc_category = DOC_CATEGORY_ATTRIBUTES
-
-AttributeValueTranslateErrorCode = graphene.Enum.from_enum(
-    translatable_error_codes.AttributeValueTranslateErrorCode
-)
-AttributeValueTranslateErrorCode.doc_category = DOC_CATEGORY_ATTRIBUTES
 
 ChannelErrorCode = graphene.Enum.from_enum(channel_error_codes.ChannelErrorCode)
 ChannelErrorCode.doc_category = DOC_CATEGORY_CHANNELS

@@ -5,7 +5,6 @@ from rx import Observable
 
 from ... import __version__
 from ...account.models import User
-from ...attribute.models import AttributeTranslation, AttributeValueTranslation
 from ...channel.models import Channel
 from ...menu.models import MenuItemTranslation
 from ...page.models import PageTranslation
@@ -42,8 +41,6 @@ from ..core.types import NonNullList, SubscriptionObjectType
 from ..translations import types as translation_types
 
 TRANSLATIONS_TYPES_MAP = {
-    AttributeTranslation: translation_types.AttributeTranslation,
-    AttributeValueTranslation: translation_types.AttributeValueTranslation,
     PageTranslation: translation_types.PageTranslation,
     MenuItemTranslation: translation_types.MenuItemTranslation,
 }

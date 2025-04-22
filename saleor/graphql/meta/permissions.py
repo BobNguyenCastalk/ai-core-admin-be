@@ -5,8 +5,6 @@ from django.db.models import Exists, OuterRef
 
 from ...account import models as account_models
 from ...account.error_codes import AccountErrorCode
-from ...attribute import AttributeType
-from ...attribute import models as attribute_models
 from ...core.exceptions import PermissionDenied
 from ...core.jwt import JWT_THIRDPARTY_ACCESS_TYPE
 from ...permission.enums import (
@@ -178,17 +176,6 @@ def page_type_permissions(
     return [PageTypePermissions.MANAGE_PAGE_TYPES_AND_ATTRIBUTES]
 
 
-def attribute_permissions(info: ResolveInfo, attribute_pk: int):
-    database_connection_name = get_database_connection_name(info.context)
-    attribute = attribute_models.Attribute.objects.using(database_connection_name).get(
-        pk=attribute_pk
-    )
-    if attribute.type == AttributeType.PAGE_TYPE:
-        return page_type_permissions(info, attribute_pk)
-    else:
-        return product_type_permissions(info, attribute_pk)
-
-
 def shipping_permissions(
     _info: ResolveInfo, _object_pk: Any
 ) -> list[BasePermissionEnum]:
@@ -235,7 +222,6 @@ PUBLIC_META_PERMISSION_MAP: dict[
     str, Callable[[ResolveInfo, Any], list[BasePermissionEnum]]
 ] = {
     "App": app_permissions,
-    "Attribute": attribute_permissions,
     "Category": product_permissions,
     "Channel": channel_permissions,
     "Checkout": no_permissions,
@@ -274,7 +260,6 @@ PRIVATE_META_PERMISSION_MAP: dict[
 ] = {
     "Address": private_address_permissions,
     "App": private_app_permssions,
-    "Attribute": attribute_permissions,
     "Category": product_permissions,
     "Channel": channel_permissions,
     "Checkout": checkout_permissions,

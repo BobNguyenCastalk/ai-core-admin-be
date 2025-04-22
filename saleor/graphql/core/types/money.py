@@ -29,32 +29,6 @@ class MoneyRange(graphene.ObjectType):
     class Meta:
         description = "Represents a range of amounts of money."
 
-
-class TaxedMoney(graphene.ObjectType):
-    currency = graphene.String(description="Currency code.", required=True)
-    gross = graphene.Field(
-        Money, description="Amount of money including taxes.", required=True
-    )
-    net = graphene.Field(
-        Money, description="Amount of money without taxes.", required=True
-    )
-    tax = graphene.Field(Money, description="Amount of taxes.", required=True)
-
-    class Meta:
-        description = (
-            "Represents a monetary value with taxes. In cases where taxes were not "
-            "applied, net and gross values will be equal."
-        )
-
-
-class TaxedMoneyRange(graphene.ObjectType):
-    start = graphene.Field(TaxedMoney, description="Lower bound of a price range.")
-    stop = graphene.Field(TaxedMoney, description="Upper bound of a price range.")
-
-    class Meta:
-        description = "Represents a range of monetary values."
-
-
 class VAT(BaseObjectType):
     country_code = graphene.String(description="Country code.", required=True)
     standard_rate = graphene.Float(description="Standard VAT rate in percent.")
