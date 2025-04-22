@@ -132,8 +132,6 @@ PRIVATE_META_PERMISSION_MAP: dict[
 ] = {
     "App": private_app_permssions,
     "Channel": channel_permissions,
-    "Menu": menu_permissions,
-    "MenuItem": menu_permissions,
     "Page": page_permissions,
     "PageType": page_type_permissions,
     "User": private_user_permissions,

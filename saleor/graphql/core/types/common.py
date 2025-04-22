@@ -10,7 +10,6 @@ from ...core.doc_category import (
     DOC_CATEGORY_APPS,
     DOC_CATEGORY_AUTH,
     DOC_CATEGORY_CHANNELS,
-    DOC_CATEGORY_MENU,
     DOC_CATEGORY_PAGES,
     DOC_CATEGORY_USERS,
     DOC_CATEGORY_WEBHOOKS,
@@ -20,7 +19,6 @@ from ..enums import (
     AccountErrorCode,
     AppErrorCode,
     ChannelErrorCode,
-    ExternalNotificationTriggerErrorCode,
     JobStatusEnum,
     LanguageCodeEnum,
     MetadataErrorCode,
@@ -169,13 +167,6 @@ class ChannelError(Error):
 
     class Meta:
         doc_category = DOC_CATEGORY_CHANNELS
-
-
-class ExternalNotificationError(Error):
-    code = ExternalNotificationTriggerErrorCode(
-        description="The error code.", required=True
-    )
-
 
 class MetadataError(Error):
     code = MetadataErrorCode(description="The error code.", required=True)

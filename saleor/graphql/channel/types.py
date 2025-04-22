@@ -17,9 +17,6 @@ from ..meta.types import ObjectWithMetadata
 from ..translations.resolvers import resolve_translation
 from . import ChannelContext
 
-if TYPE_CHECKING:
-    from ...shipping.models import ShippingZone
-
 T = TypeVar("T", bound=Model)
 
 

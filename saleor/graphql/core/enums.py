@@ -17,7 +17,6 @@ from ...page import error_codes as page_error_codes
 from ...permission.enums import get_permissions_enum_list
 from ...plugins import error_codes as plugin_error_codes
 from ...webhook import error_codes as webhook_error_codes
-from ..notifications import error_codes as external_notifications_error_codes
 from .doc_category import (
     DOC_CATEGORY_APPS,
     DOC_CATEGORY_CHANNELS,
@@ -137,11 +136,6 @@ CustomerBulkUpdateErrorCode = graphene.Enum.from_enum(
     account_error_codes.CustomerBulkUpdateErrorCode
 )
 CustomerBulkUpdateErrorCode.doc_category = DOC_CATEGORY_USERS
-
-ExternalNotificationTriggerErrorCode = graphene.Enum.from_enum(
-    external_notifications_error_codes.ExternalNotificationErrorCodes
-)
-
 
 PluginErrorCode = graphene.Enum.from_enum(plugin_error_codes.PluginErrorCode)
 

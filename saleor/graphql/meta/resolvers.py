@@ -13,21 +13,15 @@ from .permissions import PRIVATE_META_PERMISSION_MAP
 
 def resolve_object_with_metadata_type(instance):
     # Imports inside resolvers to avoid circular imports.
-    from ...menu import models as menu_models
     from ..account import types as account_types
     from ..app import types as app_types
-    from ..attribute import types as attribute_types
     from ..channel import types as channel_types
-    from ..menu import types as menu_types
 
     if isinstance(instance, ModelWithMetadata):
         MODEL_TO_TYPE_MAP = {
-            account_models.Address: account_types.Address,
             account_models.User: account_types.User,
             app_models.App: app_types.App,
             channel_models.Channel: channel_types.Channel,
-            menu_models.Menu: menu_types.Menu,
-            menu_models.MenuItem: menu_types.MenuItem,
         }
         return MODEL_TO_TYPE_MAP.get(instance.__class__, None), instance.pk
 

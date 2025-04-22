@@ -1,17 +1,9 @@
 from collections import defaultdict
 
-from ...account.models import Address, CustomerEvent, Group, User
+from ...account.models import CustomerEvent, Group, User
 from ...channel.models import Channel
 from ...permission.models import Permission
 from ..core.dataloaders import DataLoader
-
-
-class AddressByIdLoader(DataLoader):
-    context_key = "address_by_id"
-
-    def batch_load(self, keys):
-        address_map = Address.objects.using(self.database_connection_name).in_bulk(keys)
-        return [address_map.get(address_id) for address_id in keys]
 
 
 class UserByUserIdLoader(DataLoader):

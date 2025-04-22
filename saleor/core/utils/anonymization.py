@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 
 from faker import Faker
 
-from ...account.models import Address, User
-from .random_data import create_address, create_fake_user
+from ...account.models import User
+from .random_data import create_fake_user
 
 if TYPE_CHECKING:
     from ...order.models import Order
@@ -17,17 +17,6 @@ fake = Faker()
 
 def _fake_save(*args, **kwargs):
     logger.error("Unable to save fake instance")
-
-
-def generate_fake_address() -> "Address":
-    """Generate a fake instance of the "Address" class.
-
-    The instance cannot be saved
-    """
-    fake_address = create_address(save=False)
-    # Prevent accidental saving of the instance
-    fake_address.save = _fake_save
-    return fake_address
 
 
 def generate_fake_user() -> "User":

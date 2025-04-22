@@ -50,7 +50,6 @@ from ..utils import format_permissions_for_display, get_user_or_app_from_context
 from .dataloaders import (
     AccessibleChannelsByGroupIdLoader,
     AccessibleChannelsByUserIdLoader,
-    AddressByIdLoader,
     CustomerEventsByUserLoader,
     RestrictedChannelAccessByUserIdLoader,
 )
@@ -272,77 +271,8 @@ class User(ModelObjectType[models.User]):
         return CustomerEventsByUserLoader(info.context).load(root.id)
 
     @staticmethod
-    def resolve_stored_payment_sources(
-        root: models.User, info: ResolveInfo, channel=None
-    ):
-        from .resolvers import resolve_payment_sources
-
-        if root == info.context.user:
-            return get_plugin_manager_promise(info.context).then(
-                partial(resolve_payment_sources, info, root, channel_slug=channel)
-            )
-
-        raise PermissionDenied(permissions=[AuthorizationFilters.OWNER])
-
-    @staticmethod
     def resolve_language_code(root, _info: ResolveInfo):
         return LanguageCodeEnum[str_to_enum(root.language_code)]
-
-    @staticmethod
-    def __resolve_references(roots: list["User"], info: ResolveInfo):
-        from .resolvers import resolve_users
-
-        ids = set()
-        emails = set()
-        for root in roots:
-            if root.id is not None:
-                ids.add(root.id)
-            else:
-                emails.add(root.email)
-
-        users = list(resolve_users(info, ids=ids, emails=emails))
-        users_by_id = {user.id: user for user in users}
-        users_by_email = {user.email: user for user in users}
-
-        results = []
-        for root in roots:
-            if root.id is not None:
-                _, user_id = from_global_id_or_error(root.id, User)
-                results.append(users_by_id.get(int(user_id)))
-            else:
-                results.append(users_by_email.get(root.email))
-        return results
-
-    @staticmethod
-    def resolve_stored_payment_methods(
-        root: models.User,
-        info: ResolveInfo,
-        channel: str,
-    ):
-        requestor = get_user_or_app_from_context(info.context)
-        if not requestor or requestor.id != root.id:
-            return []
-
-        return Promise.all(
-            [
-                ChannelBySlugLoader(info.context).load(channel),
-                get_plugin_manager_promise(info.context),
-            ]
-        )
-
-    @staticmethod
-    def resolve_default_billing_address(root: models.User, info: ResolveInfo):
-        if root.default_billing_address_id:
-            return AddressByIdLoader(info.context).load(root.default_billing_address_id)
-        return None
-
-    @staticmethod
-    def resolve_default_shipping_address(root: models.User, info: ResolveInfo):
-        if root.default_shipping_address_id:
-            return AddressByIdLoader(info.context).load(
-                root.default_shipping_address_id
-            )
-        return None
 
 
 class UserCountableConnection(CountableConnection):

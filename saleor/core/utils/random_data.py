@@ -4,7 +4,6 @@ import unicodedata
 from collections import defaultdict
 from functools import lru_cache
 from typing import Any, cast
-from unittest.mock import patch
 
 from django.conf import settings
 from django.core.files import File
@@ -16,9 +15,8 @@ from faker.providers import BaseProvider
 from measurement.measures import Weight
 from prices import Money
 
-from ...account.models import Address, Group, User
+from ...account.models import Group, User
 from ...account.search import (
-    generate_address_search_document_value,
     generate_user_fields_search_document_value,
 )
 from ...channel.models import Channel
@@ -142,32 +140,10 @@ def get_email(first_name, last_name):
     decoded_last = _last.lower().decode("utf-8")
     return f"{decoded_first}.{decoded_last}@example.com"
 
-
-def create_address(save=True, **kwargs):
-    address = Address(
-        first_name=fake.first_name(),
-        last_name=fake.last_name(),
-        street_address_1=fake.street_address(),
-        city=fake.city(),
-        country=settings.DEFAULT_COUNTRY,
-        **kwargs,
-    )
-
-    if address.country == "US":
-        state = fake.state_abbr(include_territories=False)
-        address.country_area = state
-        address.postal_code = fake.postalcode_in_state(state)
-    else:
-        address.postal_code = fake.postalcode()
-
-    if save:
-        address.save()
-    return address
-
-
 def create_fake_user(user_password, save=True, generate_id=False):
-    address = create_address(save=save)
-    email = get_email(address.first_name, address.last_name)
+    first_name = fake.first_name()
+    last_name = fake.last_name()
+    email = get_email(first_name, last_name)
 
     # Skip the email if it already exists
     try:
@@ -176,11 +152,9 @@ def create_fake_user(user_password, save=True, generate_id=False):
         pass
 
     user_params = {
-        "first_name": address.first_name,
-        "last_name": address.last_name,
+        "first_name": first_name,
+        "last_name": last_name,
         "email": email,
-        "default_billing_address": address,
-        "default_shipping_address": address,
         "is_active": True,
         "note": fake.paragraph(),
         "date_joined": fake.date_time(tzinfo=timezone.get_current_timezone()),
@@ -195,12 +169,11 @@ def create_fake_user(user_password, save=True, generate_id=False):
     user = User(
         **user_params,
     )
-    user.search_document = _prepare_search_document_value(user, address)
+    user.search_document = _prepare_search_document_value(user)
 
     if save:
         user.set_password(user_password)
         user.save()
-        user.addresses.add(address)
     return user
 
 
@@ -258,9 +231,8 @@ def create_group(name, permissions, users):
 
 
 def _create_staff_user(staff_password, email=None, superuser=False):
-    address = create_address()
-    first_name = address.first_name
-    last_name = address.last_name
+    first_name = fake.first_name()
+    last_name = fake.last_name()
     if not email:
         email = get_email(first_name, last_name)
 
@@ -273,22 +245,18 @@ def _create_staff_user(staff_password, email=None, superuser=False):
         last_name=last_name,
         email=email,
         password=staff_password,
-        default_billing_address=address,
-        default_shipping_address=address,
         is_staff=True,
         is_active=True,
         is_superuser=superuser,
         search_document=_prepare_search_document_value(
-            User(email=email, first_name=first_name, last_name=last_name), address
+            User(email=email, first_name=first_name, last_name=last_name)
         ),
     )
-    staff_user.addresses.add(address)
     return staff_user
 
 
-def _prepare_search_document_value(user, address):
+def _prepare_search_document_value(user):
     search_document_value = generate_user_fields_search_document_value(user)
-    search_document_value += generate_address_search_document_value(address)
     return search_document_value
 
 
