@@ -1,7 +1,6 @@
 import logging
 from collections import defaultdict
 from collections.abc import Iterable
-from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 import opentracing
@@ -11,13 +10,10 @@ from django.utils.module_loading import import_string
 from graphene import Mutation
 from graphql import GraphQLError
 from graphql.execution import ExecutionResult
-from prices import TaxedMoney
 
 from ..channel.models import Channel
 from ..core.db.connection import allow_writer
 from ..core.models import EventDelivery
-from ..core.prices import quantize_price
-from ..core.taxes import TaxData, TaxType, zero_money, zero_taxed_money
 from ..graphql.core import ResolveInfo, SaleorContext
 from .base_plugin import ExcludedShippingMethod, ExternalAccessTokens
 from .models import PluginConfiguration
@@ -244,139 +240,6 @@ class PluginsManager():
             user,
             save,
             channel_slug=None,
-        )
-
-    def calculate_checkout_subtotal(
-        self,
-        checkout_info: "CheckoutInfo",
-        lines: Iterable["CheckoutLineInfo"],
-        address: Optional["Address"],
-        plugin_ids: Optional[list[str]] = None,
-    ) -> TaxedMoney:
-        line_totals = []
-        currency = checkout_info.checkout.currency
-        total = sum(line_totals, zero_taxed_money(currency))
-        return quantize_price(
-            total,
-            currency,
-        )
-
-    def get_checkout_shipping_tax_rate(
-        self,
-        checkout_info: "CheckoutInfo",
-        lines: Iterable["CheckoutLineInfo"],
-        address: Optional["Address"],
-        shipping_price: TaxedMoney,
-        plugin_ids: Optional[list[str]] = None,
-    ):
-        default_value = 0
-        return self.__run_method_on_plugins(
-            "get_checkout_shipping_tax_rate",
-            default_value,
-            checkout_info,
-            lines,
-            address,
-            channel_slug=checkout_info.channel.slug,
-            plugin_ids=plugin_ids,
-        ).quantize(Decimal(".0001"))
-
-    def get_order_shipping_tax_rate(
-        self,
-        order: "Order",
-        shipping_price: TaxedMoney,
-        plugin_ids: Optional[list[str]] = None,
-    ):
-        default_value = 0
-        return self.__run_method_on_plugins(
-            "get_order_shipping_tax_rate",
-            default_value,
-            order,
-            channel_slug=order.channel.slug,
-            plugin_ids=plugin_ids,
-        ).quantize(Decimal(".0001"))
-
-    def get_checkout_line_tax_rate(
-        self,
-        checkout_info: "CheckoutInfo",
-        lines: Iterable["CheckoutLineInfo"],
-        checkout_line_info: "CheckoutLineInfo",
-        address: Optional["Address"],
-        price: TaxedMoney,
-        plugin_ids: Optional[list[str]] = None,
-    ) -> Decimal:
-        default_value = 0
-        return self.__run_method_on_plugins(
-            "get_checkout_line_tax_rate",
-            default_value,
-            checkout_info,
-            lines,
-            checkout_line_info,
-            address,
-            channel_slug=checkout_info.channel.slug,
-            plugin_ids=plugin_ids,
-        ).quantize(Decimal(".0001"))
-
-    def get_order_line_tax_rate(
-        self,
-        order: "Order",
-        product: "Product",
-        variant: "ProductVariant",
-        address: Optional["Address"],
-        price: TaxedMoney,
-        plugin_ids: Optional[list[str]] = None,
-    ) -> Decimal:
-        default_value = 0
-        return self.__run_method_on_plugins(
-            "get_order_line_tax_rate",
-            default_value,
-            order,
-            product,
-            variant,
-            address,
-            channel_slug=order.channel.slug,
-            plugin_ids=plugin_ids,
-        ).quantize(Decimal(".0001"))
-
-    def get_tax_rate_type_choices(self) -> list[TaxType]:
-        default_value: list = []
-        plugins = self.get_all_plugins()
-        return (
-            self.__run_plugin_method_until_first_success(
-                "get_tax_rate_type_choices",
-                channel_slug=None,
-                plugins=plugins,
-            )
-            or default_value
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def get_taxes_for_checkout(
-        self,
-        checkout_info,
-        lines,
-        app_identifier,
-        pregenerated_subscription_payloads: Optional[dict] = None,
-    ) -> Optional[TaxData]:
-        if pregenerated_subscription_payloads is None:
-            pregenerated_subscription_payloads = {}
-        return self.__run_plugin_method_until_first_success(
-            "get_taxes_for_checkout",
-            checkout_info,
-            lines,
-            app_identifier,
-            pregenerated_subscription_payloads=pregenerated_subscription_payloads,
-            channel_slug=checkout_info.channel.slug,
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def get_taxes_for_order(self, order: "Order", app_identifier) -> Optional[TaxData]:
-        return self.__run_plugin_method_until_first_success(
-            "get_taxes_for_order",
-            order,
-            app_identifier,
-            channel_slug=order.channel.slug,
         )
 
     def preprocess_order_creation(
@@ -2004,19 +1867,6 @@ class PluginsManager():
             return self._global_plugin_configs, self._plugin_configs_per_channel
 
     # FIXME these methods should be more generic
-
-    def get_tax_code_from_object_meta(
-        self,
-        obj: Union["Product", "ProductType", "TaxClass"],
-        channel_slug: Optional[str],
-    ) -> TaxType:
-        default_value = TaxType(code="", description="")
-        return self.__run_method_on_plugins(
-            "get_tax_code_from_object_meta",
-            default_value,
-            obj,
-            channel_slug=channel_slug,
-        )
 
     def save_plugin_configuration(
         self, plugin_id, channel_slug: Optional[str], cleaned_data: dict

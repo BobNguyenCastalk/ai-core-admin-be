@@ -323,20 +323,6 @@ class BasePlugin:
     # Overwrite this method if the plugin handles authentication flow.
     authenticate_user: Callable[[SaleorContext, Optional["User"]], Union["User", None]]
 
-    # Calculate the subtotal for checkout.
-    #
-    # Overwrite this method if you need to apply specific logic for the calculation
-    # of a checkout subtotal. Return TaxedMoney.
-    calculate_checkout_subtotal: Callable[
-        [
-            "CheckoutInfo",
-            list["CheckoutLineInfo"],
-            Union["Address", None],
-            TaxedMoney,
-        ],
-        TaxedMoney,
-    ]
-
     # Calculate order line total.
     #
     # Overwrite this method if you need to apply specific logic for the calculation
@@ -625,46 +611,8 @@ class BasePlugin:
     # Webhook-related functionality will be moved from the plugin to core modules.
     fulfillment_metadata_updated: Callable[["Fulfillment", Any], Any]
 
-    get_checkout_line_tax_rate: Callable[
-        [
-            "CheckoutInfo",
-            list["CheckoutLineInfo"],
-            "CheckoutLineInfo",
-            Union["Address", None],
-            Decimal,
-        ],
-        Decimal,
-    ]
-
-    get_checkout_shipping_tax_rate: Callable[
-        [
-            "CheckoutInfo",
-            Iterable["CheckoutLineInfo"],
-            Union["Address", None],
-            Any,
-        ],
-        Any,
-    ]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    get_taxes_for_checkout: Callable[
-        ["CheckoutInfo", Iterable["CheckoutLineInfo"], str, Any, Optional[dict]],
-        Optional["TaxData"],
-    ]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    get_taxes_for_order: Callable[["Order", str, Any], Optional["TaxData"]]
-
     get_client_token: Callable[[Any, Any], Any]
 
-    get_order_line_tax_rate: Callable[
-        ["Order", "Product", "ProductVariant", Union["Address", None], Decimal],
-        Decimal,
-    ]
-
-    get_order_shipping_tax_rate: Callable[["Order", Any], Any]
     get_payment_config: Callable[[Any], Any]
 
     # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
@@ -674,23 +622,6 @@ class BasePlugin:
     ]
 
     get_supported_currencies: Callable[[Any], Any]
-
-    # Return tax code from object meta.
-    get_tax_code_from_object_meta: Callable[
-        [
-            Union["Product", "ProductType", "TaxClass"],
-            "TaxType",
-        ],
-        "TaxType",
-    ]
-
-    # Return list of all tax categories.
-    #
-    # The returned list will be used to provide staff users with the possibility to
-    # assign tax categories to a product. It can be used by tax plugins to properly
-    # calculate taxes for products.
-    # Overwrite this method in case your plugin provides a list of tax categories.
-    get_tax_rate_type_choices: Callable[[list["TaxType"]], list["TaxType"]]
 
     # Trigger when draft order is created.
     #
