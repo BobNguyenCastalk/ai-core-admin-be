@@ -76,8 +76,6 @@ PROJECT_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 
 ROOT_URLCONF = "saleor.urls"
 
-WSGI_APPLICATION = "saleor.wsgi.application"
-
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
@@ -277,25 +275,12 @@ INSTALLED_APPS = [
     "saleor.auth",
     "saleor.plugins",
     "saleor.account",
-    "saleor.discount",
-    "saleor.giftcard",
-    "saleor.product",
-    "saleor.attribute",
     "saleor.channel",
-    "saleor.checkout",
     "saleor.core",
-    "saleor.csv",
     "saleor.graphql",
     "saleor.menu",
-    "saleor.order",
-    "saleor.invoice",
     "saleor.seo",
-    "saleor.shipping",
-    "saleor.site",
     "saleor.page",
-    "saleor.payment",
-    "saleor.tax",
-    "saleor.warehouse",
     "saleor.webhook",
     "saleor.app",
     "saleor.thumbnail",
@@ -609,21 +594,9 @@ BEAT_PRICE_RECALCULATION_SCHEDULE_EXPIRE_AFTER_SEC = BEAT_PRICE_RECALCULATION_SC
 # the expiration value. This makes sure if the task or scheduling is wrapped
 # by custom code (e.g., a Saleor fork), the expiration is still present.
 CELERY_BEAT_SCHEDULE = {
-    "delete-empty-allocations": {
-        "task": "saleor.warehouse.tasks.delete_empty_allocations_task",
-        "schedule": timedelta(days=1),
-    },
     "deactivate-preorder-for-variants": {
         "task": "saleor.product.tasks.deactivate_preorder_for_variants_task",
         "schedule": timedelta(hours=1),
-    },
-    "delete-expired-reservations": {
-        "task": "saleor.warehouse.tasks.delete_expired_reservations_task",
-        "schedule": timedelta(days=1),
-    },
-    "delete-expired-checkouts": {
-        "task": "saleor.checkout.tasks.delete_expired_checkouts",
-        "schedule": crontab(hour=0, minute=0),
     },
     "delete_expired_orders": {
         "task": "saleor.order.tasks.delete_expired_orders_task",
@@ -632,22 +605,6 @@ CELERY_BEAT_SCHEDULE = {
     "delete-outdated-event-data": {
         "task": "saleor.core.tasks.delete_event_payloads_task",
         "schedule": timedelta(days=1),
-    },
-    "deactivate-expired-gift-cards": {
-        "task": "saleor.giftcard.tasks.deactivate_expired_cards_task",
-        "schedule": crontab(hour=0, minute=0),
-    },
-    "update-stocks-quantity-allocated": {
-        "task": "saleor.warehouse.tasks.update_stocks_quantity_allocated_task",
-        "schedule": crontab(hour=0, minute=0),
-    },
-    "delete-old-export-files": {
-        "task": "saleor.csv.tasks.delete_old_export_files",
-        "schedule": crontab(hour=1, minute=0),
-    },
-    "handle-promotion-toggle": {
-        "task": "saleor.discount.tasks.handle_promotion_toggle",
-        "schedule": initiated_promotion_webhook_schedule,
     },
     "update-products-search-vectors": {
         "task": "saleor.product.tasks.update_products_search_vector_task",
@@ -788,22 +745,7 @@ GRAPHQL_QUERY_MAX_COMPLEXITY = int(
 FEDERATED_QUERY_MAX_ENTITIES = int(os.environ.get("FEDERATED_QUERY_MAX_ENTITIES", 100))
 
 BUILTIN_PLUGINS = [
-    "saleor.plugins.avatax.plugin.AvataxPlugin",
-    "saleor.plugins.webhook.plugin.WebhookPlugin",
-    "saleor.payment.gateways.dummy.plugin.DummyGatewayPlugin",
-    "saleor.payment.gateways.dummy_credit_card.plugin.DummyCreditCardGatewayPlugin",
-    "saleor.payment.gateways.stripe.deprecated.plugin.DeprecatedStripeGatewayPlugin",
-    "saleor.payment.gateways.stripe.plugin.StripeGatewayPlugin",
-    "saleor.payment.gateways.braintree.plugin.BraintreeGatewayPlugin",
-    "saleor.payment.gateways.razorpay.plugin.RazorpayGatewayPlugin",
-    "saleor.payment.gateways.adyen.plugin.AdyenGatewayPlugin",
-    "saleor.payment.gateways.authorize_net.plugin.AuthorizeNetGatewayPlugin",
-    "saleor.payment.gateways.np_atobarai.plugin.NPAtobaraiGatewayPlugin",
-    "saleor.plugins.invoicing.plugin.InvoicingPlugin",
-    "saleor.plugins.user_email.plugin.UserEmailPlugin",
-    "saleor.plugins.admin_email.plugin.AdminEmailPlugin",
-    "saleor.plugins.sendgrid.plugin.SendgridEmailPlugin",
-    "saleor.plugins.openid_connect.plugin.OpenIDConnectPlugin",
+
 ]
 
 # Plugin discovery
