@@ -9,7 +9,6 @@ from ...attribute import models as attribute_models
 from ...attribute.models import AttributeValue
 from ...menu import models as menu_models
 from ...page import models as page_models
-from ...site import models as site_models
 from ..channel import ChannelContext
 from ..core.context import get_database_connection_name
 from ..core.descriptions import (
@@ -245,20 +244,6 @@ class PageTranslatableContent(ModelObjectType[page_models.Page]):
     @staticmethod
     def resolve_page_id(root: page_models.Page, _info):
         return graphene.Node.to_global_id("Page", root.id)
-
-class ShopTranslation(BaseTranslationType[site_models.SiteSettingsTranslation]):
-    id = graphene.GlobalID(required=True, description="The ID of the shop translation.")
-    header_text = graphene.String(
-        required=True, description="Translated header text of sale."
-    )
-    description = graphene.String(
-        required=True, description="Translated description of sale."
-    )
-
-    class Meta:
-        model = site_models.SiteSettingsTranslation
-        interfaces = [graphene.relay.Node]
-        description = "Represents shop translations."
 
 
 class MenuItemTranslation(BaseTranslationType[menu_models.MenuItemTranslation]):

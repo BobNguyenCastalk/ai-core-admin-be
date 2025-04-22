@@ -7,7 +7,6 @@ from ...channel import models as channel_models
 from ...core.exceptions import PermissionDenied
 from ...core.models import ModelWithMetadata
 from ...permission.utils import one_of_permissions_or_auth_filter_required
-from ...site import models as site_models
 from ..core import ResolveInfo
 from ..utils import get_user_or_app_from_context
 from .permissions import PRIVATE_META_PERMISSION_MAP
@@ -21,7 +20,6 @@ def resolve_object_with_metadata_type(instance):
     from ..attribute import types as attribute_types
     from ..channel import types as channel_types
     from ..menu import types as menu_types
-    from ..shop import types as shop_types
 
     if isinstance(instance, ModelWithMetadata):
         MODEL_TO_TYPE_MAP = {
@@ -32,7 +30,6 @@ def resolve_object_with_metadata_type(instance):
             channel_models.Channel: channel_types.Channel,
             menu_models.Menu: menu_types.Menu,
             menu_models.MenuItem: menu_types.MenuItem,
-            site_models.SiteSettings: shop_types.Shop,
         }
         return MODEL_TO_TYPE_MAP.get(instance.__class__, None), instance.pk
 

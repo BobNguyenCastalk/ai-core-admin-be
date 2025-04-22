@@ -20,7 +20,6 @@ from ..core.models import ModelWithExternalReference, ModelWithMetadata
 from ..core.utils.json_serializer import CustomJsonEncoder
 from ..permission.enums import AccountPermissions, BasePermissionEnum, get_permissions
 from ..permission.models import Permission, PermissionsMixin, _user_has_perm
-from ..site.models import SiteSettings
 from . import CustomerEvents
 from .validators import validate_possible_number
 
@@ -311,12 +310,8 @@ class User(
         ]
         return super().has_perms(perm_list, obj)
 
-    def can_login(self, site_settings: SiteSettings):
-        return self.is_active and (
-            site_settings.allow_login_without_confirmation
-            or not site_settings.enable_account_confirmation_by_email
-            or self.is_confirmed
-        )
+    def can_login(self):
+        return self.is_active
 
 
 class CustomerNote(models.Model):

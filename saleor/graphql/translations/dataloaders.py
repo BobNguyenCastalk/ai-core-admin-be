@@ -3,7 +3,6 @@ from collections import defaultdict
 from ...attribute import models as attribute_models
 from ...menu import models as menu_models
 from ...page import models as page_models
-from ...site import models as site_models
 from ..core.dataloaders import DataLoader
 
 
@@ -68,11 +67,3 @@ class PageTranslationByIdAndLanguageCodeLoader(
     context_key = "page_translation_by_id_and_language_code"
     model = page_models.PageTranslation
     relation_name = "page_id"
-
-
-class SiteSettingsTranslationByIdAndLanguageCodeLoader(
-    BaseTranslationByIdAndLanguageCodeLoader
-):
-    context_key = "site_settings_translation_by_id_and_language_code"
-    model = site_models.SiteSettingsTranslation
-    relation_name = "site_settings_id"

@@ -18,7 +18,6 @@ from ...menu import error_codes as menu_error_codes
 from ...page import error_codes as page_error_codes
 from ...permission.enums import get_permissions_enum_list
 from ...plugins import error_codes as plugin_error_codes
-from ...site import error_codes as site_error_codes
 from ...thumbnail import IconThumbnailFormat, ThumbnailFormat
 from ...translations import error_codes as translatable_error_codes
 from ...webhook import error_codes as webhook_error_codes
@@ -187,16 +186,6 @@ ExternalNotificationTriggerErrorCode = graphene.Enum.from_enum(
 PluginErrorCode = graphene.Enum.from_enum(plugin_error_codes.PluginErrorCode)
 
 MenuErrorCode = graphene.Enum.from_enum(menu_error_codes.MenuErrorCode)
-
-OrderSettingsErrorCode = graphene.Enum.from_enum(
-    site_error_codes.OrderSettingsErrorCode
-)
-OrderSettingsErrorCode.doc_category = DOC_CATEGORY_ORDERS
-
-GiftCardSettingsErrorCode = graphene.Enum.from_enum(
-    site_error_codes.GiftCardSettingsErrorCode
-)
-GiftCardSettingsErrorCode.doc_category = DOC_CATEGORY_GIFT_CARDS
 
 MetadataErrorCode = graphene.Enum.from_enum(core_error_codes.MetadataErrorCode)
 

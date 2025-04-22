@@ -1,7 +1,6 @@
 from ...attribute import models as attribute_models
 from ...menu import models as menu_models
 from ...page import models as page_models
-from ...site import models as site_models
 from ..core import ResolveInfo
 from ..core.context import get_database_connection_name
 from . import dataloaders
@@ -15,9 +14,6 @@ TYPE_TO_TRANSLATION_LOADER_MAP = {
     ),
     menu_models.MenuItem: (dataloaders.MenuItemTranslationByIdAndLanguageCodeLoader),
     page_models.Page: dataloaders.PageTranslationByIdAndLanguageCodeLoader,
-    site_models.SiteSettings: (
-        dataloaders.SiteSettingsTranslationByIdAndLanguageCodeLoader
-    ),
 }
 
 

@@ -47,7 +47,6 @@ def set_user_is_confirmed_task(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("account", "0080_user_is_confirmed"),
-        ("site", "0038_auto_20230510_1107"),
     ]
 
     operations = [

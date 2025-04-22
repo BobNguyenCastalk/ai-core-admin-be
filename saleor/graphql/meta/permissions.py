@@ -26,7 +26,6 @@ from ...permission.enums import (
     ShippingPermissions,
     SitePermissions,
 )
-from ...site import models as site_models
 from ..app.dataloaders import get_app_promise
 from ..core import ResolveInfo
 from ..core.context import get_database_connection_name
@@ -80,51 +79,6 @@ def private_user_permissions(
         raise PermissionDenied()
     if user.is_staff:
         return [AccountPermissions.MANAGE_STAFF]
-    return [AccountPermissions.MANAGE_USERS]
-
-
-def public_address_permissions(
-    info: ResolveInfo, address_pk: int
-) -> list[BasePermissionEnum]:
-    """Resolve permission for access to public metadata for user addresses.
-
-    Customer have access to the public metadata of their own addresses.
-    Staff user with `MANAGE_USERS` have access to public metadata of customer
-    addresses.
-    Staff user with `MANAGE_STAFF` have access to public metadata of staff user
-    addresses.
-    For now, updating warehouse and shop addresses is forbidden.
-    """
-    database_connection_name = get_database_connection_name(info.context)
-    address = (
-        account_models.Address.objects.using(database_connection_name)
-        .filter(pk=address_pk)
-        .prefetch_related("user_addresses")
-        .first()
-    )
-    if not address:
-        raise ValidationError(
-            {
-                "id": ValidationError(
-                    "Couldn't resolve address.", code=AccountErrorCode.NOT_FOUND.value
-                )
-            }
-        )
-    user = info.context.user
-    # no permission is required when the requestor is the owner of the address
-    if user and address.user_addresses.filter(id=user.id):
-        return []
-    staff_users = account_models.User.objects.filter(is_staff=True)
-
-    if address.user_addresses.filter(Exists(staff_users.filter(id=OuterRef("id")))):
-        return [AccountPermissions.MANAGE_STAFF]
-    elif (
-        site_models.SiteSettings.objects.using(database_connection_name)
-        .filter(company_address_id=address.id)
-        .exists()
-    ):
-        return [SitePermissions.MANAGE_SETTINGS]
-
     return [AccountPermissions.MANAGE_USERS]
 
 
@@ -280,7 +234,6 @@ def site_permissions(_info: ResolveInfo, _object_pk: Any) -> list[BasePermission
 PUBLIC_META_PERMISSION_MAP: dict[
     str, Callable[[ResolveInfo, Any], list[BasePermissionEnum]]
 ] = {
-    "Address": public_address_permissions,
     "App": app_permissions,
     "Attribute": attribute_permissions,
     "Category": product_permissions,

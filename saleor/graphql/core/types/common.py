@@ -39,13 +39,11 @@ from ..enums import (
     AttributeValueTranslateErrorCode,
     ChannelErrorCode,
     ExternalNotificationTriggerErrorCode,
-    GiftCardSettingsErrorCode,
     IconThumbnailFormatEnum,
     JobStatusEnum,
     LanguageCodeEnum,
     MenuErrorCode,
     MetadataErrorCode,
-    OrderSettingsErrorCode,
     PageErrorCode,
     PermissionEnum,
     PermissionGroupErrorCode,
@@ -238,21 +236,6 @@ class MenuError(Error):
 
     class Meta:
         doc_category = DOC_CATEGORY_MENU
-
-
-class OrderSettingsError(Error):
-    code = OrderSettingsErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_ORDERS
-
-
-class GiftCardSettingsError(Error):
-    code = GiftCardSettingsErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_GIFT_CARDS
-
 
 class MetadataError(Error):
     code = MetadataErrorCode(description="The error code.", required=True)

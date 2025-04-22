@@ -541,7 +541,7 @@ def get_user_from_token(claims: CodeIDToken) -> User:
 
     site_settings = Site.objects.get_current().settings
     user = User.objects.filter(email=user_email).first()
-    if not user or not user.can_login(site_settings):
+    if not user or not user.can_login():
         raise AuthenticationError("User does not exist.")
     return user
 
