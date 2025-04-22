@@ -38,9 +38,7 @@ from ..core.fields import PermissionsField
 from ..core.scalars import UUID, DateTime
 from ..core.tracing import traced_resolver
 from ..core.types import (
-    BaseInputObjectType,
     BaseObjectType,
-    CountryDisplay,
     ModelObjectType,
     NonNullList,
     Permission,
@@ -56,7 +54,7 @@ from .dataloaders import (
     CustomerEventsByUserLoader,
     RestrictedChannelAccessByUserIdLoader,
 )
-from .enums import CountryCodeEnum, CustomerEventsEnum
+from .enums import CustomerEventsEnum
 from .utils import can_user_manage_group, get_groups_which_user_can_manage
 
 

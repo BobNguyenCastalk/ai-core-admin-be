@@ -5,14 +5,7 @@ from ..permission.enums import (
     AppPermission,
     BasePermissionEnum,
     ChannelPermissions,
-    CheckoutPermissions,
-    DiscountPermissions,
     MenuPermissions,
-    OrderPermissions,
-    PaymentPermissions,
-    ProductPermissions,
-    ShippingPermissions,
-    SitePermissions,
 )
 
 

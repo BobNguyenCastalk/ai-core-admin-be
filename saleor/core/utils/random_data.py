@@ -27,8 +27,6 @@ from ...menu.models import Menu, MenuItem
 from ...page.models import Page, PageType
 from ...permission.enums import (
     AccountPermissions,
-    CheckoutPermissions,
-    OrderPermissions,
     get_permissions,
 )
 from ...permission.models import Permission
@@ -223,7 +221,7 @@ def create_permission_groups(staff_password):
     staff_users = create_staff_users(staff_password)
     customer_support_codenames = [
         perm.codename
-        for enum in [CheckoutPermissions, OrderPermissions]
+        for enum in []
         for perm in enum
     ]
     customer_support_codenames.append(AccountPermissions.MANAGE_USERS.codename)

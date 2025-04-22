@@ -2,18 +2,15 @@ import graphene
 
 from ...menu.models import MenuItem
 from ...page.models import Page
-from ...permission.enums import SitePermissions
 from ..core import ResolveInfo
-from ..core.connection import CountableConnection, create_connection_slice
+from ..core.connection import CountableConnection
 from ..core.context import get_database_connection_name
 from ..core.fields import ConnectionField, PermissionsField
 from ..core.utils import from_global_id_or_error
-from ..menu.resolvers import resolve_menu_items
 from ..translations import types as translation_types
 
 TYPES_TRANSLATIONS_MAP = {
     Page: translation_types.PageTranslatableContent,
-    MenuItem: translation_types.MenuItemTranslatableContent,
 }
 
 
@@ -48,9 +45,7 @@ class TranslationQueries(graphene.ObjectType):
         kind=graphene.Argument(
             TranslatableKinds, required=True, description="Kind of objects to retrieve."
         ),
-        permissions=[
-            SitePermissions.MANAGE_TRANSLATIONS,
-        ],
+        permissions=[],
     )
     translation = PermissionsField(
         TranslatableItem,
@@ -63,15 +58,8 @@ class TranslationQueries(graphene.ObjectType):
             required=True,
             description="Kind of the object to retrieve.",
         ),
-        permissions=[SitePermissions.MANAGE_TRANSLATIONS],
+        permissions=[],
     )
-
-    @staticmethod
-    def resolve_translations(_root, info: ResolveInfo, *, kind, **kwargs):
-        if kind == TranslatableKinds.MENU_ITEM:
-            qs = resolve_menu_items(info)
-
-        return create_connection_slice(qs, info, kwargs, TranslatableItemConnection)
 
     @staticmethod
     def resolve_translation(_root, info: ResolveInfo, *, id, kind):

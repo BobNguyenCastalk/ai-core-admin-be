@@ -1,7 +1,6 @@
 from typing import Any, Callable, Union
 
 from django.core.exceptions import ValidationError
-from django.db.models import Exists, OuterRef
 
 from ...account import models as account_models
 from ...account.error_codes import AccountErrorCode
@@ -12,17 +11,9 @@ from ...permission.enums import (
     AppPermission,
     BasePermissionEnum,
     ChannelPermissions,
-    CheckoutPermissions,
-    DiscountPermissions,
     MenuPermissions,
-    OrderPermissions,
     PagePermissions,
     PageTypePermissions,
-    PaymentPermissions,
-    ProductPermissions,
-    ProductTypePermissions,
-    ShippingPermissions,
-    SitePermissions,
 )
 from ..app.dataloaders import get_app_promise
 from ..core import ResolveInfo
@@ -80,54 +71,6 @@ def private_user_permissions(
     return [AccountPermissions.MANAGE_USERS]
 
 
-def private_address_permissions(
-    info: ResolveInfo, address_pk: int
-) -> list[BasePermissionEnum]:
-    database_connection_name = get_database_connection_name(info.context)
-    address = (
-        account_models.Address.objects.using(database_connection_name)
-        .filter(pk=address_pk)
-        .prefetch_related("user_addresses")
-        .first()
-    )
-    if not address:
-        raise ValidationError(
-            {
-                "id": ValidationError(
-                    "Couldn't resolve address.", code=AccountErrorCode.NOT_FOUND.value
-                )
-            }
-        )
-    staff_users = account_models.User.objects.using(database_connection_name).filter(
-        is_staff=True
-    )
-    if address.user_addresses.filter(Exists(staff_users.filter(id=OuterRef("id")))):
-        return [AccountPermissions.MANAGE_STAFF]
-    return [AccountPermissions.MANAGE_USERS]
-
-
-def product_permissions(
-    _info: ResolveInfo, _object_pk: Any
-) -> list[BasePermissionEnum]:
-    return [ProductPermissions.MANAGE_PRODUCTS]
-
-
-def product_type_permissions(
-    _info: ResolveInfo, _object_pk: Any
-) -> list[BasePermissionEnum]:
-    return [ProductTypePermissions.MANAGE_PRODUCT_TYPES_AND_ATTRIBUTES]
-
-
-def order_permissions(_info: ResolveInfo, _object_pk: Any) -> list[BasePermissionEnum]:
-    return [OrderPermissions.MANAGE_ORDERS]
-
-
-def invoice_permissions(
-    _info: ResolveInfo, _object_pk: Any
-) -> list[BasePermissionEnum]:
-    return [OrderPermissions.MANAGE_ORDERS]
-
-
 def menu_permissions(_info: ResolveInfo, _object_pk: Any) -> list[BasePermissionEnum]:
     return [MenuPermissions.MANAGE_MENUS]
 
@@ -160,11 +103,6 @@ def channel_permissions(
     return [ChannelPermissions.MANAGE_CHANNELS]
 
 
-def checkout_permissions(
-    _info: ResolveInfo, _object_pk: Any
-) -> list[BasePermissionEnum]:
-    return [CheckoutPermissions.MANAGE_CHECKOUTS]
-
 
 def page_permissions(_info: ResolveInfo, _object_pk: Any) -> list[BasePermissionEnum]:
     return [PagePermissions.MANAGE_PAGES]
@@ -176,119 +114,27 @@ def page_type_permissions(
     return [PageTypePermissions.MANAGE_PAGE_TYPES_AND_ATTRIBUTES]
 
 
-def shipping_permissions(
-    _info: ResolveInfo, _object_pk: Any
-) -> list[BasePermissionEnum]:
-    return [ShippingPermissions.MANAGE_SHIPPING]
-
-
-def discount_permissions(
-    _info: ResolveInfo, _object_pk: Any
-) -> list[BasePermissionEnum]:
-    return [DiscountPermissions.MANAGE_DISCOUNTS]
-
-
-def public_payment_permissions(
-    info: ResolveInfo, payment_pk: int
-) -> list[BasePermissionEnum]:
-    context_user = info.context.user
-    app = get_app_promise(info.context).get()
-    if app or (context_user and context_user.is_staff):
-        return [PaymentPermissions.HANDLE_PAYMENTS]
-    raise PermissionDenied()
-
-
-def private_payment_permissions(
-    info: ResolveInfo, _object_pk: Any
-) -> list[BasePermissionEnum]:
-    app = get_app_promise(info.context).get()
-    if app is not None or (info.context.user and info.context.user.is_staff):
-        return [PaymentPermissions.HANDLE_PAYMENTS]
-    raise PermissionDenied(permissions=[PaymentPermissions.HANDLE_PAYMENTS])
-
-
-def tax_permissions(_info: ResolveInfo, _object_pk: int) -> list[BasePermissionEnum]:
-    return [
-        CheckoutPermissions.HANDLE_TAXES,
-        CheckoutPermissions.MANAGE_TAXES,
-    ]
-
-
-def site_permissions(_info: ResolveInfo, _object_pk: Any) -> list[BasePermissionEnum]:
-    return [SitePermissions.MANAGE_SETTINGS]
-
-
 PUBLIC_META_PERMISSION_MAP: dict[
     str, Callable[[ResolveInfo, Any], list[BasePermissionEnum]]
 ] = {
     "App": app_permissions,
-    "Category": product_permissions,
     "Channel": channel_permissions,
-    "Checkout": no_permissions,
-    "CheckoutLine": no_permissions,
-    "Collection": product_permissions,
-    "DigitalContent": product_permissions,
-    "Fulfillment": order_permissions,
-    "Invoice": invoice_permissions,
     "Menu": menu_permissions,
     "MenuItem": menu_permissions,
-    "Order": no_permissions,
-    "OrderLine": no_permissions,
     "Page": page_permissions,
     "PageType": page_type_permissions,
-    "Payment": public_payment_permissions,
-    "Promotion": discount_permissions,
-    "TransactionItem": private_payment_permissions,
-    "Product": product_permissions,
-    "ProductMedia": product_permissions,
-    "ProductType": product_type_permissions,
-    "ProductVariant": product_permissions,
-    "Sale": discount_permissions,
-    "ShippingMethodType": shipping_permissions,
-    "ShippingZone": shipping_permissions,
-    "Shop": site_permissions,
-    "TaxConfiguration": tax_permissions,
-    "TaxClass": tax_permissions,
     "User": public_user_permissions,
-    "Voucher": discount_permissions,
-    "Warehouse": product_permissions,
 }
 
 
 PRIVATE_META_PERMISSION_MAP: dict[
     str, Callable[[ResolveInfo, Any], list[BasePermissionEnum]]
 ] = {
-    "Address": private_address_permissions,
     "App": private_app_permssions,
-    "Category": product_permissions,
     "Channel": channel_permissions,
-    "Checkout": checkout_permissions,
-    "CheckoutLine": checkout_permissions,
-    "Collection": product_permissions,
-    "DigitalContent": product_permissions,
-    "Fulfillment": order_permissions,
-    "Invoice": invoice_permissions,
     "Menu": menu_permissions,
     "MenuItem": menu_permissions,
-    "Order": order_permissions,
-    "OrderLine": order_permissions,
     "Page": page_permissions,
     "PageType": page_type_permissions,
-    "Payment": private_payment_permissions,
-    "Promotion": discount_permissions,
-    "TransactionItem": private_payment_permissions,
-    "Product": product_permissions,
-    "ProductMedia": product_permissions,
-    "ProductType": product_type_permissions,
-    "ProductVariant": product_permissions,
-    "Sale": discount_permissions,
-    "ShippingMethod": shipping_permissions,
-    "ShippingMethodType": shipping_permissions,
-    "ShippingZone": shipping_permissions,
-    "Shop": site_permissions,
-    "TaxConfiguration": tax_permissions,
-    "TaxClass": tax_permissions,
     "User": private_user_permissions,
-    "Voucher": discount_permissions,
-    "Warehouse": product_permissions,
 }

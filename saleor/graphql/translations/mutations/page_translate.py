@@ -1,7 +1,6 @@
 import graphene
 
 from ....page import models as page_models
-from ....permission.enums import SitePermissions
 from ...core.descriptions import RICH_CONTENT
 from ...core.enums import LanguageCodeEnum
 from ...core.fields import JSONString
@@ -34,4 +33,4 @@ class PageTranslate(BaseTranslateMutation):
         object_type = translation_types.PageTranslatableContent
         error_type_class = TranslationError
         error_type_field = "translation_errors"
-        permissions = (SitePermissions.MANAGE_TRANSLATIONS,)
+        permissions = ()

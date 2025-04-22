@@ -21,7 +21,6 @@ from .app.schema import AppQueries
 from .core.enums import unit_enums
 from .core.federation.schema import build_federated_schema
 from .core.schema import CoreMutations, CoreQueries
-from .menu.schema import MenuMutations, MenuQueries
 from .translations.schema import TranslationQueries
 from .webhook.schema import WebhookMutations, WebhookQueries
 from .webhook.subscription_types import WEBHOOK_TYPES_MAP, Subscription
@@ -33,7 +32,6 @@ class Query(
     AccountQueries,
     AppQueries,
     CoreQueries,
-    MenuQueries,
     TranslationQueries,
     WebhookQueries,
 ):
@@ -43,7 +41,6 @@ class Query(
 class Mutation(
     AccountMutations,
     CoreMutations,
-    MenuMutations,
     WebhookMutations,
 ):
     pass

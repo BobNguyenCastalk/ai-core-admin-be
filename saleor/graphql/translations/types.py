@@ -4,9 +4,7 @@ import graphene
 from django.conf import settings
 from django.db.models import Model
 
-from ...menu import models as menu_models
 from ...page import models as page_models
-from ..channel import ChannelContext
 from ..core.context import get_database_connection_name
 from ..core.descriptions import (
     ADDED_IN_39,
@@ -19,7 +17,6 @@ from ..core.fields import JSONString
 from ..core.tracing import traced_resolver
 from ..core.types import LanguageDisplay, ModelObjectType, NonNullList
 from ..core.utils import str_to_enum
-from ..menu.dataloaders import MenuItemByIdLoader
 from .fields import TranslationField
 
 
@@ -117,63 +114,3 @@ class PageTranslatableContent(ModelObjectType[page_models.Page]):
     @staticmethod
     def resolve_page_id(root: page_models.Page, _info):
         return graphene.Node.to_global_id("Page", root.id)
-
-
-class MenuItemTranslation(BaseTranslationType[menu_models.MenuItemTranslation]):
-    id = graphene.GlobalID(
-        required=True, description="The ID of the menu item translation."
-    )
-    name = graphene.String(required=True, description="Translated menu item name.")
-    translatable_content = graphene.Field(
-        "saleor.graphql.translations.types.MenuItemTranslatableContent",
-        description="Represents the menu item fields to translate." + ADDED_IN_314,
-    )
-
-    class Meta:
-        model = menu_models.MenuItemTranslation
-        interfaces = [graphene.relay.Node]
-        description = "Represents menu item translations."
-
-    @staticmethod
-    def resolve_translatable_content(root: menu_models.MenuItemTranslation, info):
-        return MenuItemByIdLoader(info.context).load(root.menu_item_id)
-
-
-class MenuItemTranslatableContent(ModelObjectType[menu_models.MenuItem]):
-    id = graphene.GlobalID(
-        required=True, description="The ID of the menu item translatable content."
-    )
-    menu_item_id = graphene.ID(
-        required=True,
-        description="The ID of the menu item to translate." + ADDED_IN_314,
-    )
-    name = graphene.String(
-        required=True, description="Name of the menu item to translate."
-    )
-    translation = TranslationField(MenuItemTranslation, type_name="menu item")
-    menu_item = graphene.Field(
-        "saleor.graphql.menu.types.MenuItem",
-        description=(
-            "Represents a single item of the related menu. Can store categories, "
-            "collection or pages."
-        ),
-        deprecation_reason=(
-            f"{DEPRECATED_IN_3X_FIELD} Get model fields from the root level queries."
-        ),
-    )
-
-    class Meta:
-        model = menu_models.MenuItem
-        interfaces = [graphene.relay.Node]
-        description = (
-            "Represents menu item's original translatable fields "
-            "and related translations."
-        )
-
-    @staticmethod
-    def resolve_menu_item(root: menu_models.MenuItem, _info):
-        return ChannelContext(node=root, channel_slug=None)
-
-    @staticmethod
-    def resolve_menu_item_id(root: menu_models.MenuItem, _info):
-        return graphene.Node.to_global_id("MenuItem", root.id)

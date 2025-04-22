@@ -13,7 +13,6 @@ from ...webhook.event_types import WebhookEventAsyncType, WebhookEventSyncType
 from ..account.types import User as UserType
 from ..app.types import App as AppType
 from ..channel import ChannelContext
-from ..channel.enums import TransactionFlowStrategyEnum
 from ..core import ResolveInfo
 from ..core.context import get_database_connection_name
 from ..core.descriptions import (
@@ -21,16 +20,11 @@ from ..core.descriptions import (
     ADDED_IN_34,
     ADDED_IN_35,
     ADDED_IN_36,
-    ADDED_IN_37,
     ADDED_IN_38,
-    ADDED_IN_313,
     ADDED_IN_315,
-    PREVIEW_FEATURE,
 )
 from ..core.doc_category import (
     DOC_CATEGORY_MISC,
-    DOC_CATEGORY_PAYMENTS,
-    DOC_CATEGORY_TAXES,
     DOC_CATEGORY_USERS,
 )
 from ..core.scalars import JSON, DateTime, PositiveDecimal
@@ -39,7 +33,6 @@ from ..translations import types as translation_types
 
 TRANSLATIONS_TYPES_MAP = {
     PageTranslation: translation_types.PageTranslation,
-    MenuItemTranslation: translation_types.MenuItemTranslation,
 }
 
 
@@ -352,84 +345,6 @@ class ChannelMetadataUpdated(SubscriptionObjectType, ChannelBase):
         description = "Event sent when channel metadata is updated." + ADDED_IN_315
 
 
-class MenuBase(AbstractType):
-    menu = graphene.Field(
-        "saleor.graphql.menu.types.Menu",
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-        description="The menu the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_menu(root, info: ResolveInfo, channel=None):
-        _, menu = root
-        return ChannelContext(node=menu, channel_slug=channel)
-
-
-class MenuCreated(SubscriptionObjectType, MenuBase):
-    class Meta:
-        root_type = "Menu"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new menu is created." + ADDED_IN_34
-
-
-class MenuUpdated(SubscriptionObjectType, MenuBase):
-    class Meta:
-        root_type = "Menu"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when menu is updated." + ADDED_IN_34
-
-
-class MenuDeleted(SubscriptionObjectType, MenuBase):
-    class Meta:
-        root_type = "Menu"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when menu is deleted." + ADDED_IN_34
-
-
-class MenuItemBase(AbstractType):
-    menu_item = graphene.Field(
-        "saleor.graphql.menu.types.MenuItem",
-        channel=graphene.String(
-            description="Slug of a channel for which the data should be returned."
-        ),
-        description="The menu item the event relates to.",
-    )
-
-    @staticmethod
-    def resolve_menu_item(root, info: ResolveInfo, channel=None):
-        _, menu_item = root
-        return ChannelContext(node=menu_item, channel_slug=channel)
-
-
-class MenuItemCreated(SubscriptionObjectType, MenuItemBase):
-    class Meta:
-        root_type = "MenuItem"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when new menu item is created." + ADDED_IN_34
-
-
-class MenuItemUpdated(SubscriptionObjectType, MenuItemBase):
-    class Meta:
-        root_type = "MenuItem"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when menu item is updated." + ADDED_IN_34
-
-
-class MenuItemDeleted(SubscriptionObjectType, MenuItemBase):
-    class Meta:
-        root_type = "MenuItem"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = "Event sent when menu item is deleted." + ADDED_IN_34
-
-
 class UserBase(AbstractType):
     user = graphene.Field(
         "saleor.graphql.account.types.User",
@@ -537,98 +452,6 @@ class StaffSetPasswordRequested(SubscriptionObjectType, AccountOperationBase):
         doc_category = DOC_CATEGORY_USERS
 
 
-class PaymentGatewayInitializeSession(SubscriptionObjectType):
-    data = graphene.Field(
-        JSON,
-        description="Payment gateway data in JSON format, received from storefront.",
-    )
-    amount = graphene.Field(
-        PositiveDecimal,
-        description="Amount requested for initializing the payment gateway.",
-    )
-
-    class Meta:
-        interfaces = (Event,)
-        root_type = None
-        enable_dry_run = False
-        description = (
-            "Event sent when user wants to initialize the payment gateway."
-            + ADDED_IN_313
-            + PREVIEW_FEATURE
-        )
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-    @staticmethod
-    def resolve_source_object(root, _info: ResolveInfo):
-        _, objects = root
-        source_object, _, _ = objects
-        return source_object
-
-    @staticmethod
-    def resolve_data(root, _info: ResolveInfo):
-        _, objects = root
-        _, data, _ = objects
-        return data
-
-    @staticmethod
-    def resolve_amount(root, _info: ResolveInfo):
-        _, objects = root
-        _, _, amount = objects
-        return amount
-
-
-class TransactionProcessAction(SubscriptionObjectType, AbstractType):
-    amount = PositiveDecimal(
-        description="Transaction amount to process.", required=True
-    )
-    currency = graphene.String(description="Currency of the amount.", required=True)
-    action_type = graphene.Field(TransactionFlowStrategyEnum, required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class TransactionItemMetadataUpdated(SubscriptionObjectType):
-
-    class Meta:
-        root_type = "TransactionItem"
-        enable_dry_run = True
-        interfaces = (Event,)
-        description = (
-            "Event sent when transaction item metadata is updated." + ADDED_IN_38
-        )
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-    @staticmethod
-    def resolve_transaction(root, _info: ResolveInfo):
-        _, transaction_item = root
-        return transaction_item
-
-
-class CalculateTaxes(SubscriptionObjectType):
-    tax_base = graphene.Field(
-        "saleor.graphql.core.types.taxes.TaxableObject", required=True
-    )
-
-    class Meta:
-        root_type = None
-        enable_dry_run = False
-        interfaces = (Event,)
-        description = (
-            "Synchronous webhook for calculating checkout/order taxes." + ADDED_IN_37
-        )
-        doc_category = DOC_CATEGORY_TAXES
-
-    @staticmethod
-    def resolve_tax_base(root, _info: ResolveInfo):
-        _, tax_base = root
-        return tax_base
-
-
-def default_order_resolver(root, info, channels=None):
-    return Observable.from_([root])
-
-
 channels_argument = graphene.Argument(
     NonNullList(graphene.String),
     description=(
@@ -722,12 +545,6 @@ ASYNC_WEBHOOK_TYPES_MAP = {
     WebhookEventAsyncType.CHANNEL_DELETED: ChannelDeleted,
     WebhookEventAsyncType.CHANNEL_STATUS_CHANGED: ChannelStatusChanged,
     WebhookEventAsyncType.CHANNEL_METADATA_UPDATED: ChannelMetadataUpdated,
-    WebhookEventAsyncType.MENU_CREATED: MenuCreated,
-    WebhookEventAsyncType.MENU_UPDATED: MenuUpdated,
-    WebhookEventAsyncType.MENU_DELETED: MenuDeleted,
-    WebhookEventAsyncType.MENU_ITEM_CREATED: MenuItemCreated,
-    WebhookEventAsyncType.MENU_ITEM_UPDATED: MenuItemUpdated,
-    WebhookEventAsyncType.MENU_ITEM_DELETED: MenuItemDeleted,
     WebhookEventAsyncType.CUSTOMER_CREATED: CustomerCreated,
     WebhookEventAsyncType.CUSTOMER_UPDATED: CustomerUpdated,
     WebhookEventAsyncType.CUSTOMER_METADATA_UPDATED: CustomerMetadataUpdated,

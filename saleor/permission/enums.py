@@ -28,36 +28,12 @@ class ChannelPermissions(BasePermissionEnum):
     MANAGE_CHANNELS = "channel.manage_channels"
 
 
-class DiscountPermissions(BasePermissionEnum):
-    MANAGE_DISCOUNTS = "discount.manage_discounts"
-
-
 class PluginsPermissions(BasePermissionEnum):
     MANAGE_PLUGINS = "plugins.manage_plugins"
 
 
-class GiftcardPermissions(BasePermissionEnum):
-    MANAGE_GIFT_CARD = "giftcard.manage_gift_card"
-
-
 class MenuPermissions(BasePermissionEnum):
     MANAGE_MENUS = "menu.manage_menus"
-
-
-class CheckoutPermissions(BasePermissionEnum):
-    MANAGE_CHECKOUTS = "checkout.manage_checkouts"
-    HANDLE_CHECKOUTS = "checkout.handle_checkouts"
-    HANDLE_TAXES = "checkout.handle_taxes"
-    MANAGE_TAXES = "checkout.manage_taxes"
-
-
-class OrderPermissions(BasePermissionEnum):
-    MANAGE_ORDERS = "order.manage_orders"
-    MANAGE_ORDERS_IMPORT = "order.manage_orders_import"
-
-
-class PaymentPermissions(BasePermissionEnum):
-    HANDLE_PAYMENTS = "payment.handle_payments"
 
 
 class PagePermissions(BasePermissionEnum):
@@ -68,40 +44,14 @@ class PageTypePermissions(BasePermissionEnum):
     MANAGE_PAGE_TYPES_AND_ATTRIBUTES = "page.manage_page_types_and_attributes"
 
 
-class ProductPermissions(BasePermissionEnum):
-    MANAGE_PRODUCTS = "product.manage_products"
-
-
-class ProductTypePermissions(BasePermissionEnum):
-    MANAGE_PRODUCT_TYPES_AND_ATTRIBUTES = "product.manage_product_types_and_attributes"
-
-
-class ShippingPermissions(BasePermissionEnum):
-    MANAGE_SHIPPING = "shipping.manage_shipping"
-
-
-class SitePermissions(BasePermissionEnum):
-    MANAGE_SETTINGS = "site.manage_settings"
-    MANAGE_TRANSLATIONS = "site.manage_translations"
-
-
 PERMISSIONS_ENUMS = [
     AccountPermissions,
     AppPermission,
-    CheckoutPermissions,
     ChannelPermissions,
-    DiscountPermissions,
-    GiftcardPermissions,
     MenuPermissions,
-    OrderPermissions,
     PagePermissions,
     PageTypePermissions,
-    PaymentPermissions,
     PluginsPermissions,
-    ProductPermissions,
-    ProductTypePermissions,
-    ShippingPermissions,
-    SitePermissions,
 ]
 
 

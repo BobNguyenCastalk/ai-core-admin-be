@@ -1,7 +1,6 @@
 import graphene
 
 from ....menu import models as menu_models
-from ....permission.enums import SitePermissions
 from ...channel import ChannelContext
 from ...core import ResolveInfo
 from ...core.enums import LanguageCodeEnum
@@ -29,7 +28,6 @@ class MenuItemTranslate(BaseTranslateMutation):
         object_type = MenuItem
         error_type_class = TranslationError
         error_type_field = "translation_errors"
-        permissions = (SitePermissions.MANAGE_TRANSLATIONS,)
 
     @classmethod
     def perform_mutation(  # type: ignore[override]

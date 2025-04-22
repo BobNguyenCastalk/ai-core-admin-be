@@ -3,7 +3,7 @@ from django.db.models import Q
 from ...account import models
 from ...core.exceptions import PermissionDenied
 from ...graphql.core.context import get_database_connection_name
-from ...permission.enums import AccountPermissions, OrderPermissions
+from ...permission.enums import AccountPermissions
 from ...permission.utils import has_one_of_permissions
 from ..core import ResolveInfo
 from ..core.tracing import traced_resolver
@@ -71,7 +71,7 @@ def resolve_user(info, id=None, email=None, external_reference=None):
                 .first()
             )
         if has_one_of_permissions(
-            requester, [AccountPermissions.MANAGE_USERS, OrderPermissions.MANAGE_ORDERS]
+            requester, [AccountPermissions.MANAGE_USERS]
         ):
             return (
                 models.User.objects.customers()
@@ -83,7 +83,6 @@ def resolve_user(info, id=None, email=None, external_reference=None):
         permissions=[
             AccountPermissions.MANAGE_STAFF,
             AccountPermissions.MANAGE_USERS,
-            OrderPermissions.MANAGE_ORDERS,
         ]
     )
 

@@ -12,17 +12,10 @@ from ...core.doc_category import (
     DOC_CATEGORY_CHANNELS,
     DOC_CATEGORY_MENU,
     DOC_CATEGORY_PAGES,
-    DOC_CATEGORY_PRODUCTS,
     DOC_CATEGORY_USERS,
     DOC_CATEGORY_WEBHOOKS,
 )
 from ...core.scalars import DateTime, Decimal
-from ..descriptions import (
-    ADDED_IN_36,
-    ADDED_IN_314,
-    DEPRECATED_IN_3X_FIELD,
-    PREVIEW_FEATURE,
-)
 from ..enums import (
     AccountErrorCode,
     AppErrorCode,
@@ -48,8 +41,6 @@ from ..enums import (
 from ..scalars import Date, PositiveDecimal
 from ..tracing import traced_resolver
 from .base import BaseObjectType
-from .money import VAT
-from .upload import Upload
 
 if TYPE_CHECKING:
     from .. import ResolveInfo
@@ -65,19 +56,6 @@ class NonNullList(graphene.List):
     def __init__(self, of_type, *args, **kwargs):
         of_type = graphene.NonNull(of_type)
         super().__init__(of_type, *args, **kwargs)
-
-
-class CountryDisplay(graphene.ObjectType):
-    code = graphene.String(description="Country code.", required=True)
-    country = graphene.String(description="Country name.", required=True)
-    vat = graphene.Field(
-        VAT,
-        description="Country tax.",
-        deprecation_reason=(
-            f"{DEPRECATED_IN_3X_FIELD} Always returns `null`. Use `TaxClassCountryRate`"
-            " type to manage tax rates per country."
-        ),
-    )
 
 
 class LanguageDisplay(graphene.ObjectType):
@@ -192,16 +170,6 @@ class ChannelError(Error):
 
     class Meta:
         doc_category = DOC_CATEGORY_CHANNELS
-
-
-class ProductWithoutVariantError(Error):
-    products = NonNullList(
-        graphene.ID,
-        description="List of products IDs which causes the error.",
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PRODUCTS
 
 
 class ExternalNotificationError(Error):
@@ -347,16 +315,6 @@ class File(graphene.ObjectType):
         return build_absolute_uri(default_storage.url(unquote(root.url)))
 
 
-class PriceInput(graphene.InputObjectType):
-    currency = graphene.String(description="Currency code.", required=True)
-    amount = PositiveDecimal(description="Amount of money.", required=True)
-
-
-class PriceRangeInput(graphene.InputObjectType):
-    gte = graphene.Float(description="Price greater than or equal to.", required=False)
-    lte = graphene.Float(description="Price less than or equal to.", required=False)
-
-
 class DecimalRangeInput(graphene.InputObjectType):
     gte = Decimal(description="Decimal value greater than or equal to.", required=False)
     lte = Decimal(description="Decimal value less than or equal to.", required=False)
@@ -401,13 +359,3 @@ class Job(graphene.Interface):
 class TimePeriod(graphene.ObjectType):
     amount = graphene.Int(description="The length of the period.", required=True)
     type = TimePeriodTypeEnum(description="The type of the period.", required=True)
-
-
-class MediaInput(graphene.InputObjectType):
-    alt = graphene.String(description="Alt text for a product media.")
-    image = Upload(
-        required=False, description="Represents an image file in a multipart request."
-    )
-    media_url = graphene.String(
-        required=False, description="Represents an URL to an external media."
-    )
