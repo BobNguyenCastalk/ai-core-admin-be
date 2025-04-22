@@ -6,7 +6,6 @@ from ...attribute import models as attribute_models
 from ...channel import models as channel_models
 from ...core.exceptions import PermissionDenied
 from ...core.models import ModelWithMetadata
-from ...payment import models as payment_models
 from ...permission.utils import one_of_permissions_or_auth_filter_required
 from ...product import models as product_models
 from ...site import models as site_models
@@ -38,8 +37,6 @@ def resolve_object_with_metadata_type(instance):
             channel_models.Channel: channel_types.Channel,
             menu_models.Menu: menu_types.Menu,
             menu_models.MenuItem: menu_types.MenuItem,
-            payment_models.Payment: payment_types.Payment,
-            payment_models.TransactionItem: payment_types.TransactionItem,
             product_models.Category: product_types.Category,
             product_models.Collection: product_types.Collection,
             product_models.DigitalContent: product_types.DigitalContent,

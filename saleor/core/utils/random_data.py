@@ -42,8 +42,6 @@ from ...channel.models import Channel
 from ...core.weight import zero_weight
 from ...menu.models import Menu, MenuItem
 from ...page.models import Page, PageType
-from ...payment import gateway
-from ...payment.utils import create_payment
 from ...permission.enums import (
     AccountPermissions,
     CheckoutPermissions,
@@ -51,7 +49,6 @@ from ...permission.enums import (
     get_permissions,
 )
 from ...permission.models import Permission
-from ...plugins.manager import get_plugins_manager
 from ...product.models import (
     Category,
     Collection,
@@ -498,38 +495,6 @@ def create_fake_user(user_password, save=True, generate_id=False):
         user.save()
         user.addresses.add(address)
     return user
-
-
-# We don't want to spam the console with payment confirmations sent to
-# fake customers.
-@patch("saleor.plugins.manager.PluginsManager.notify")
-def create_fake_payment(mock_notify, order):
-    payment = create_payment(
-        gateway="mirumee.payments.dummy",
-        customer_ip_address=fake.ipv4(),
-        email=order.user_email,
-        order=order,
-        payment_token=str(uuid.uuid4()),
-        total=order.total.gross.amount,
-        currency=order.total.gross.currency,
-    )
-    manager = get_plugins_manager(allow_replica=False)
-
-    # Create authorization transaction
-    gateway.authorize(payment, payment.token, manager, order.channel.slug)
-    # 20% chance to void the transaction at this stage
-    if random.choice([0, 0, 0, 0, 1]):
-        gateway.void(payment, manager, order.channel.slug)
-        return payment
-    # 25% to end the payment at the authorization stage
-    if not random.choice([1, 1, 1, 0]):
-        return payment
-    # Create capture transaction
-    gateway.capture(payment, manager, order.channel.slug)
-    # 25% to refund the payment
-    if random.choice([0, 0, 0, 1]):
-        gateway.refund(payment, manager, order.channel.slug)
-    return payment
 
 
 def create_users(user_password, how_many=10):

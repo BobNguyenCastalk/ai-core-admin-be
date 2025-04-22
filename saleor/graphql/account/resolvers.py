@@ -8,8 +8,6 @@ from i18naddress import get_validation_rules
 from ...account import models
 from ...core.exceptions import PermissionDenied
 from ...graphql.core.context import get_database_connection_name
-from ...payment import gateway
-from ...payment.utils import fetch_customer_id
 from ...permission.auth_filters import AuthorizationFilters
 from ...permission.enums import AccountPermissions, OrderPermissions
 from ...permission.utils import has_one_of_permissions
@@ -179,29 +177,6 @@ def resolve_address_validation_rules(
         ],
         postal_code_examples=rules.postal_code_examples,
         postal_code_prefix=rules.postal_code_prefix,
-    )
-
-
-@traced_resolver
-def resolve_payment_sources(
-    _info, user: models.User, manager, channel_slug: Optional[str]
-):
-    stored_customer_accounts = [
-        (gtw.id, fetch_customer_id(user, gtw.id))
-        for gtw in gateway.list_gateways(manager, channel_slug)
-    ]
-    return list(
-        chain(
-            *[
-                prepare_graphql_payment_sources_type(
-                    gateway.list_payment_sources(
-                        gtw, customer_id, manager, channel_slug
-                    )
-                )
-                for gtw, customer_id in stored_customer_accounts
-                if customer_id is not None
-            ]
-        )
     )
 
 

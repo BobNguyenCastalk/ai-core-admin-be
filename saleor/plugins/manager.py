@@ -16,33 +16,9 @@ from prices import TaxedMoney
 from ..channel.models import Channel
 from ..core.db.connection import allow_writer
 from ..core.models import EventDelivery
-from ..core.payments import PaymentInterface
 from ..core.prices import quantize_price
 from ..core.taxes import TaxData, TaxType, zero_money, zero_taxed_money
 from ..graphql.core import ResolveInfo, SaleorContext
-from ..payment.interface import (
-    CustomerSource,
-    GatewayResponse,
-    InitializedPaymentResponse,
-    ListStoredPaymentMethodsRequestData,
-    PaymentData,
-    PaymentGateway,
-    PaymentGatewayData,
-    PaymentGatewayInitializeTokenizationRequestData,
-    PaymentGatewayInitializeTokenizationResponseData,
-    PaymentGatewayInitializeTokenizationResult,
-    PaymentMethodData,
-    PaymentMethodProcessTokenizationRequestData,
-    PaymentMethodTokenizationResponseData,
-    PaymentMethodTokenizationResult,
-    StoredPaymentMethodRequestDeleteData,
-    StoredPaymentMethodRequestDeleteResponseData,
-    StoredPaymentMethodRequestDeleteResult,
-    TokenConfig,
-    TransactionActionData,
-    TransactionSessionData,
-    TransactionSessionResult,
-)
 from .base_plugin import ExcludedShippingMethod, ExternalAccessTokens
 from .models import PluginConfiguration
 
@@ -81,7 +57,7 @@ NotifyEventTypeChoice = str
 logger = logging.getLogger(__name__)
 
 
-class PluginsManager(PaymentInterface):
+class PluginsManager():
     """Base manager for handling plugins logic."""
 
     plugins_per_channel: dict[str, list["BasePlugin"]] = {}
@@ -1120,91 +1096,6 @@ class PluginsManager(PaymentInterface):
 
     # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
     # Webhook-related functionality will be moved from plugin to core modules.
-    def transaction_charge_requested(
-        self, payment_data: "TransactionActionData", channel_slug: str
-    ):
-        default_value = None
-        return self.__run_method_on_plugins(
-            "transaction_charge_requested",
-            default_value,
-            payment_data,
-            channel_slug=channel_slug,
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def transaction_refund_requested(
-        self, payment_data: "TransactionActionData", channel_slug: str
-    ):
-        default_value = None
-        return self.__run_method_on_plugins(
-            "transaction_refund_requested",
-            default_value,
-            payment_data,
-            channel_slug=channel_slug,
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def transaction_cancelation_requested(
-        self, payment_data: "TransactionActionData", channel_slug: str
-    ):
-        default_value = None
-        return self.__run_method_on_plugins(
-            "transaction_cancelation_requested",
-            default_value,
-            payment_data,
-            channel_slug=channel_slug,
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def payment_gateway_initialize_session(
-        self,
-        amount: Decimal,
-        payment_gateways: Optional[list["PaymentGatewayData"]],
-        source_object: Union["Order", "Checkout"],
-    ) -> list["PaymentGatewayData"]:
-        default_value = None
-        return self.__run_method_on_plugins(
-            "payment_gateway_initialize_session",
-            default_value,
-            amount,
-            payment_gateways,
-            source_object,
-            channel_slug=source_object.channel.slug,
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def transaction_initialize_session(
-        self,
-        transaction_session_data: "TransactionSessionData",
-    ) -> "TransactionSessionResult":
-        default_value = None
-        return self.__run_method_on_plugins(
-            "transaction_initialize_session",
-            default_value,
-            transaction_session_data,
-            channel_slug=transaction_session_data.source_object.channel.slug,
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def transaction_process_session(
-        self,
-        transaction_session_data: "TransactionSessionData",
-    ) -> "TransactionSessionResult":
-        default_value = None
-        return self.__run_method_on_plugins(
-            "transaction_process_session",
-            default_value,
-            transaction_session_data,
-            channel_slug=transaction_session_data.source_object.channel.slug,
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
     def transaction_item_metadata_updated(self, transaction_item: "TransactionItem"):
         default_value = None
         return self.__run_method_on_plugins(
@@ -1946,199 +1837,6 @@ class PluginsManager(PaymentInterface):
             channel_slug=None,
         )
 
-    def initialize_payment(
-        self, gateway, payment_data: dict, channel_slug: str
-    ) -> Optional["InitializedPaymentResponse"]:
-        method_name = "initialize_payment"
-        default_value = None
-        gtw = self.get_plugin(gateway, channel_slug)
-        if not gtw:
-            return None
-
-        return self.__run_method_on_single_plugin(
-            gtw,
-            method_name,
-            previous_value=default_value,
-            payment_data=payment_data,
-            channel_slug=channel_slug,
-        )
-
-    def authorize_payment(
-        self, gateway: str, payment_information: "PaymentData", channel_slug: str
-    ) -> "GatewayResponse":
-        return self.__run_payment_method(
-            gateway, "authorize_payment", payment_information, channel_slug=channel_slug
-        )
-
-    def capture_payment(
-        self, gateway: str, payment_information: "PaymentData", channel_slug: str
-    ) -> "GatewayResponse":
-        return self.__run_payment_method(
-            gateway, "capture_payment", payment_information, channel_slug=channel_slug
-        )
-
-    def refund_payment(
-        self, gateway: str, payment_information: "PaymentData", channel_slug: str
-    ) -> "GatewayResponse":
-        return self.__run_payment_method(
-            gateway, "refund_payment", payment_information, channel_slug=channel_slug
-        )
-
-    def void_payment(
-        self, gateway: str, payment_information: "PaymentData", channel_slug: str
-    ) -> "GatewayResponse":
-        return self.__run_payment_method(
-            gateway, "void_payment", payment_information, channel_slug=channel_slug
-        )
-
-    def confirm_payment(
-        self, gateway: str, payment_information: "PaymentData", channel_slug: str
-    ) -> "GatewayResponse":
-        return self.__run_payment_method(
-            gateway, "confirm_payment", payment_information, channel_slug=channel_slug
-        )
-
-    def process_payment(
-        self, gateway: str, payment_information: "PaymentData", channel_slug: str
-    ) -> "GatewayResponse":
-        return self.__run_payment_method(
-            gateway, "process_payment", payment_information, channel_slug=channel_slug
-        )
-
-    def token_is_required_as_payment_input(
-        self, gateway: str, channel_slug: str
-    ) -> bool:
-        method_name = "token_is_required_as_payment_input"
-        default_value = True
-        gtw = self.get_plugin(gateway, channel_slug=channel_slug)
-        if gtw is not None:
-            return self.__run_method_on_single_plugin(
-                gtw,
-                method_name,
-                previous_value=default_value,
-            )
-        return default_value
-
-    def get_client_token(
-        self,
-        gateway,
-        token_config: "TokenConfig",
-        channel_slug: str,
-    ) -> str:
-        method_name = "get_client_token"
-        default_value = None
-        gtw = self.get_plugin(gateway, channel_slug=channel_slug)
-        return self.__run_method_on_single_plugin(
-            gtw, method_name, default_value, token_config=token_config
-        )
-
-    def list_payment_sources(
-        self,
-        gateway: str,
-        customer_id: str,
-        channel_slug: Optional[str],
-    ) -> list["CustomerSource"]:
-        default_value: list = []
-        gtw = self.get_plugin(gateway, channel_slug=channel_slug)
-        if gtw is not None:
-            return self.__run_method_on_single_plugin(
-                gtw, "list_payment_sources", default_value, customer_id=customer_id
-            )
-        raise Exception(f"Payment plugin {gateway} is inaccessible!")
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def list_stored_payment_methods(
-        self,
-        list_stored_payment_methods_data: "ListStoredPaymentMethodsRequestData",
-    ) -> list["PaymentMethodData"]:
-        default_value: list = []
-        return self.__run_method_on_plugins(
-            "list_stored_payment_methods",
-            default_value,
-            list_stored_payment_methods_data,
-            channel_slug=list_stored_payment_methods_data.channel.slug,
-        )
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def stored_payment_method_request_delete(
-        self,
-        request_delete_data: "StoredPaymentMethodRequestDeleteData",
-    ) -> "StoredPaymentMethodRequestDeleteResponseData":
-        default_response = StoredPaymentMethodRequestDeleteResponseData(
-            result=StoredPaymentMethodRequestDeleteResult.FAILED_TO_DELIVER,
-            error="Payment method request delete failed to deliver.",
-        )
-        response = self.__run_method_on_plugins(
-            "stored_payment_method_request_delete",
-            default_response,
-            request_delete_data,
-            channel_slug=request_delete_data.channel.slug,
-        )
-        return response
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def payment_gateway_initialize_tokenization(
-        self,
-        request_data: "PaymentGatewayInitializeTokenizationRequestData",
-    ) -> "PaymentGatewayInitializeTokenizationResponseData":
-        default_response = PaymentGatewayInitializeTokenizationResponseData(
-            result=PaymentGatewayInitializeTokenizationResult.FAILED_TO_DELIVER,
-            error="Payment gateway initialize tokenization failed to deliver.",
-            data=None,
-        )
-
-        response = self.__run_method_on_plugins(
-            "payment_gateway_initialize_tokenization",
-            default_response,
-            request_data,
-            channel_slug=request_data.channel.slug,
-        )
-        return response
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules.
-    def payment_method_initialize_tokenization(
-        self,
-        request_data: "PaymentMethodProcessTokenizationRequestData",
-    ) -> "PaymentMethodTokenizationResponseData":
-        default_response = PaymentMethodTokenizationResponseData(
-            result=PaymentMethodTokenizationResult.FAILED_TO_DELIVER,
-            error="Payment method initialize tokenization failed to deliver.",
-            data=None,
-        )
-
-        response = self.__run_method_on_plugins(
-            "payment_method_initialize_tokenization",
-            default_response,
-            request_data,
-            channel_slug=request_data.channel.slug,
-        )
-        return response
-
-    # Note: this method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from plugin to core modules..
-    # Any webhook-related functionality will be moved from plugin to core modules.
-    def payment_method_process_tokenization(
-        self,
-        request_data: "PaymentMethodProcessTokenizationRequestData",
-    ) -> "PaymentMethodTokenizationResponseData":
-        default_response = PaymentMethodTokenizationResponseData(
-            result=PaymentMethodTokenizationResult.FAILED_TO_DELIVER,
-            error="Payment method process tokenization failed to deliver.",
-            data=None,
-        )
-
-        response = self.__run_method_on_plugins(
-            "payment_method_process_tokenization",
-            default_response,
-            request_data,
-            channel_slug=request_data.channel.slug,
-        )
-        return response
-
     def translations_created(self, translations: list["Translation"], webhooks=None):
         default_value = None
         self.__run_method_on_plugins(
@@ -2219,43 +1917,6 @@ class PluginsManager(PaymentInterface):
 
         return plugins
 
-    def list_payment_gateways(
-        self,
-        currency: Optional[str] = None,
-        checkout_info: Optional["CheckoutInfo"] = None,
-        checkout_lines: Optional[Iterable["CheckoutLineInfo"]] = None,
-        channel_slug: Optional[str] = None,
-        active_only: bool = True,
-    ) -> list["PaymentGateway"]:
-        channel_slug = checkout_info.channel.slug if checkout_info else channel_slug
-
-        if channel_slug is not None:
-            plugins = self.get_plugins(
-                channel_slug=channel_slug, active_only=active_only
-            )
-        else:
-            # Backwards compatibility for: https://github.com/saleor/saleor/pull/15769/
-            # Load all channel plugins and global plugins if channel_slug is None, as
-            # it was done before the mentioned PR.
-            plugins = self.get_all_plugins(active_only=active_only)
-
-        payment_plugins = [
-            plugin for plugin in plugins if "process_payment" in type(plugin).__dict__
-        ]
-
-        # if currency is given return only gateways which support given currency
-        gateways = []
-        for plugin in payment_plugins:
-            gateways.extend(
-                plugin.get_payment_gateways(
-                    currency=currency,
-                    checkout_info=checkout_info,
-                    checkout_lines=checkout_lines,
-                    previous_value=None,
-                )
-            )
-        return gateways
-
     def list_shipping_methods_for_checkout(
         self,
         checkout: "Checkout",
@@ -2302,32 +1963,6 @@ class PluginsManager(PaymentInterface):
             for plugin in plugins
             if auth_basic_method in type(plugin).__dict__
         ]
-
-    def __run_payment_method(
-        self,
-        gateway: str,
-        method_name: str,
-        payment_information: "PaymentData",
-        channel_slug: str,
-        **kwargs,
-    ) -> "GatewayResponse":
-        default_value = None
-        plugin = self.get_plugin(gateway, channel_slug)
-        if plugin is not None:
-            resp = self.__run_method_on_single_plugin(
-                plugin,
-                method_name,
-                previous_value=default_value,
-                payment_information=payment_information,
-                **kwargs,
-            )
-            if resp is not None:
-                return resp
-
-        raise Exception(
-            f"Payment plugin {gateway} for {method_name}"
-            " payment method is inaccessible!"
-        )
 
     def __run_plugin_method_until_first_success(
         self,

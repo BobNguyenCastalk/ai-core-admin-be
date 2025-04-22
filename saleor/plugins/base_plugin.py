@@ -15,24 +15,6 @@ from promise.promise import Promise
 
 from ..core.models import EventDelivery
 from ..graphql.core import ResolveInfo, SaleorContext
-from ..payment.interface import (
-    CustomerSource,
-    GatewayResponse,
-    InitializedPaymentResponse,
-    ListStoredPaymentMethodsRequestData,
-    PaymentData,
-    PaymentGateway,
-    PaymentGatewayInitializeTokenizationRequestData,
-    PaymentGatewayInitializeTokenizationResponseData,
-    PaymentMethodData,
-    PaymentMethodInitializeTokenizationRequestData,
-    PaymentMethodProcessTokenizationRequestData,
-    PaymentMethodTokenizationResponseData,
-    StoredPaymentMethodRequestDeleteData,
-    StoredPaymentMethodRequestDeleteResponseData,
-    TransactionActionData,
-    TransactionSessionResult,
-)
 from ..thumbnail.models import Thumbnail
 from .models import PluginConfiguration
 
@@ -341,8 +323,6 @@ class BasePlugin:
     # Overwrite this method if the plugin handles authentication flow.
     authenticate_user: Callable[[SaleorContext, Optional["User"]], Union["User", None]]
 
-    authorize_payment: Callable[["PaymentData", Any], GatewayResponse]
-
     # Calculate the subtotal for checkout.
     #
     # Overwrite this method if you need to apply specific logic for the calculation
@@ -388,8 +368,6 @@ class BasePlugin:
     calculate_order_total: Callable[
         ["Order", list["OrderLine"], TaxedMoney], TaxedMoney
     ]
-
-    capture_payment: Callable[["PaymentData", Any], GatewayResponse]
 
     # Trigger when category is created.
     #
@@ -541,8 +519,6 @@ class BasePlugin:
     # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
     # Webhook-related functionality will be moved from the plugin to core modules.
     collection_metadata_updated: Callable[["Collection", Any], Any]
-
-    confirm_payment: Callable[["PaymentData", Any], GatewayResponse]
 
     # Trigger when user is created.
     #
@@ -742,59 +718,6 @@ class BasePlugin:
     # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
     # Webhook-related functionality will be moved from the plugin to core modules.
     draft_order_deleted: Callable[["Order", Any, None], Any]
-
-    initialize_payment: Callable[
-        [dict, Optional[InitializedPaymentResponse]], InitializedPaymentResponse
-    ]
-
-    list_payment_sources: Callable[[str, Any], list["CustomerSource"]]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    list_stored_payment_methods: Callable[
-        ["ListStoredPaymentMethodsRequestData", list["PaymentMethodData"]],
-        list["PaymentMethodData"],
-    ]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    stored_payment_method_request_delete: Callable[
-        [
-            "StoredPaymentMethodRequestDeleteData",
-            "StoredPaymentMethodRequestDeleteResponseData",
-        ],
-        "StoredPaymentMethodRequestDeleteResponseData",
-    ]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    payment_gateway_initialize_tokenization: Callable[
-        [
-            "PaymentGatewayInitializeTokenizationRequestData",
-            "PaymentGatewayInitializeTokenizationResponseData",
-        ],
-        "PaymentGatewayInitializeTokenizationResponseData",
-    ]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    payment_method_initialize_tokenization: Callable[
-        [
-            "PaymentMethodInitializeTokenizationRequestData",
-            "PaymentMethodTokenizationResponseData",
-        ],
-        "PaymentMethodTokenizationResponseData",
-    ]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    payment_method_process_tokenization: Callable[
-        [
-            "PaymentMethodProcessTokenizationRequestData",
-            "PaymentMethodTokenizationResponseData",
-        ],
-        "PaymentMethodTokenizationResponseData",
-    ]
 
     # Trigger when menu is created.
     #
@@ -1000,20 +923,6 @@ class BasePlugin:
         Any,
     ]
 
-    process_payment: Callable[["PaymentData", Any], Any]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    transaction_charge_requested: Callable[["TransactionActionData", None], None]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    transaction_cancelation_requested: Callable[["TransactionActionData", None], None]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    transaction_refund_requested: Callable[["TransactionActionData", None], None]
-
     # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
     # Webhook-related functionality will be moved from the plugin to core modules.
     payment_gateway_initialize_session: Callable[
@@ -1024,18 +933,6 @@ class BasePlugin:
             None,
         ],
         list["PaymentGatewayData"],
-    ]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    transaction_initialize_session: Callable[
-        ["TransactionSessionData", None], "TransactionSessionResult"
-    ]
-
-    # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
-    # Webhook-related functionality will be moved from the plugin to core modules.
-    transaction_process_session: Callable[
-        ["TransactionSessionData", None], "TransactionSessionResult"
     ]
 
     # Trigger when transaction item metadata is updated.
@@ -1199,8 +1096,6 @@ class BasePlugin:
     # Note: This method is deprecated in Saleor 3.20 and will be removed in Saleor 3.21.
     # Webhook-related functionality will be moved from the plugin to core modules.
     product_export_completed: Callable[["ExportFile", None], None]
-
-    refund_payment: Callable[["PaymentData", Any], GatewayResponse]
 
     # Trigger when sale is created.
     #
@@ -1410,8 +1305,6 @@ class BasePlugin:
     # Trigger when tracking number is updated.
     tracking_number_updated: Callable[["Fulfillment", Any], Any]
 
-    void_payment: Callable[["PaymentData", Any], GatewayResponse]
-
     # Trigger when warehouse is created.
     #
     # Overwrite this method if you need to trigger specific logic after a warehouse is
@@ -1550,33 +1443,6 @@ class BasePlugin:
 
     def token_is_required_as_payment_input(self, previous_value):
         return previous_value
-
-    def get_payment_gateways(
-        self,
-        currency: Optional[str],
-        checkout_info: Optional["CheckoutInfo"],
-        checkout_lines: Optional[Iterable["CheckoutLineInfo"]],
-        previous_value,
-    ) -> list["PaymentGateway"]:
-        payment_config = (
-            self.get_payment_config(previous_value)
-            if hasattr(self, "get_payment_config")
-            else []
-        )
-        currencies = (
-            self.get_supported_currencies([])
-            if hasattr(self, "get_supported_currencies")
-            else []
-        )
-        if currency and currency not in currencies:
-            return []
-        gateway = PaymentGateway(
-            id=self.PLUGIN_ID,
-            name=self.PLUGIN_NAME,
-            config=payment_config,
-            currencies=currencies,
-        )
-        return [gateway]
 
     @classmethod
     def _update_config_items(

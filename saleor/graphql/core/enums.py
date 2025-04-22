@@ -16,7 +16,6 @@ from ...core.units import (
 )
 from ...menu import error_codes as menu_error_codes
 from ...page import error_codes as page_error_codes
-from ...payment import error_codes as payment_error_codes
 from ...permission.enums import get_permissions_enum_list
 from ...plugins import error_codes as plugin_error_codes
 from ...product import error_codes as product_error_codes
@@ -29,12 +28,9 @@ from .doc_category import (
     DOC_CATEGORY_APPS,
     DOC_CATEGORY_ATTRIBUTES,
     DOC_CATEGORY_CHANNELS,
-    DOC_CATEGORY_CHECKOUT,
-    DOC_CATEGORY_DISCOUNTS,
     DOC_CATEGORY_GIFT_CARDS,
     DOC_CATEGORY_ORDERS,
     DOC_CATEGORY_PAGES,
-    DOC_CATEGORY_PAYMENTS,
     DOC_CATEGORY_PRODUCTS,
     DOC_CATEGORY_USERS,
     DOC_CATEGORY_WEBHOOKS,
@@ -208,9 +204,6 @@ MetadataErrorCode = graphene.Enum.from_enum(core_error_codes.MetadataErrorCode)
 PageErrorCode = graphene.Enum.from_enum(page_error_codes.PageErrorCode)
 PageErrorCode.doc_category = DOC_CATEGORY_PAGES
 
-PaymentErrorCode = graphene.Enum.from_enum(payment_error_codes.PaymentErrorCode)
-PaymentErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
 
 ProductTranslateErrorCode = graphene.Enum.from_enum(
     translatable_error_codes.ProductTranslateErrorCode
@@ -222,71 +215,6 @@ ProductVariantTranslateErrorCode = graphene.Enum.from_enum(
     translatable_error_codes.ProductVariantTranslateErrorCode
 )
 ProductVariantTranslateErrorCode.doc_category = DOC_CATEGORY_PRODUCTS
-
-
-TransactionCreateErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.TransactionCreateErrorCode
-)
-TransactionCreateErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
-TransactionUpdateErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.TransactionUpdateErrorCode
-)
-TransactionUpdateErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
-TransactionRequestActionErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.TransactionRequestActionErrorCode
-)
-TransactionRequestActionErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
-TransactionRequestRefundForGrantedRefundErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.TransactionRequestRefundForGrantedRefundErrorCode
-)
-TransactionRequestRefundForGrantedRefundErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-TransactionEventReportErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.TransactionEventReportErrorCode
-)
-TransactionEventReportErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
-TransactionInitializeErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.TransactionInitializeErrorCode
-)
-TransactionInitializeErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
-TransactionProcessErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.TransactionProcessErrorCode
-)
-TransactionProcessErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
-PaymentGatewayConfigErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.PaymentGatewayConfigErrorCode
-)
-PaymentGatewayConfigErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
-PaymentGatewayInitializeErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.PaymentGatewayInitializeErrorCode
-)
-PaymentGatewayInitializeErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
-StoredPaymentMethodRequestDeleteErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.StoredPaymentMethodRequestDeleteErrorCode
-)
-StoredPaymentMethodRequestDeleteErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
-PaymentGatewayInitializeTokenizationErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.PaymentGatewayInitializeTokenizationErrorCode
-)
-PaymentGatewayInitializeTokenizationErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
-PaymentMethodInitializeTokenizationErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.PaymentMethodInitializeTokenizationErrorCode
-)
-PaymentMethodInitializeTokenizationErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
-
-PaymentMethodProcessTokenizationErrorCode = graphene.Enum.from_enum(
-    payment_error_codes.PaymentMethodProcessTokenizationErrorCode
-)
-PaymentMethodProcessTokenizationErrorCode.doc_category = DOC_CATEGORY_PAYMENTS
 
 PermissionGroupErrorCode = graphene.Enum.from_enum(
     account_error_codes.PermissionGroupErrorCode

@@ -11,13 +11,10 @@ from ...core.doc_category import (
     DOC_CATEGORY_ATTRIBUTES,
     DOC_CATEGORY_AUTH,
     DOC_CATEGORY_CHANNELS,
-    DOC_CATEGORY_CHECKOUT,
-    DOC_CATEGORY_DISCOUNTS,
     DOC_CATEGORY_GIFT_CARDS,
     DOC_CATEGORY_MENU,
     DOC_CATEGORY_ORDERS,
     DOC_CATEGORY_PAGES,
-    DOC_CATEGORY_PAYMENTS,
     DOC_CATEGORY_PRODUCTS,
     DOC_CATEGORY_SHOP,
     DOC_CATEGORY_TAXES,
@@ -29,7 +26,6 @@ from ..descriptions import (
     ADDED_IN_36,
     ADDED_IN_312,
     ADDED_IN_314,
-    ADDED_IN_318,
     DEPRECATED_IN_3X_FIELD,
     PREVIEW_FEATURE,
 )
@@ -52,12 +48,6 @@ from ..enums import (
     MetadataErrorCode,
     OrderSettingsErrorCode,
     PageErrorCode,
-    PaymentErrorCode,
-    PaymentGatewayConfigErrorCode,
-    PaymentGatewayInitializeErrorCode,
-    PaymentGatewayInitializeTokenizationErrorCode,
-    PaymentMethodInitializeTokenizationErrorCode,
-    PaymentMethodProcessTokenizationErrorCode,
     PermissionEnum,
     PermissionGroupErrorCode,
     PluginErrorCode,
@@ -68,16 +58,8 @@ from ..enums import (
     ProductVariantTranslateErrorCode,
     SendConfirmationEmailErrorCode,
     ShopErrorCode,
-    StoredPaymentMethodRequestDeleteErrorCode,
     ThumbnailFormatEnum,
     TimePeriodTypeEnum,
-    TransactionCreateErrorCode,
-    TransactionEventReportErrorCode,
-    TransactionInitializeErrorCode,
-    TransactionProcessErrorCode,
-    TransactionRequestActionErrorCode,
-    TransactionRequestRefundForGrantedRefundErrorCode,
-    TransactionUpdateErrorCode,
     TranslationErrorCode,
     UploadErrorCode,
     WebhookDryRunErrorCode,
@@ -481,18 +463,6 @@ class PageError(Error):
         doc_category = DOC_CATEGORY_PAGES
 
 
-class PaymentError(Error):
-    code = PaymentErrorCode(description="The error code.", required=True)
-    variants = NonNullList(
-        graphene.ID,
-        description="List of variant IDs which causes the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
 class ProductBulkTranslateError(BulkError):
     code = ProductTranslateErrorCode(description="The error code.", required=True)
 
@@ -501,111 +471,6 @@ class ProductVariantBulkTranslateError(BulkError):
     code = ProductVariantTranslateErrorCode(
         description="The error code.", required=True
     )
-
-
-class TransactionCreateError(Error):
-    code = TransactionCreateErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class TransactionUpdateError(Error):
-    code = TransactionUpdateErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class TransactionRequestActionError(Error):
-    code = TransactionRequestActionErrorCode(
-        description="The error code.", required=True
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class TransactionRequestRefundForGrantedRefundError(Error):
-    code = TransactionRequestRefundForGrantedRefundErrorCode(
-        description="The error code.", required=True
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class TransactionEventReportError(Error):
-    code = TransactionEventReportErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class TransactionInitializeError(Error):
-    code = TransactionInitializeErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class TransactionProcessError(Error):
-    code = TransactionProcessErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class PaymentGatewayConfigError(Error):
-    code = PaymentGatewayConfigErrorCode(description="The error code.", required=True)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class PaymentGatewayInitializeError(Error):
-    code = PaymentGatewayInitializeErrorCode(
-        description="The error code.", required=True
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class PaymentMethodRequestDeleteError(Error):
-    code = StoredPaymentMethodRequestDeleteErrorCode(
-        description="The error code.", required=True
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class PaymentGatewayInitializeTokenizationError(Error):
-    code = PaymentGatewayInitializeTokenizationErrorCode(
-        description="The error code.", required=True
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class PaymentMethodInitializeTokenizationError(Error):
-    code = PaymentMethodInitializeTokenizationErrorCode(
-        description="The error code.", required=True
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
-
-
-class PaymentMethodProcessTokenizationError(Error):
-    code = PaymentMethodProcessTokenizationErrorCode(
-        description="The error code.", required=True
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAYMENTS
 
 
 class PluginError(Error):

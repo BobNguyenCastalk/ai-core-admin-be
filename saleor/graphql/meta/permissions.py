@@ -9,7 +9,6 @@ from ...attribute import AttributeType
 from ...attribute import models as attribute_models
 from ...core.exceptions import PermissionDenied
 from ...core.jwt import JWT_THIRDPARTY_ACCESS_TYPE
-from ...payment.utils import payment_owned_by_user
 from ...permission.enums import (
     AccountPermissions,
     AppPermission,
@@ -251,13 +250,10 @@ def discount_permissions(
 def public_payment_permissions(
     info: ResolveInfo, payment_pk: int
 ) -> list[BasePermissionEnum]:
-    database_connection_name = get_database_connection_name(info.context)
     context_user = info.context.user
     app = get_app_promise(info.context).get()
     if app or (context_user and context_user.is_staff):
         return [PaymentPermissions.HANDLE_PAYMENTS]
-    if payment_owned_by_user(payment_pk, context_user, database_connection_name):
-        return []
     raise PermissionDenied()
 
 
