@@ -36,7 +36,6 @@ from ...graphql.account.mutations.authentication.utils import (
 from ...order.utils import match_orders_with_new_user
 from ...permission.enums import get_permission_names, get_permissions_from_codenames
 from ...permission.models import Permission
-from ...site.models import Site
 from ..error_codes import PluginErrorCode
 from ..models import PluginConfiguration
 from . import PLUGIN_ID
@@ -539,7 +538,6 @@ def get_user_from_token(claims: CodeIDToken) -> User:
     if not user_email:
         raise AuthenticationError("Missing user's email.")
 
-    site_settings = Site.objects.get_current().settings
     user = User.objects.filter(email=user_email).first()
     if not user or not user.can_login():
         raise AuthenticationError("User does not exist.")

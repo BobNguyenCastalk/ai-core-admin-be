@@ -72,12 +72,10 @@ class Command(BaseCommand):
         settings.PLUGINS = []
         for msg in create_channels():
             self.stdout.write(msg)
-        self.stdout.write("Created warehouses")
         for msg in create_page_type():
             self.stdout.write(msg)
         for msg in create_pages():
             self.stdout.write(msg)
-        self.stdout.write("Created products")
         for msg in create_users(user_password, 20):
             self.stdout.write(msg)
 

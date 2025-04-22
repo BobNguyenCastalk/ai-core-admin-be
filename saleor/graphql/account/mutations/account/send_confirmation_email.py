@@ -10,7 +10,7 @@ from django.utils import timezone
 from .....account import models
 from .....account.error_codes import SendConfirmationEmailErrorCode
 from .....account.notifications import send_account_confirmation
-from .....core.utils.url import prepare_url, validate_storefront_url
+from .....core.utils.url import prepare_url
 from .....permission.auth_filters import AuthorizationFilters
 from .....webhook.event_types import WebhookEventAsyncType
 from ....channel.utils import clean_channel
@@ -21,7 +21,6 @@ from ....core.mutations import BaseMutation
 from ....core.types import SendConfirmationEmailError
 from ....core.utils import WebhookEventInfo
 from ....plugins.dataloaders import get_plugin_manager_promise
-from ....site.dataloaders import get_site_promise
 
 
 class SendConfirmationEmail(BaseMutation):
@@ -81,20 +80,10 @@ class SendConfirmationEmail(BaseMutation):
                         code=SendConfirmationEmailErrorCode.CONFIRMATION_ALREADY_REQUESTED.value,
                     )
                 )
-
-        try:
-            validate_storefront_url(redirect_url)
-        except ValidationError as error:
-            raise ValidationError(
-                {"redirect_url": error},
-                code=SendConfirmationEmailErrorCode.INVALID.value,
-            )
-
         return user
 
     @classmethod
     def perform_mutation(cls, _root, info: ResolveInfo, /, **data):
-        site = get_site_promise(info.context).get()
         redirect_url = data["redirect_url"]
         user = cls.clean_user(site, redirect_url, info)
 

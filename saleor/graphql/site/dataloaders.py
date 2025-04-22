@@ -31,19 +31,6 @@ class SiteByHostLoader(DataLoader):
         return [sites_mapped.get(host.lower()) for host in keys]
 
 
-def get_site_promise(request) -> Promise[Site]:
-    if getattr(settings, "SITE_ID", ""):
-        site_id = settings.SITE_ID
-        return SiteByIdLoader(request).load(site_id)
-
-    host = request.get_host()
-    return (
-        SiteByHostLoader(request)
-        .load(host)
-        .then(partial(ensure_that_site_is_not_none, request, host))
-    )
-
-
 def execute_callback_if_site_not_none(site):
     if site is None:
         raise ImproperlyConfigured(
@@ -68,12 +55,3 @@ def ensure_that_site_is_not_none(request, host, site):
 
 
 T = TypeVar("T")
-
-
-def load_site_callback(func: Callable[..., T]) -> Callable[..., Promise[T]]:
-    def _wrapper(root, info, *args, **kwargs):
-        return get_site_promise(info.context).then(
-            partial(func, root, info, *args, **kwargs)
-        )
-
-    return _wrapper

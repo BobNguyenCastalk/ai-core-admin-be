@@ -13,7 +13,7 @@ from ....account.notifications import send_set_password_notification
 from ....account.search import prepare_user_search_document_value
 from ....core.exceptions import PermissionDenied
 from ....core.tracing import traced_atomic_transaction
-from ....core.utils.url import prepare_url, validate_storefront_url
+from ....core.utils.url import prepare_url
 from ...account.i18n import I18nMixin
 from ...app.dataloaders import get_app_promise
 from ...channel.utils import clean_channel, validate_channel
@@ -123,14 +123,6 @@ class BaseCustomerCreate(ModelMutation, I18nMixin):
     @classmethod
     def clean_input(cls, info: ResolveInfo, instance, data, **kwargs):
         cleaned_input = super().clean_input(info, instance, data, **kwargs)
-
-        if cleaned_input.get("redirect_url"):
-            try:
-                validate_storefront_url(cleaned_input.get("redirect_url"))
-            except ValidationError as error:
-                raise ValidationError(
-                    {"redirect_url": error}, code=AccountErrorCode.INVALID.value
-                )
 
         email = cleaned_input.get("email")
         if email:
