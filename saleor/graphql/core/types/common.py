@@ -50,8 +50,6 @@ from ..enums import (
     LanguageCodeEnum,
     MenuErrorCode,
     MetadataErrorCode,
-    OrderBulkCreateErrorCode,
-    OrderErrorCode,
     OrderSettingsErrorCode,
     PageErrorCode,
     PaymentErrorCode,
@@ -282,38 +280,6 @@ class GiftCardSettingsError(Error):
 
 class MetadataError(Error):
     code = MetadataErrorCode(description="The error code.", required=True)
-
-
-class OrderError(Error):
-    code = OrderErrorCode(description="The error code.", required=True)
-    warehouse = graphene.ID(
-        description="Warehouse ID which causes the error.",
-        required=False,
-    )
-    order_lines = NonNullList(
-        graphene.ID,
-        description="List of order line IDs that cause the error.",
-        required=False,
-    )
-    variants = NonNullList(
-        graphene.ID,
-        description="List of product variants that are associated with the error",
-        required=False,
-    )
-    address_type = AddressTypeEnum(  # type: ignore[has-type]
-        description="A type of address that causes the error.", required=False
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_ORDERS
-
-
-class OrderBulkCreateError(BulkError):
-    code = OrderBulkCreateErrorCode(description="The error code.", required=False)
-
-    class Meta:
-        doc_category = DOC_CATEGORY_ORDERS
-
 
 class PermissionGroupError(Error):
     code = PermissionGroupErrorCode(description="The error code.", required=True)

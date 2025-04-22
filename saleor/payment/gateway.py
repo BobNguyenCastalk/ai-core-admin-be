@@ -4,14 +4,7 @@ from typing import TYPE_CHECKING, Callable, Optional, cast
 
 from ..account.models import User
 from ..app.models import App
-from ..core.prices import quantize_price
 from ..core.tracing import traced_atomic_transaction
-from ..order.events import (
-    event_transaction_cancel_requested,
-    event_transaction_charge_requested,
-    event_transaction_refund_requested,
-)
-from ..order.models import OrderGrantedRefund
 from ..payment.interface import (
     CustomerSource,
     PaymentGateway,
@@ -108,87 +101,6 @@ def request_charge_action(
         transaction_request_func=manager.transaction_charge_requested,
         plugin_func_name="transaction_charge_requested",
     )
-    if order_id := transaction.order_id:
-        event_transaction_charge_requested(
-            order_id=order_id,
-            reference=transaction.psp_reference or "",
-            amount=quantize_price(charge_value, transaction.currency),
-            user=user,
-            app=app,
-        )
-
-
-def request_refund_action(
-    transaction: TransactionItem,
-    manager: "PluginsManager",
-    refund_value: Optional[Decimal],
-    request_event: TransactionEvent,
-    channel_slug: str,
-    user: Optional[User],
-    app: Optional[App],
-    granted_refund: Optional[OrderGrantedRefund] = None,
-):
-    if refund_value is None:
-        refund_value = transaction.charged_value
-
-    transaction_action_data = _create_transaction_data(
-        transaction=transaction,
-        action_type=TransactionAction.REFUND,
-        action_value=refund_value,
-        request_event=request_event,
-        granted_refund=granted_refund,
-    )
-    _request_payment_action(
-        transaction_action_data=transaction_action_data,
-        manager=manager,
-        channel_slug=channel_slug,
-        event_type=WebhookEventSyncType.TRANSACTION_REFUND_REQUESTED,
-        transaction_request_func=manager.transaction_refund_requested,
-        plugin_func_name="transaction_refund_requested",
-    )
-
-    if order_id := transaction.order_id:
-        event_transaction_refund_requested(
-            order_id=order_id,
-            reference=transaction.psp_reference or "",
-            amount=quantize_price(refund_value, transaction.currency),
-            user=user,
-            app=app,
-        )
-
-
-def request_cancelation_action(
-    transaction: TransactionItem,
-    manager: "PluginsManager",
-    cancel_value: Optional[Decimal],
-    request_event: TransactionEvent,
-    channel_slug: str,
-    user: Optional[User],
-    app: Optional[App],
-    action: str,
-):
-    transaction_action_data = _create_transaction_data(
-        transaction=transaction,
-        action_type=action,
-        action_value=cancel_value,
-        request_event=request_event,
-    )
-    _request_payment_action(
-        transaction_action_data=transaction_action_data,
-        manager=manager,
-        channel_slug=channel_slug,
-        event_type=WebhookEventSyncType.TRANSACTION_CANCELATION_REQUESTED,
-        transaction_request_func=manager.transaction_cancelation_requested,
-        plugin_func_name="transaction_cancelation_requested",
-    )
-
-    if order_id := transaction.order_id:
-        event_transaction_cancel_requested(
-            order_id=order_id,
-            reference=transaction.psp_reference or "",
-            user=user,
-            app=app,
-        )
 
 
 def _create_transaction_data(
@@ -196,7 +108,6 @@ def _create_transaction_data(
     action_type: str,
     action_value: Optional[Decimal],
     request_event: TransactionEvent,
-    granted_refund: Optional[OrderGrantedRefund] = None,
 ):
     app_owner = None
     if transaction.app_id:
@@ -217,7 +128,6 @@ def _create_transaction_data(
         action_value=action_value,
         event=request_event,
         transaction_app_owner=app_owner,
-        granted_refund=granted_refund,
     )
 
 

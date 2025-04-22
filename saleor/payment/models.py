@@ -110,12 +110,6 @@ class TransactionItem(ModelWithMetadata):
 
     external_url = models.URLField(blank=True, null=True)
 
-    order = models.ForeignKey(
-        "order.Order",
-        related_name="payment_transactions",
-        null=True,
-        on_delete=models.PROTECT,
-    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         blank=True,
@@ -197,14 +191,6 @@ class TransactionEvent(models.Model):
 
     include_in_calculations = models.BooleanField(default=False)
 
-    related_granted_refund = models.ForeignKey(
-        "order.OrderGrantedRefund",
-        related_name="transaction_events",
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-    )
-
     class Meta:
         ordering = ("pk",)
         constraints = [
@@ -254,12 +240,6 @@ class Payment(ModelWithMetadata):
         max_length=settings.DEFAULT_CURRENCY_CODE_LENGTH
     )  # FIXME: add ISO4217 validator
 
-    order = models.ForeignKey(
-        "order.Order",
-        related_name="payments",
-        null=True,
-        on_delete=models.PROTECT,
-    )
     store_payment_method = models.CharField(
         max_length=11,
         choices=StorePaymentMethod.CHOICES,
@@ -308,7 +288,7 @@ class Payment(ModelWithMetadata):
         indexes = [
             *ModelWithMetadata.Meta.indexes,
             # Orders filtering by status index
-            GinIndex(fields=["order_id", "is_active", "charge_status"]),
+            GinIndex(fields=["is_active", "charge_status"]),
         ]
 
     def __repr__(self):

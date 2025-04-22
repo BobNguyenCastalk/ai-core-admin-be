@@ -1,7 +1,5 @@
 from django.db import transaction
 
-from ...order.fetch import OrderInfo
-from ...order.models import Order
 from ...webhook.event_types import WebhookEventAsyncType
 from ...webhook.models import Webhook
 
@@ -126,16 +124,8 @@ def call_event(func_obj, *func_args, **func_kwargs):
 
     Ensures that in atomic transaction event is called on_commit.
     """
-    is_protected_instance = any(
-        [
-            isinstance(arg, (Order, OrderInfo))
-            for arg in func_args
-        ]
-    )
     func_obj_self = getattr(func_obj, "__self__", None)
     is_plugin_manager_method = "PluginsManager" in str(
         getattr(func_obj_self, "__class__", "")
     )
-    if is_protected_instance and is_plugin_manager_method:
-        raise NotImplementedError("`call_event` doesn't support checkout/order events.")
     call_event_including_protected_events(func_obj, *func_args, **func_kwargs)

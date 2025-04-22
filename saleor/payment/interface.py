@@ -5,8 +5,6 @@ from enum import Enum
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
-from ..order import FulfillmentLineData
-from ..order.fetch import OrderLineInfo
 from ..payment.models import TransactionEvent, TransactionItem
 
 if TYPE_CHECKING:
@@ -344,8 +342,6 @@ class PaymentLinesData:
 
 @dataclass
 class RefundData:
-    order_lines_to_refund: list[OrderLineInfo] = field(default_factory=list)
-    fulfillment_lines_to_refund: list[FulfillmentLineData] = field(default_factory=list)
     refund_shipping_costs: bool = False
     refund_amount_is_automatically_calculated: bool = True
 

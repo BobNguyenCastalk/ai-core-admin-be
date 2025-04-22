@@ -18,7 +18,6 @@ from phonenumber_field.modelfields import PhoneNumber, PhoneNumberField
 from ..app.models import App
 from ..core.models import ModelWithExternalReference, ModelWithMetadata
 from ..core.utils.json_serializer import CustomJsonEncoder
-from ..order.models import Order
 from ..permission.enums import AccountPermissions, BasePermissionEnum, get_permissions
 from ..permission.models import Permission, PermissionsMixin, _user_has_perm
 from ..site.models import SiteSettings
@@ -146,13 +145,6 @@ class UserManager(BaseUserManager["User"]):
             group.permissions.add(*get_permissions())
         group.user_set.add(user)  # type: ignore[attr-defined]
         return user
-
-    def customers(self):
-        orders = Order.objects.values("user_id")
-        return self.get_queryset().filter(
-            Q(is_staff=False)
-            | (Q(is_staff=True) & (Exists(orders.filter(user_id=OuterRef("pk")))))
-        )
 
     def staff(self):
         return self.get_queryset().filter(is_staff=True)
@@ -352,7 +344,6 @@ class CustomerEvent(models.Model):
             (type_name.upper(), type_name) for type_name, _ in CustomerEvents.CHOICES
         ],
     )
-    order = models.ForeignKey("order.Order", on_delete=models.SET_NULL, null=True)
     parameters = JSONField(blank=True, default=dict, encoder=CustomJsonEncoder)
     user = models.ForeignKey(
         User, related_name="events", on_delete=models.CASCADE, null=True

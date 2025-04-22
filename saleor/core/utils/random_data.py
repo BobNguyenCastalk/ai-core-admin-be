@@ -41,10 +41,6 @@ from ...attribute.models import (
 from ...channel.models import Channel
 from ...core.weight import zero_weight
 from ...menu.models import Menu, MenuItem
-from ...order import OrderStatus
-from ...order.models import Fulfillment, Order, OrderLine
-from ...order.search import prepare_order_search_vector_value
-from ...order.utils import update_order_status
 from ...page.models import Page, PageType
 from ...payment import gateway
 from ...payment.utils import create_payment
@@ -536,152 +532,6 @@ def create_fake_payment(mock_notify, order):
     return payment
 
 
-def create_order_lines(order, how_many=10):
-    channel = order.channel
-    available_variant_ids = channel.variant_listings.values_list(
-        "variant_id", flat=True
-    )
-    variants = (
-        ProductVariant.objects.filter(pk__in=available_variant_ids, is_preorder=False)
-        .order_by("?")
-        .prefetch_related("product__product_type")[:how_many]
-    )
-    variants_iter = itertools.cycle(variants)
-    lines = []
-    for _ in range(how_many):
-        variant = next(variants_iter)
-
-    lines = OrderLine.objects.bulk_create(lines)
-    manager = get_plugins_manager(allow_replica=False)
-    warehouses = []
-    for line in lines:
-        variant = cast(ProductVariant, line.variant)
-        unit_price_data = manager.calculate_order_line_unit(
-            order, line, variant, variant.product, lines
-        )
-        total_price_data = manager.calculate_order_line_total(
-            order, line, variant, variant.product, lines
-        )
-        line.unit_price = unit_price_data.price_with_discounts
-        line.total_price = total_price_data.price_with_discounts
-        line.undiscounted_unit_price = unit_price_data.undiscounted_price
-        line.undiscounted_total_price = total_price_data.undiscounted_price
-        line.tax_rate = (
-            unit_price_data.price_with_discounts.tax
-            / unit_price_data.price_with_discounts.net
-        )
-    OrderLine.objects.bulk_update(
-        lines,
-        [
-            "unit_price_net_amount",
-            "unit_price_gross_amount",
-            "undiscounted_unit_price_gross_amount",
-            "undiscounted_unit_price_net_amount",
-            "undiscounted_total_price_gross_amount",
-            "undiscounted_total_price_net_amount",
-            "currency",
-            "tax_rate",
-        ],
-    )
-    return lines
-
-def create_fulfillments(order):
-    for line in order.lines.all():
-        if random.choice([False, True]):
-            fulfillment, _ = Fulfillment.objects.get_or_create(order=order)
-            quantity = random.randrange(0, line.quantity) + 1
-            allocation = line.allocations.get()
-            stock = allocation.stock
-            fulfillment.lines.create(order_line=line, quantity=quantity, stock=stock)
-            line.quantity_fulfilled = quantity
-            line.save(update_fields=["quantity_fulfilled"])
-
-            allocation.quantity_allocated = F("quantity_allocated") - quantity
-            allocation.save(update_fields=["quantity_allocated"])
-
-            stock.quantity_allocated = F("quantity_allocated") - quantity
-            stock.save(update_fields=["quantity_allocated"])
-
-    update_order_status(order)
-
-
-def create_fake_order(max_order_lines=5, create_preorder_lines=False):
-    channel = (
-        Channel.objects.filter(slug__in=[settings.DEFAULT_CHANNEL_SLUG, "channel-pln"])
-        .order_by("?")
-        .first()
-    )
-    if not channel:
-        raise ValueError("No channel found.")
-    customers = (
-        User.objects.filter(is_superuser=False)
-        .exclude(default_billing_address=None)
-        .order_by("?")
-    )
-    customer = random.choice([None, customers.first()])
-
-    # 20% chance to be unconfirmed order.
-    will_be_unconfirmed = (
-        random.choice([0, 0, 0, 0, 1]) if not create_preorder_lines else True
-    )
-
-    if customer and customer.default_shipping_address:
-        address = customer.default_shipping_address
-    else:
-        address = create_address()
-    if customer and customer.default_billing_address:
-        billing_address = customer.default_billing_address
-    else:
-        billing_address = address
-    order_data: dict[str, Any] = {
-        "billing_address": billing_address or address,
-        "shipping_address": address,
-        "user_email": get_email(address.first_name, address.last_name),
-    }
-
-    shipping_method_channel_listing = []
-    if not shipping_method_channel_listing:
-        raise Exception(f"No shipping method found for channel {channel.slug}")
-    shipping_method = shipping_method_channel_listing.shipping_method
-    shipping_price = shipping_method_channel_listing.price
-    shipping_price = TaxedMoney(net=shipping_price, gross=shipping_price)
-    order_data.update(
-        {
-            "channel": channel,
-            "shipping_method": shipping_method,
-            "shipping_method_name": shipping_method.name,
-            "shipping_price": shipping_price,
-            "base_shipping_price": shipping_method_channel_listing.price,
-            "undiscounted_base_shipping_price": shipping_method_channel_listing.price,
-        }
-    )
-    if will_be_unconfirmed:
-        order_data["status"] = OrderStatus.UNCONFIRMED
-
-    order = Order.objects.create(**order_data)
-    if create_preorder_lines:
-        pass
-    else:
-        lines = create_order_lines(order, random.randrange(1, max_order_lines))
-    order.total = sum([line.total_price for line in lines], shipping_price)
-    weight = Weight(kg=0)
-    for line in order.lines.all():
-        if line.variant:
-            weight += line.variant.get_weight()
-    order.weight = weight
-    order.search_vector = FlatConcatSearchVector(
-        *prepare_order_search_vector_value(order)
-    )
-    order.save()
-
-    create_fake_payment(order=order)
-
-    if not will_be_unconfirmed:
-        create_fulfillments(order)
-
-    return order
-
-
 def create_users(user_password, how_many=10):
     for _ in range(how_many):
         user = create_fake_user(user_password)
@@ -776,12 +626,6 @@ def create_staff_users(staff_password, how_many=2, superuser=False):
         staff_user = _create_staff_user(staff_password, superuser=superuser)
         users.append(staff_user)
     return users
-
-
-def create_orders(how_many=10):
-    for _ in range(how_many):
-        order = create_fake_order()
-        yield f"Order: {order}"
 
 
 def create_channel(channel_name, currency_code, slug=None, country=None):

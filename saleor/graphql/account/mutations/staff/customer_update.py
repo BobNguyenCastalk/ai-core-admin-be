@@ -5,7 +5,6 @@ from django.db.models import QuerySet
 
 from .....account import events as account_events
 from .....account import models
-from .....order.utils import match_orders_with_new_user
 from .....permission.enums import AccountPermissions
 from .....webhook.event_types import WebhookEventAsyncType
 from ....account.types import User
@@ -69,10 +68,6 @@ class CustomerUpdate(CustomerCreate, ModelWithExtRefMutation):
         has_new_email = old_instance.email != new_email
         was_activated = not old_instance.is_active and new_instance.is_active
         was_deactivated = old_instance.is_active and not new_instance.is_active
-        being_confirmed = not old_instance.is_confirmed and new_instance.is_confirmed
-
-        if has_new_email or being_confirmed:
-            match_orders_with_new_user(new_instance)
 
         # Generate the events accordingly
         if has_new_email:

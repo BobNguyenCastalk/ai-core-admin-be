@@ -10,7 +10,6 @@ from promise import Promise
 from ...account import models
 from ...core.exceptions import PermissionDenied
 from ...graphql.meta.inputs import MetadataInput
-from ...order import OrderStatus
 from ...permission.auth_filters import AuthorizationFilters
 from ...permission.enums import (
     AccountPermissions,

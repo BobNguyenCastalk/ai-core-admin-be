@@ -1,7 +1,4 @@
-from django.db.models import Exists, OuterRef
-
 from ...channel.models import Channel
-from ...order.models import Order
 from ..core.dataloaders import DataLoader
 
 
@@ -21,19 +18,3 @@ class ChannelBySlugLoader(DataLoader):
             keys, field_name="slug"
         )
         return [channels.get(slug) for slug in keys]
-
-
-
-class ChannelWithHasOrdersByIdLoader(DataLoader):
-    context_key = "channel_with_has_orders_by_id"
-
-    def batch_load(self, keys):
-        orders = Order.objects.using(self.database_connection_name).filter(
-            channel=OuterRef("pk")
-        )
-        channels = (
-            Channel.objects.using(self.database_connection_name)
-            .annotate(has_orders=Exists(orders))
-            .in_bulk(keys)
-        )
-        return [channels.get(channel_id) for channel_id in keys]

@@ -562,13 +562,6 @@ class DigitalContentUrl(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     download_num = models.IntegerField(default=0)
-    line = models.OneToOneField(
-        "order.OrderLine",
-        related_name="digital_content_url",
-        blank=True,
-        null=True,
-        on_delete=models.CASCADE,
-    )
 
     def save(
         self, force_insert=False, force_update=False, using=None, update_fields=None

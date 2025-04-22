@@ -47,7 +47,6 @@ from ..core.types import BaseObjectType, CountryDisplay, ModelObjectType, NonNul
 from ..meta.types import ObjectWithMetadata
 from ..translations.resolvers import resolve_translation
 from . import ChannelContext
-from .dataloaders import ChannelWithHasOrdersByIdLoader
 from .enums import (
     AllocationStrategyEnum,
     MarkAsPaidStrategyEnum,
@@ -406,14 +405,6 @@ class Channel(ModelObjectType):
         model = models.Channel
         interfaces = [graphene.relay.Node, ObjectWithMetadata]
         metadata_since = ADDED_IN_315
-
-    @staticmethod
-    def resolve_has_orders(root: models.Channel, info: ResolveInfo):
-        return (
-            ChannelWithHasOrdersByIdLoader(info.context)
-            .load(root.id)
-            .then(lambda channel: channel.has_orders)
-        )
 
     @staticmethod
     def resolve_default_country(root: models.Channel, _info: ResolveInfo):

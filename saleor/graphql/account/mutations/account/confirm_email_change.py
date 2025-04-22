@@ -7,7 +7,6 @@ from django.core.exceptions import ValidationError
 from .....account import models, notifications, search
 from .....account.error_codes import AccountErrorCode
 from .....core.jwt import jwt_decode
-from .....order.utils import match_orders_with_new_user
 from .....permission.auth_filters import AuthorizationFilters
 from .....webhook.event_types import WebhookEventAsyncType
 from ....channel.utils import clean_channel
@@ -104,7 +103,6 @@ class ConfirmEmailChange(BaseMutation):
 
     @classmethod
     def post_save_action(cls, info: ResolveInfo, instance, channel_slug, old_email):
-        match_orders_with_new_user(instance)
         manager = get_plugin_manager_promise(info.context).get()
         notifications.send_user_change_email_notification(
             old_email, instance, manager, channel_slug=channel_slug

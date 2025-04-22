@@ -47,11 +47,3 @@ def digital_content_url_is_valid(content_url: DigitalContentUrl) -> bool:
 def increment_download_count(content_url: DigitalContentUrl):
     content_url.download_num += 1
     content_url.save(update_fields=["download_num"])
-
-    line = content_url.line
-    user = line.order.user if line else None
-
-    if user and line:
-        account_events.customer_downloaded_a_digital_link_event(
-            user=user, order_line=line
-        )

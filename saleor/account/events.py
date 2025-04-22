@@ -1,7 +1,6 @@
 from typing import Optional
 
 from ..app.models import App
-from ..order.models import Order, OrderLine
 from . import CustomerEvents
 from .models import CustomerEvent, User
 
@@ -59,34 +58,6 @@ def customer_email_changed_event(
 ) -> Optional[CustomerEvent]:
     return CustomerEvent.objects.create(
         user_id=user_id, type=CustomerEvents.EMAIL_CHANGED, parameters=parameters
-    )
-
-
-def customer_placed_order_event(*, user: User, order: Order) -> Optional[CustomerEvent]:
-    return CustomerEvent.objects.create(
-        user=user, order=order, type=CustomerEvents.PLACED_ORDER
-    )
-
-
-def customer_added_to_note_order_event(
-    *, user: Optional[User], order: Order, message: str
-) -> CustomerEvent:
-    return CustomerEvent.objects.create(
-        user=user,
-        order=order,
-        type=CustomerEvents.NOTE_ADDED_TO_ORDER,
-        parameters={"message": message},
-    )
-
-
-def customer_downloaded_a_digital_link_event(
-    *, user: User, order_line: OrderLine
-) -> CustomerEvent:
-    return CustomerEvent.objects.create(
-        user=user,
-        order=order_line.order,
-        type=CustomerEvents.DIGITAL_LINK_DOWNLOADED,
-        parameters={"order_line_pk": order_line.pk},
     )
 
 

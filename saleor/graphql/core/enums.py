@@ -15,7 +15,6 @@ from ...core.units import (
     WeightUnits,
 )
 from ...menu import error_codes as menu_error_codes
-from ...order import error_codes as order_error_codes
 from ...page import error_codes as page_error_codes
 from ...payment import error_codes as payment_error_codes
 from ...permission.enums import get_permissions_enum_list
@@ -205,12 +204,6 @@ GiftCardSettingsErrorCode = graphene.Enum.from_enum(
 GiftCardSettingsErrorCode.doc_category = DOC_CATEGORY_GIFT_CARDS
 
 MetadataErrorCode = graphene.Enum.from_enum(core_error_codes.MetadataErrorCode)
-
-OrderErrorCode = graphene.Enum.from_enum(order_error_codes.OrderErrorCode)
-OrderErrorCode.doc_category = DOC_CATEGORY_ORDERS
-OrderBulkCreateErrorCode = graphene.Enum.from_enum(
-    order_error_codes.OrderBulkCreateErrorCode
-)
 
 PageErrorCode = graphene.Enum.from_enum(page_error_codes.PageErrorCode)
 PageErrorCode.doc_category = DOC_CATEGORY_PAGES

@@ -8,7 +8,6 @@ from .....account import events as account_events
 from .....account import models
 from .....account.error_codes import AccountErrorCode
 from .....core.db.connection import allow_writer
-from .....order.utils import match_orders_with_new_user
 from ....core import ResolveInfo
 from ....core.context import disallow_replica_in_context
 from ....core.doc_category import DOC_CATEGORY_USERS
@@ -92,7 +91,6 @@ class SetPassword(CreateToken):
         # confirmed.
         if not user.is_confirmed:
             user.is_confirmed = True
-            match_orders_with_new_user(user)
             fields_to_save.append("is_confirmed")
         user.save(update_fields=fields_to_save)
         account_events.customer_password_reset_event(user=user)

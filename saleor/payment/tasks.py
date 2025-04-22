@@ -14,8 +14,7 @@ from ..checkout import CheckoutAuthorizeStatus
 from ..checkout.models import Checkout
 from ..payment.models import TransactionEvent, TransactionItem
 from ..plugins.manager import get_plugins_manager
-from . import PaymentError, TransactionAction, TransactionEventType
-from .gateway import request_cancelation_action, request_refund_action
+from . import PaymentError, TransactionEventType
 
 logger = logging.getLogger(__name__)
 
@@ -143,23 +142,6 @@ def transaction_release_funds_for_checkout_task():
                         )
                     },
                 )
-                try:
-                    request_cancelation_action(
-                        request_event=event,
-                        cancel_value=event.amount_value,
-                        action=TransactionAction.CANCEL,
-                        channel_slug=channel.slug,
-                        user=None,
-                        app=None,
-                        transaction=transaction_item,
-                        manager=manager,
-                    )
-                except PaymentError as e:
-                    logger.warning(
-                        "Unable to cancel transaction %s. %s",
-                        transaction_item.token,
-                        str(e),
-                    )
             for transaction_item, event in transactions_with_charge_request_events:
                 channel = checkout_id_to_channel[transaction_item.checkout_id]
                 logger.info(
@@ -171,21 +153,5 @@ def transaction_release_funds_for_checkout_task():
                         )
                     },
                 )
-                try:
-                    request_refund_action(
-                        request_event=event,
-                        refund_value=event.amount_value,
-                        channel_slug=channel.slug,
-                        user=None,
-                        app=None,
-                        transaction=transaction_item,
-                        manager=manager,
-                    )
-                except PaymentError as e:
-                    logger.warning(
-                        "Unable to refund transaction %s. %s",
-                        transaction_item.token,
-                        str(e),
-                    )
         else:
             logger.warning("No transactions to release funds.")

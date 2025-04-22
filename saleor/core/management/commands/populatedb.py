@@ -10,12 +10,10 @@ from ....account.utils import create_superuser
 from ...utils.random_data import (
     create_channels,
     create_menus,
-    create_orders,
     create_page_type,
     create_pages,
     create_permission_groups,
     create_products_by_schema,
-    create_shipping_zones,
     create_staffs,
     create_users,
 )
@@ -81,8 +79,6 @@ class Command(BaseCommand):
         create_images = not options["withoutimages"]
         for msg in create_channels():
             self.stdout.write(msg)
-        for msg in create_shipping_zones():
-            self.stdout.write(msg)
         self.stdout.write("Created warehouses")
         for msg in create_page_type():
             self.stdout.write(msg)
@@ -91,8 +87,6 @@ class Command(BaseCommand):
         create_products_by_schema(self.placeholders_dir, create_images)
         self.stdout.write("Created products")
         for msg in create_users(user_password, 20):
-            self.stdout.write(msg)
-        for msg in create_orders(20):
             self.stdout.write(msg)
         for msg in create_menus():
             self.stdout.write(msg)

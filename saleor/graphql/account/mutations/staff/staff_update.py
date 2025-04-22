@@ -6,7 +6,6 @@ from django.core.exceptions import ValidationError
 from .....account import models
 from .....account.error_codes import AccountErrorCode
 from .....core.tracing import traced_atomic_transaction
-from .....order.utils import match_orders_with_new_user
 from .....permission.enums import AccountPermissions
 from .....webhook.event_types import WebhookEventAsyncType
 from ....account.types import User
@@ -178,14 +177,7 @@ class StaffUpdate(StaffCreate):
 
     @classmethod
     def perform_mutation(cls, root, info: ResolveInfo, /, **data):
-        original_instance, _ = cls.get_instance(info, **data)
         response = super().perform_mutation(root, info, **data)
-        user = response.user
-        has_new_email = user.email != original_instance.email
-        has_new_name = original_instance.get_full_name() != user.get_full_name()
-
-        if has_new_email:
-            match_orders_with_new_user(user)
 
         return response
 
