@@ -20,7 +20,6 @@ from ...account.search import (
     generate_user_fields_search_document_value,
 )
 from ...channel.models import Channel
-from ...page.models import Page, PageType
 from ...permission.enums import (
     AccountPermissions,
     get_permissions,
@@ -287,30 +286,6 @@ def create_channels():
         slug="channel-pln",
         country="PL",
     )
-
-def create_page_type():
-    types = get_sample_data()
-
-    data = types["page.pagetype"]
-
-    for page_type_data in data:
-        pk = page_type_data.pop("pk")
-        defaults = dict(page_type_data["fields"])
-        page_type, _ = PageType.objects.update_or_create(pk=pk, defaults=defaults)
-        yield f"Page type {page_type.slug} created"
-
-
-def create_pages():
-    types = get_sample_data()
-
-    data_pages = types["page.page"]
-
-    for page_data in data_pages:
-        pk = page_data["pk"]
-        defaults = dict(page_data["fields"])
-        defaults["page_type_id"] = defaults.pop("page_type")
-        page, _ = Page.objects.update_or_create(pk=pk, defaults=defaults)
-        yield f"Page {page.slug} created"
 
 
 def get_image(image_dir, image_name):

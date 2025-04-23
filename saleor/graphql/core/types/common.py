@@ -10,7 +10,6 @@ from ...core.doc_category import (
     DOC_CATEGORY_APPS,
     DOC_CATEGORY_AUTH,
     DOC_CATEGORY_CHANNELS,
-    DOC_CATEGORY_PAGES,
     DOC_CATEGORY_USERS,
     DOC_CATEGORY_WEBHOOKS,
 )
@@ -22,13 +21,11 @@ from ..enums import (
     JobStatusEnum,
     LanguageCodeEnum,
     MetadataErrorCode,
-    PageErrorCode,
     PermissionEnum,
     PermissionGroupErrorCode,
     PluginErrorCode,
     SendConfirmationEmailErrorCode,
     TimePeriodTypeEnum,
-    TranslationErrorCode,
     UploadErrorCode,
     WebhookDryRunErrorCode,
     WebhookErrorCode,
@@ -182,22 +179,6 @@ class PermissionGroupError(Error):
     class Meta:
         doc_category = DOC_CATEGORY_USERS
 
-class PageError(Error):
-    code = PageErrorCode(description="The error code.", required=True)
-    attributes = NonNullList(
-        graphene.ID,
-        description="List of attributes IDs which causes the error.",
-        required=False,
-    )
-    values = NonNullList(
-        graphene.ID,
-        description="List of attribute values IDs which causes the error.",
-        required=False,
-    )
-
-    class Meta:
-        doc_category = DOC_CATEGORY_PAGES
-
 
 class PluginError(Error):
     code = PluginErrorCode(description="The error code.", required=True)
@@ -226,14 +207,6 @@ class WebhookTriggerError(Error):
 
     class Meta:
         doc_category = DOC_CATEGORY_WEBHOOKS
-
-
-class TranslationError(Error):
-    code = TranslationErrorCode(description="The error code.", required=True)
-
-
-class TranslationBulkError(BulkError):
-    code = TranslationErrorCode(description="The error code.", required=True)
 
 
 class SeoInput(graphene.InputObjectType):

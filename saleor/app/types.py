@@ -14,16 +14,12 @@ class AppExtensionMount:
 
 
     NAVIGATION_CUSTOMERS = "navigation_customers"
-    NAVIGATION_TRANSLATIONS = "navigation_translations"
-    NAVIGATION_PAGES = "navigation_pages"
 
     CHOICES = [
         (CUSTOMER_OVERVIEW_CREATE, "customer_overview_create"),
         (CUSTOMER_OVERVIEW_MORE_ACTIONS, "customer_overview_more_actions"),
         (CUSTOMER_DETAILS_MORE_ACTIONS, "customer_details_more_actions"),
         (NAVIGATION_CUSTOMERS, "navigation_customers"),
-        (NAVIGATION_TRANSLATIONS, "navigation_translations"),
-        (NAVIGATION_PAGES, "navigation_pages"),
     ]
 
 

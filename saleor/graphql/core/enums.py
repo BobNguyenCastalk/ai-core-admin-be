@@ -13,7 +13,6 @@ from ...core.units import (
     VolumeUnits,
     WeightUnits,
 )
-from ...page import error_codes as page_error_codes
 from ...permission.enums import get_permissions_enum_list
 from ...plugins import error_codes as plugin_error_codes
 from ...webhook import error_codes as webhook_error_codes
@@ -141,9 +140,6 @@ PluginErrorCode = graphene.Enum.from_enum(plugin_error_codes.PluginErrorCode)
 
 MetadataErrorCode = graphene.Enum.from_enum(core_error_codes.MetadataErrorCode)
 
-PageErrorCode = graphene.Enum.from_enum(page_error_codes.PageErrorCode)
-PageErrorCode.doc_category = DOC_CATEGORY_PAGES
-
 PermissionGroupErrorCode = graphene.Enum.from_enum(
     account_error_codes.PermissionGroupErrorCode
 )
@@ -155,8 +151,6 @@ SendConfirmationEmailErrorCode = graphene.Enum.from_enum(
 SendConfirmationEmailErrorCode.doc_category = DOC_CATEGORY_USERS
 
 UploadErrorCode = graphene.Enum.from_enum(core_error_codes.UploadErrorCode)
-
-TranslationErrorCode = graphene.Enum.from_enum(core_error_codes.TranslationErrorCode)
 
 WebhookErrorCode = graphene.Enum.from_enum(webhook_error_codes.WebhookErrorCode)
 WebhookErrorCode.doc_category = DOC_CATEGORY_WEBHOOKS

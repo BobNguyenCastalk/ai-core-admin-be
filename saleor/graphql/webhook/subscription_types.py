@@ -6,7 +6,6 @@ from rx import Observable
 from ... import __version__
 from ...account.models import User
 from ...channel.models import Channel
-from ...page.models import PageTranslation
 from ...webhook.const import MAX_FILTERABLE_CHANNEL_SLUGS_LIMIT
 from ...webhook.event_types import WebhookEventAsyncType
 from ..account.types import User as UserType
@@ -25,13 +24,8 @@ from ..core.doc_category import (
     DOC_CATEGORY_MISC,
     DOC_CATEGORY_USERS,
 )
-from ..core.scalars import JSON, DateTime, PositiveDecimal
+from ..core.scalars import DateTime
 from ..core.types import NonNullList, SubscriptionObjectType
-from ..translations import types as translation_types
-
-TRANSLATIONS_TYPES_MAP = {
-    PageTranslation: translation_types.PageTranslation,
-}
 
 
 class IssuingPrincipal(Union):

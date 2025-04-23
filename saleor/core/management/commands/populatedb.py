@@ -9,7 +9,6 @@ from django.db import connection
 from ....account.utils import create_superuser
 from ...utils.random_data import (
     create_channels,
-    create_page_type,
     create_pages,
     create_permission_groups,
     create_staffs,
@@ -71,10 +70,6 @@ class Command(BaseCommand):
         superuser_password = options["superuser_password"]
         settings.PLUGINS = []
         for msg in create_channels():
-            self.stdout.write(msg)
-        for msg in create_page_type():
-            self.stdout.write(msg)
-        for msg in create_pages():
             self.stdout.write(msg)
         for msg in create_users(user_password, 20):
             self.stdout.write(msg)

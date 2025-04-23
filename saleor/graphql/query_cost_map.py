@@ -62,8 +62,6 @@ COST_MAP = {
         "permissionGroup": {"complexity": 1},
         "permissionGroups": {"complexity": 1, "multipliers": ["first", "last"]},
         "staffUsers": {"complexity": 1, "multipliers": ["first", "last"]},
-        "translation": {"complexity": 1},
-        "translations": {"complexity": 1, "multipliers": ["first", "last"]},
         "user": {"complexity": 1},
         "webhook": {"complexity": 1},
     },

@@ -14,7 +14,6 @@ from ..core.descriptions import (
 from ..core.fields import PermissionsField
 from ..core.types import ModelObjectType
 from ..meta.types import ObjectWithMetadata
-from ..translations.resolvers import resolve_translation
 from . import ChannelContext
 
 T = TypeVar("T", bound=Model)
@@ -36,13 +35,6 @@ class ChannelContextTypeForObjectType(ModelObjectType[T]):
     @staticmethod
     def resolve_id(root: ChannelContext[T], _info: ResolveInfo):
         return root.node.pk
-
-    @staticmethod
-    def resolve_translation(
-        root: ChannelContext[T], info: ResolveInfo, *, language_code
-    ):
-        # Resolver for TranslationField; needs to be manually specified.
-        return resolve_translation(root.node, info, language_code=language_code)
 
 
 class ChannelContextType(ChannelContextTypeForObjectType[T]):
