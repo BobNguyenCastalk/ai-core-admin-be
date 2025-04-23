@@ -38,7 +38,7 @@ class Page(ModelWithMetadata, SeoModel, PublishableModel):
     class Meta(ModelWithMetadata.Meta):
         ordering = ("slug",)
         permissions = ((PagePermissions.MANAGE_PAGES.codename, "Manage pages."),)
-        indexes = [*ModelWithMetadata.Meta.indexes, GinIndex(fields=["title", "slug"])]
+        indexes = [*ModelWithMetadata.Meta.indexes, GinIndex(name="page_title_slug_gin", fields=["title", "slug"], opclasses=["gin_trgm_ops", "gin_trgm_ops"])]
 
     def __str__(self):
         return self.title
@@ -88,4 +88,4 @@ class PageType(ModelWithMetadata):
                 "Manage page types and attributes.",
             ),
         )
-        indexes = [*ModelWithMetadata.Meta.indexes, GinIndex(fields=["name", "slug"])]
+        indexes = [*ModelWithMetadata.Meta.indexes, GinIndex(name="page_type_name_slug_gin", fields=["name", "slug"], opclasses=["gin_trgm_ops", "gin_trgm_ops"])]

@@ -1,12 +1,10 @@
 from functools import partial, reduce
-from typing import Callable, TypeVar
+from typing import TypeVar
 
-from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Q
 from django.http.request import split_domain_port
-from promise import Promise
 
 from ..core.dataloaders import DataLoader
 
