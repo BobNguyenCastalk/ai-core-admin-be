@@ -11,9 +11,6 @@ from django.db import connection
 from django.utils import timezone
 from django.utils.text import slugify
 from faker import Factory
-from faker.providers import BaseProvider
-from measurement.measures import Weight
-from prices import Money
 
 from ...account.models import Group, User
 from ...account.search import (
@@ -105,22 +102,6 @@ def get_sample_data():
         model = item.pop("model")
         types[model].append(item)
     return types
-
-def set_field_as_money(defaults, field):
-    amount_field = f"{field}_amount"
-    if amount_field in defaults and defaults[amount_field] is not None:
-        defaults[field] = Money(defaults[amount_field], DEFAULT_CURRENCY)
-
-
-class SaleorProvider(BaseProvider):
-    def money(self):
-        return Money(fake.pydecimal(2, 2, positive=True), DEFAULT_CURRENCY)
-
-    def weight(self):
-        return Weight(kg=fake.pydecimal(1, 2, positive=True))
-
-
-fake.add_provider(SaleorProvider)
 
 
 def get_email(first_name, last_name):

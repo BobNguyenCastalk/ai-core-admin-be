@@ -277,17 +277,12 @@ INSTALLED_APPS = [
     "saleor.channel",
     "saleor.core",
     "saleor.graphql",
-    "saleor.seo",
-    "saleor.page",
     "saleor.webhook",
     "saleor.app",
     "saleor.schedulers",
     # External apps
-    "django_measurement",
     "mptt",
-    "django_countries",
     "django_filters",
-    "phonenumber_field",
 ]
 
 ENABLE_DJANGO_EXTENSIONS = get_bool_from_env("ENABLE_DJANGO_EXTENSIONS", False)
@@ -439,7 +434,6 @@ DEFAULT_MAX_EMAIL_DISPLAY_NAME_LENGTH = 78
 
 COUNTRIES_OVERRIDE = {"EU": "European Union"}
 
-MAX_USER_ADDRESSES = int(os.environ.get("MAX_USER_ADDRESSES", 100))
 
 TEST_RUNNER = "saleor.tests.runner.PytestTestRunner"
 
@@ -536,21 +530,6 @@ AUTHENTICATION_BACKENDS = [
     "saleor.core.auth_backend.PluginBackend",
 ]
 
-# Expired checkouts settings - defines after what time checkouts will be deleted
-ANONYMOUS_CHECKOUTS_TIMEDELTA = timedelta(
-    seconds=parse(os.environ.get("ANONYMOUS_CHECKOUTS_TIMEDELTA", "30 days"))
-)
-USER_CHECKOUTS_TIMEDELTA = timedelta(
-    seconds=parse(os.environ.get("USER_CHECKOUTS_TIMEDELTA", "90 days"))
-)
-EMPTY_CHECKOUTS_TIMEDELTA = timedelta(
-    seconds=parse(os.environ.get("EMPTY_CHECKOUTS_TIMEDELTA", "6 hours"))
-)
-
-# Exports settings - defines after what time exported files will be deleted
-EXPORT_FILES_TIMEDELTA = timedelta(
-    seconds=parse(os.environ.get("EXPORT_FILES_TIMEDELTA", "30 days"))
-)
 
 # CELERY SETTINGS
 CELERY_ACCEPT_CONTENT = ["json"]
@@ -708,11 +687,6 @@ HTTP_IP_FILTER_ALLOW_LOOPBACK_IPS: bool = get_bool_from_env(
     "HTTP_IP_FILTER_ALLOW_LOOPBACK_IPS", False
 )
 
-# Since we split checkout complete logic into two separate transactions, in order to
-# mimic stock lock, we apply short reservation for the stocks. The value represents
-# time of the reservation in seconds.
-RESERVE_DURATION = 45
-
 # Initialize a simple and basic Jaeger Tracing integration
 # for open-tracing if enabled.
 #
@@ -757,19 +731,6 @@ JWT_TTL_REQUEST_EMAIL_CHANGE = timedelta(
     seconds=parse(os.environ.get("JWT_TTL_REQUEST_EMAIL_CHANGE", "1 hour")),
 )
 
-CHECKOUT_PRICES_TTL = timedelta(
-    seconds=parse(os.environ.get("CHECKOUT_PRICES_TTL", "1 hour"))
-)
-
-CHECKOUT_TTL_BEFORE_RELEASING_FUNDS = timedelta(
-    seconds=parse(os.environ.get("CHECKOUT_TTL_BEFORE_RELEASING_FUNDS", "6 hours"))
-)
-CHECKOUT_BATCH_FOR_RELEASING_FUNDS = os.environ.get(
-    "CHECKOUT_BATCH_FOR_RELEASING_FUNDS", 30
-)
-TRANSACTION_BATCH_FOR_RELEASING_FUNDS = os.environ.get(
-    "TRANSACTION_BATCH_FOR_RELEASING_FUNDS", 60
-)
 
 
 # The maximum SearchVector expression count allowed per index SQL statement
@@ -801,24 +762,6 @@ WEBHOOK_PUBSUB_CELERY_QUEUE_NAME = os.environ.get(
     "WEBHOOK_PUBSUB_CELERY_QUEUE_NAME", WEBHOOK_CELERY_QUEUE_NAME
 )
 
-CHECKOUT_WEBHOOK_EVENTS_CELERY_QUEUE_NAME = os.environ.get(
-    "CHECKOUT_WEBHOOK_EVENTS_CELERY_QUEUE_NAME", WEBHOOK_CELERY_QUEUE_NAME
-)
-ORDER_WEBHOOK_EVENTS_CELERY_QUEUE_NAME = os.environ.get(
-    "ORDER_WEBHOOK_EVENTS_CELERY_QUEUE_NAME", WEBHOOK_CELERY_QUEUE_NAME
-)
-
-
-# Queue name for execution of collection product_updated events
-COLLECTION_PRODUCT_UPDATED_QUEUE_NAME = os.environ.get(
-    "COLLECTION_PRODUCT_UPDATED_QUEUE_NAME", None
-)
-
-# Queue name for execution of automatic checkout completion
-AUTOMATIC_CHECKOUT_COMPLETION_QUEUE_NAME = os.environ.get(
-    "AUTOMATIC_CHECKOUT_COMPLETION_QUEUE_NAME", None
-)
-
 # Lock time for request password reset mutation per user (seconds)
 RESET_PASSWORD_LOCK_TIME = parse(
     os.environ.get("RESET_PASSWORD_LOCK_TIME", "15 minutes")
@@ -838,12 +781,6 @@ OAUTH_UPDATE_LAST_LOGIN_THRESHOLD = parse(
 # mutations.
 TOKEN_UPDATE_LAST_LOGIN_THRESHOLD = parse(
     os.environ.get("TOKEN_UPDATE_LAST_LOGIN_THRESHOLD", "5 seconds")
-)
-
-# Max lock time for checkout processing.
-# It prevents locking checkout when unhandled issue appears.
-CHECKOUT_COMPLETION_LOCK_TIME = parse(
-    os.environ.get("CHECKOUT_COMPLETION_LOCK_TIME", "3 minutes")
 )
 
 # Default timeout (sec) for establishing a connection when performing external requests.
