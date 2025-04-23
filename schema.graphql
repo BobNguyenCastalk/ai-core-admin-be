@@ -43,37 +43,6 @@ type Query {
     eventType: WebhookSampleEventTypeEnum!
   ): JSONString @doc(category: "Webhooks")
 
-  """Returns a list of all translatable items of a given kind."""
-  translations(
-    """Kind of objects to retrieve."""
-    kind: TranslatableKinds!
-
-    """Return the elements in the list that come before the specified cursor."""
-    before: String
-
-    """Return the elements in the list that come after the specified cursor."""
-    after: String
-
-    """
-    Retrieve the first n elements from the list. Note that the system only allows fetching a maximum of 100 objects in a single query.
-    """
-    first: Int
-
-    """
-    Retrieve the last n elements from the list. Note that the system only allows fetching a maximum of 100 objects in a single query.
-    """
-    last: Int
-  ): TranslatableItemConnection
-
-  """Lookup a translatable item by ID."""
-  translation(
-    """ID of the object to retrieve."""
-    id: ID!
-
-    """Kind of the object to retrieve."""
-    kind: TranslatableKinds!
-  ): TranslatableItem
-
   """
   List of all apps installations
   
@@ -809,8 +778,6 @@ enum AppExtensionMountEnum @doc(category: "Apps") {
   CUSTOMER_OVERVIEW_MORE_ACTIONS
   CUSTOMER_DETAILS_MORE_ACTIONS
   NAVIGATION_CUSTOMERS
-  NAVIGATION_TRANSLATIONS
-  NAVIGATION_PAGES
 }
 
 """
@@ -864,10 +831,55 @@ enum WebhookSampleEventTypeEnum @doc(category: "Webhooks") {
   OBSERVABILITY
 }
 
-type TranslatableItemConnection {
+"""Represents ongoing installation of app."""
+type AppInstallation implements Node & Job {
+  """The ID of the app installation."""
+  id: ID!
+
+  """Job status."""
+  status: JobStatusEnum!
+
+  """Created date time of job in ISO 8601 format."""
+  createdAt: DateTime!
+
+  """Date time of job last update in ISO 8601 format."""
+  updatedAt: DateTime!
+
+  """Job message."""
+  message: String
+
+  """The name of the app installation."""
+  appName: String!
+
+  """The URL address of manifest for the app installation."""
+  manifestUrl: String!
+}
+
+interface Job {
+  """Job status."""
+  status: JobStatusEnum!
+
+  """Created date time of job in ISO 8601 format."""
+  createdAt: DateTime!
+
+  """Date time of job last update in ISO 8601 format."""
+  updatedAt: DateTime!
+
+  """Job message."""
+  message: String
+}
+
+enum JobStatusEnum {
+  PENDING
+  SUCCESS
+  FAILED
+  DELETED
+}
+
+type AppCountableConnection @doc(category: "Apps") {
   """Pagination data for this connection."""
   pageInfo: PageInfo!
-  edges: [TranslatableItemEdge!]!
+  edges: [AppCountableEdge!]!
 
   """A total count of items in the collection."""
   totalCount: Int
@@ -890,105 +902,379 @@ type PageInfo {
   endCursor: String
 }
 
-type TranslatableItemEdge {
+type AppCountableEdge @doc(category: "Apps") {
   """The item at the end of the edge."""
-  node: TranslatableItem!
+  node: App!
 
   """A cursor for use in pagination."""
   cursor: String!
 }
 
-union TranslatableItem = PageTranslatableContent
-
-"""
-Represents page's original translatable fields and related translations.
-"""
-type PageTranslatableContent implements Node {
-  """The ID of the page translatable content."""
-  id: ID!
-
-  """
-  The ID of the page to translate.
-  
-  Added in Saleor 3.14.
-  """
-  pageId: ID!
-
-  """SEO title to translate."""
-  seoTitle: String
-
-  """SEO description to translate."""
-  seoDescription: String
-
-  """Page title to translate."""
-  title: String!
-
-  """
-  Content of the page to translate.
-  
-  Rich text format. For reference see https://editorjs.io/
-  """
-  content: JSONString
-
-  """
-  Content of the page.
-  
-  Rich text format. For reference see https://editorjs.io/
-  """
-  contentJson: JSONString @deprecated(reason: "This field will be removed in Saleor 4.0. Use the `content` field instead.")
-
-  """Returns translated page fields for the given language code."""
-  translation(
-    """A language code to return the translation for page."""
-    languageCode: LanguageCodeEnum!
-  ): PageTranslation
+input AppFilterInput @doc(category: "Apps") {
+  search: String
+  isActive: Boolean
+  type: AppTypeEnum
 }
 
-"""Represents page translations."""
-type PageTranslation implements Node {
-  """The ID of the page translation."""
-  id: ID!
+input AppSortingInput @doc(category: "Apps") {
+  """Specifies the direction in which to sort apps."""
+  direction: OrderDirection!
 
-  """Translation language."""
-  language: LanguageDisplay!
-
-  """Translated SEO title."""
-  seoTitle: String
-
-  """Translated SEO description."""
-  seoDescription: String
-
-  """Translated page title."""
-  title: String
-
-  """
-  Translated content of the page.
-  
-  Rich text format. For reference see https://editorjs.io/
-  """
-  content: JSONString
-
-  """
-  Translated description of the page.
-  
-  Rich text format. For reference see https://editorjs.io/
-  """
-  contentJson: JSONString @deprecated(reason: "This field will be removed in Saleor 4.0. Use the `content` field instead.")
-
-  """
-  Represents the page fields to translate.
-  
-  Added in Saleor 3.14.
-  """
-  translatableContent: PageTranslatableContent
+  """Sort apps by the selected field."""
+  field: AppSortField!
 }
 
-type LanguageDisplay {
-  """ISO 639 representation of the language name."""
-  code: LanguageCodeEnum!
+enum OrderDirection {
+  """Specifies an ascending sort order."""
+  ASC
 
-  """Full name of the language."""
-  language: String!
+  """Specifies a descending sort order."""
+  DESC
+}
+
+enum AppSortField @doc(category: "Apps") {
+  """Sort apps by name."""
+  NAME
+
+  """Sort apps by creation date."""
+  CREATION_DATE
+}
+
+type AppExtensionCountableConnection @doc(category: "Apps") {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+  edges: [AppExtensionCountableEdge!]!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type AppExtensionCountableEdge @doc(category: "Apps") {
+  """The item at the end of the edge."""
+  node: AppExtension!
+
+  """A cursor for use in pagination."""
+  cursor: String!
+}
+
+input AppExtensionFilterInput @doc(category: "Apps") {
+  mount: [AppExtensionMountEnum!]
+  target: AppExtensionTargetEnum
+}
+
+type GroupCountableConnection @doc(category: "Users") {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+  edges: [GroupCountableEdge!]!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type GroupCountableEdge @doc(category: "Users") {
+  """The item at the end of the edge."""
+  node: Group!
+
+  """A cursor for use in pagination."""
+  cursor: String!
+}
+
+"""Represents permission group data."""
+type Group implements Node {
+  """The ID of the group."""
+  id: ID!
+
+  """The name of the group."""
+  name: String!
+
+  """
+  List of group users
+  
+  Requires one of the following permissions: MANAGE_STAFF.
+  """
+  users: [User!]
+
+  """List of group permissions"""
+  permissions: [Permission!]
+
+  """
+  True, if the currently authenticated user has rights to manage a group.
+  """
+  userCanManage: Boolean!
+
+  """
+  List of channels the group has access to.
+  
+  Added in Saleor 3.14.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  accessibleChannels: [Channel!]
+
+  """
+  Determine if the group have restricted access to channels.
+  
+  Added in Saleor 3.14.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  restrictedAccessToChannels: Boolean!
+}
+
+"""Represents user data."""
+type User implements Node & ObjectWithMetadata {
+  """The ID of the user."""
+  id: ID!
+
+  """List of private metadata items. Requires staff permissions to access."""
+  privateMetadata: [MetadataItem!]!
+
+  """
+  A single key from private metadata. Requires staff permissions to access.
+  
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  
+  Added in Saleor 3.3.
+  """
+  privateMetafield(key: String!): String
+
+  """
+  Private metadata. Requires staff permissions to access. Use `keys` to control which fields you want to include. The default is to include everything.
+  
+  Added in Saleor 3.3.
+  """
+  privateMetafields(keys: [String!]): Metadata
+
+  """List of public metadata items. Can be accessed without permissions."""
+  metadata: [MetadataItem!]!
+
+  """
+  A single key from public metadata.
+  
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  
+  Added in Saleor 3.3.
+  """
+  metafield(key: String!): String
+
+  """
+  Public metadata. Use `keys` to control which fields you want to include. The default is to include everything.
+  
+  Added in Saleor 3.3.
+  """
+  metafields(keys: [String!]): Metadata
+
+  """The email address of the user."""
+  email: String!
+
+  """The given name of the address."""
+  firstName: String!
+
+  """The family name of the address."""
+  lastName: String!
+
+  """Determine if the user is a staff admin."""
+  isStaff: Boolean!
+
+  """Determine if the user is active."""
+  isActive: Boolean!
+
+  """
+  Determines if user has confirmed email.
+  
+  Added in Saleor 3.15.
+  """
+  isConfirmed: Boolean!
+
+  """Returns the checkout UUID's assigned to this user."""
+  checkoutTokens(
+    """Slug of a channel for which the data should be returned."""
+    channel: String
+  ): [UUID!] @deprecated(reason: "This field will be removed in Saleor 4.0. Use `checkoutIds` instead.")
+
+  """Returns the checkout ID's assigned to this user."""
+  checkoutIds(
+    """Slug of a channel for which the data should be returned."""
+    channel: String
+  ): [ID!]
+
+  """
+  A note about the customer.
+  
+  Requires one of the following permissions: MANAGE_USERS, MANAGE_STAFF.
+  """
+  note: String
+
+  """List of user's permissions."""
+  userPermissions: [UserPermission!]
+
+  """List of user's permission groups."""
+  permissionGroups: [Group!]
+
+  """List of user's permission groups which user can manage."""
+  editableGroups: [Group!]
+
+  """
+  List of channels the user has access to. The sum of channels from all user groups. If at least one group has `restrictedAccessToChannels` set to False - all channels are returned.
+  
+  Added in Saleor 3.14.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  accessibleChannels: [Channel!]
+
+  """
+  Determine if user have restricted access to channels. False if at least one user group has `restrictedAccessToChannels` set to False.
+  
+  Added in Saleor 3.14.
+  
+  Note: this API is currently in Feature Preview and can be subject to changes at later point.
+  """
+  restrictedAccessToChannels: Boolean!
+
+  """
+  List of events associated with the user.
+  
+  Requires one of the following permissions: MANAGE_USERS, MANAGE_STAFF.
+  """
+  events: [CustomerEvent!]
+
+  """User language code."""
+  languageCode: LanguageCodeEnum!
+
+  """
+  External ID of this user. 
+  
+  Added in Saleor 3.10.
+  """
+  externalReference: String
+
+  """The date when the user last time log in to the system."""
+  lastLogin: DateTime
+
+  """The data when the user create account."""
+  dateJoined: DateTime!
+
+  """The data when the user last update the account information."""
+  updatedAt: DateTime!
+}
+
+scalar UUID
+
+"""Represents user's permissions."""
+type UserPermission @doc(category: "Users") {
+  """Internal code for permission."""
+  code: PermissionEnum!
+
+  """Describe action(s) allowed to do by permission."""
+  name: String!
+
+  """List of user permission groups which contains this permission."""
+  sourcePermissionGroups(
+    """ID of user whose groups should be returned."""
+    userId: ID!
+  ): [Group!]
+}
+
+"""Represents channel."""
+type Channel implements Node & ObjectWithMetadata {
+  """The ID of the channel."""
+  id: ID!
+
+  """List of private metadata items. Requires staff permissions to access."""
+  privateMetadata: [MetadataItem!]!
+
+  """
+  A single key from private metadata. Requires staff permissions to access.
+  
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  
+  Added in Saleor 3.3.
+  """
+  privateMetafield(key: String!): String
+
+  """
+  Private metadata. Requires staff permissions to access. Use `keys` to control which fields you want to include. The default is to include everything.
+  
+  Added in Saleor 3.3.
+  """
+  privateMetafields(keys: [String!]): Metadata
+
+  """List of public metadata items. Can be accessed without permissions."""
+  metadata: [MetadataItem!]!
+
+  """
+  A single key from public metadata.
+  
+  Tip: Use GraphQL aliases to fetch multiple keys.
+  
+  Added in Saleor 3.3.
+  """
+  metafield(key: String!): String
+
+  """
+  Public metadata. Use `keys` to control which fields you want to include. The default is to include everything.
+  
+  Added in Saleor 3.3.
+  """
+  metafields(keys: [String!]): Metadata
+
+  """Slug of the channel."""
+  slug: String!
+
+  """
+  Name of the channel.
+  
+  Requires one of the following permissions: AUTHENTICATED_APP, AUTHENTICATED_STAFF_USER.
+  """
+  name: String!
+
+  """
+  Whether the channel is active.
+  
+  Requires one of the following permissions: AUTHENTICATED_APP, AUTHENTICATED_STAFF_USER.
+  """
+  isActive: Boolean!
+}
+
+"""History log of the customer."""
+type CustomerEvent implements Node {
+  """The ID of the customer event."""
+  id: ID!
+
+  """Date when event happened at in ISO 8601 format."""
+  date: DateTime
+
+  """Customer event type."""
+  type: CustomerEventsEnum
+
+  """User who performed the action."""
+  user: User
+
+  """App that performed the action."""
+  app: App
+
+  """Content of the event."""
+  message: String
+
+  """Number of objects concerned by the event."""
+  count: Int
+}
+
+enum CustomerEventsEnum @doc(category: "Users") {
+  ACCOUNT_CREATED
+  ACCOUNT_ACTIVATED
+  ACCOUNT_DEACTIVATED
+  PASSWORD_RESET_LINK_SENT
+  PASSWORD_RESET
+  EMAIL_CHANGED_REQUEST
+  PASSWORD_CHANGED
+  EMAIL_CHANGED
+  DIGITAL_LINK_DOWNLOADED
+  CUSTOMER_DELETED
+  NAME_ASSIGNED
+  EMAIL_ASSIGNED
+  NOTE_ADDED
 }
 
 enum LanguageCodeEnum {
@@ -1771,440 +2057,6 @@ enum LanguageCodeEnum {
   ZH_HANT_TW
   ZU
   ZU_ZA
-}
-
-enum TranslatableKinds {
-  PAGE
-  SALE
-}
-
-"""Represents ongoing installation of app."""
-type AppInstallation implements Node & Job {
-  """The ID of the app installation."""
-  id: ID!
-
-  """Job status."""
-  status: JobStatusEnum!
-
-  """Created date time of job in ISO 8601 format."""
-  createdAt: DateTime!
-
-  """Date time of job last update in ISO 8601 format."""
-  updatedAt: DateTime!
-
-  """Job message."""
-  message: String
-
-  """The name of the app installation."""
-  appName: String!
-
-  """The URL address of manifest for the app installation."""
-  manifestUrl: String!
-}
-
-interface Job {
-  """Job status."""
-  status: JobStatusEnum!
-
-  """Created date time of job in ISO 8601 format."""
-  createdAt: DateTime!
-
-  """Date time of job last update in ISO 8601 format."""
-  updatedAt: DateTime!
-
-  """Job message."""
-  message: String
-}
-
-enum JobStatusEnum {
-  PENDING
-  SUCCESS
-  FAILED
-  DELETED
-}
-
-type AppCountableConnection @doc(category: "Apps") {
-  """Pagination data for this connection."""
-  pageInfo: PageInfo!
-  edges: [AppCountableEdge!]!
-
-  """A total count of items in the collection."""
-  totalCount: Int
-}
-
-type AppCountableEdge @doc(category: "Apps") {
-  """The item at the end of the edge."""
-  node: App!
-
-  """A cursor for use in pagination."""
-  cursor: String!
-}
-
-input AppFilterInput @doc(category: "Apps") {
-  search: String
-  isActive: Boolean
-  type: AppTypeEnum
-}
-
-input AppSortingInput @doc(category: "Apps") {
-  """Specifies the direction in which to sort apps."""
-  direction: OrderDirection!
-
-  """Sort apps by the selected field."""
-  field: AppSortField!
-}
-
-enum OrderDirection {
-  """Specifies an ascending sort order."""
-  ASC
-
-  """Specifies a descending sort order."""
-  DESC
-}
-
-enum AppSortField @doc(category: "Apps") {
-  """Sort apps by name."""
-  NAME
-
-  """Sort apps by creation date."""
-  CREATION_DATE
-}
-
-type AppExtensionCountableConnection @doc(category: "Apps") {
-  """Pagination data for this connection."""
-  pageInfo: PageInfo!
-  edges: [AppExtensionCountableEdge!]!
-
-  """A total count of items in the collection."""
-  totalCount: Int
-}
-
-type AppExtensionCountableEdge @doc(category: "Apps") {
-  """The item at the end of the edge."""
-  node: AppExtension!
-
-  """A cursor for use in pagination."""
-  cursor: String!
-}
-
-input AppExtensionFilterInput @doc(category: "Apps") {
-  mount: [AppExtensionMountEnum!]
-  target: AppExtensionTargetEnum
-}
-
-type GroupCountableConnection @doc(category: "Users") {
-  """Pagination data for this connection."""
-  pageInfo: PageInfo!
-  edges: [GroupCountableEdge!]!
-
-  """A total count of items in the collection."""
-  totalCount: Int
-}
-
-type GroupCountableEdge @doc(category: "Users") {
-  """The item at the end of the edge."""
-  node: Group!
-
-  """A cursor for use in pagination."""
-  cursor: String!
-}
-
-"""Represents permission group data."""
-type Group implements Node {
-  """The ID of the group."""
-  id: ID!
-
-  """The name of the group."""
-  name: String!
-
-  """
-  List of group users
-  
-  Requires one of the following permissions: MANAGE_STAFF.
-  """
-  users: [User!]
-
-  """List of group permissions"""
-  permissions: [Permission!]
-
-  """
-  True, if the currently authenticated user has rights to manage a group.
-  """
-  userCanManage: Boolean!
-
-  """
-  List of channels the group has access to.
-  
-  Added in Saleor 3.14.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  accessibleChannels: [Channel!]
-
-  """
-  Determine if the group have restricted access to channels.
-  
-  Added in Saleor 3.14.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  restrictedAccessToChannels: Boolean!
-}
-
-"""Represents user data."""
-type User implements Node & ObjectWithMetadata {
-  """The ID of the user."""
-  id: ID!
-
-  """List of private metadata items. Requires staff permissions to access."""
-  privateMetadata: [MetadataItem!]!
-
-  """
-  A single key from private metadata. Requires staff permissions to access.
-  
-  Tip: Use GraphQL aliases to fetch multiple keys.
-  
-  Added in Saleor 3.3.
-  """
-  privateMetafield(key: String!): String
-
-  """
-  Private metadata. Requires staff permissions to access. Use `keys` to control which fields you want to include. The default is to include everything.
-  
-  Added in Saleor 3.3.
-  """
-  privateMetafields(keys: [String!]): Metadata
-
-  """List of public metadata items. Can be accessed without permissions."""
-  metadata: [MetadataItem!]!
-
-  """
-  A single key from public metadata.
-  
-  Tip: Use GraphQL aliases to fetch multiple keys.
-  
-  Added in Saleor 3.3.
-  """
-  metafield(key: String!): String
-
-  """
-  Public metadata. Use `keys` to control which fields you want to include. The default is to include everything.
-  
-  Added in Saleor 3.3.
-  """
-  metafields(keys: [String!]): Metadata
-
-  """The email address of the user."""
-  email: String!
-
-  """The given name of the address."""
-  firstName: String!
-
-  """The family name of the address."""
-  lastName: String!
-
-  """Determine if the user is a staff admin."""
-  isStaff: Boolean!
-
-  """Determine if the user is active."""
-  isActive: Boolean!
-
-  """
-  Determines if user has confirmed email.
-  
-  Added in Saleor 3.15.
-  """
-  isConfirmed: Boolean!
-
-  """Returns the checkout UUID's assigned to this user."""
-  checkoutTokens(
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-  ): [UUID!] @deprecated(reason: "This field will be removed in Saleor 4.0. Use `checkoutIds` instead.")
-
-  """Returns the checkout ID's assigned to this user."""
-  checkoutIds(
-    """Slug of a channel for which the data should be returned."""
-    channel: String
-  ): [ID!]
-
-  """
-  A note about the customer.
-  
-  Requires one of the following permissions: MANAGE_USERS, MANAGE_STAFF.
-  """
-  note: String
-
-  """List of user's permissions."""
-  userPermissions: [UserPermission!]
-
-  """List of user's permission groups."""
-  permissionGroups: [Group!]
-
-  """List of user's permission groups which user can manage."""
-  editableGroups: [Group!]
-
-  """
-  List of channels the user has access to. The sum of channels from all user groups. If at least one group has `restrictedAccessToChannels` set to False - all channels are returned.
-  
-  Added in Saleor 3.14.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  accessibleChannels: [Channel!]
-
-  """
-  Determine if user have restricted access to channels. False if at least one user group has `restrictedAccessToChannels` set to False.
-  
-  Added in Saleor 3.14.
-  
-  Note: this API is currently in Feature Preview and can be subject to changes at later point.
-  """
-  restrictedAccessToChannels: Boolean!
-
-  """
-  List of events associated with the user.
-  
-  Requires one of the following permissions: MANAGE_USERS, MANAGE_STAFF.
-  """
-  events: [CustomerEvent!]
-
-  """User language code."""
-  languageCode: LanguageCodeEnum!
-
-  """
-  External ID of this user. 
-  
-  Added in Saleor 3.10.
-  """
-  externalReference: String
-
-  """The date when the user last time log in to the system."""
-  lastLogin: DateTime
-
-  """The data when the user create account."""
-  dateJoined: DateTime!
-
-  """The data when the user last update the account information."""
-  updatedAt: DateTime!
-}
-
-scalar UUID
-
-"""Represents user's permissions."""
-type UserPermission @doc(category: "Users") {
-  """Internal code for permission."""
-  code: PermissionEnum!
-
-  """Describe action(s) allowed to do by permission."""
-  name: String!
-
-  """List of user permission groups which contains this permission."""
-  sourcePermissionGroups(
-    """ID of user whose groups should be returned."""
-    userId: ID!
-  ): [Group!]
-}
-
-"""Represents channel."""
-type Channel implements Node & ObjectWithMetadata {
-  """The ID of the channel."""
-  id: ID!
-
-  """List of private metadata items. Requires staff permissions to access."""
-  privateMetadata: [MetadataItem!]!
-
-  """
-  A single key from private metadata. Requires staff permissions to access.
-  
-  Tip: Use GraphQL aliases to fetch multiple keys.
-  
-  Added in Saleor 3.3.
-  """
-  privateMetafield(key: String!): String
-
-  """
-  Private metadata. Requires staff permissions to access. Use `keys` to control which fields you want to include. The default is to include everything.
-  
-  Added in Saleor 3.3.
-  """
-  privateMetafields(keys: [String!]): Metadata
-
-  """List of public metadata items. Can be accessed without permissions."""
-  metadata: [MetadataItem!]!
-
-  """
-  A single key from public metadata.
-  
-  Tip: Use GraphQL aliases to fetch multiple keys.
-  
-  Added in Saleor 3.3.
-  """
-  metafield(key: String!): String
-
-  """
-  Public metadata. Use `keys` to control which fields you want to include. The default is to include everything.
-  
-  Added in Saleor 3.3.
-  """
-  metafields(keys: [String!]): Metadata
-
-  """Slug of the channel."""
-  slug: String!
-
-  """
-  Name of the channel.
-  
-  Requires one of the following permissions: AUTHENTICATED_APP, AUTHENTICATED_STAFF_USER.
-  """
-  name: String!
-
-  """
-  Whether the channel is active.
-  
-  Requires one of the following permissions: AUTHENTICATED_APP, AUTHENTICATED_STAFF_USER.
-  """
-  isActive: Boolean!
-}
-
-"""History log of the customer."""
-type CustomerEvent implements Node {
-  """The ID of the customer event."""
-  id: ID!
-
-  """Date when event happened at in ISO 8601 format."""
-  date: DateTime
-
-  """Customer event type."""
-  type: CustomerEventsEnum
-
-  """User who performed the action."""
-  user: User
-
-  """App that performed the action."""
-  app: App
-
-  """Content of the event."""
-  message: String
-
-  """Number of objects concerned by the event."""
-  count: Int
-}
-
-enum CustomerEventsEnum @doc(category: "Users") {
-  ACCOUNT_CREATED
-  ACCOUNT_ACTIVATED
-  ACCOUNT_DEACTIVATED
-  PASSWORD_RESET_LINK_SENT
-  PASSWORD_RESET
-  EMAIL_CHANGED_REQUEST
-  PASSWORD_CHANGED
-  EMAIL_CHANGED
-  DIGITAL_LINK_DOWNLOADED
-  CUSTOMER_DELETED
-  NAME_ASSIGNED
-  EMAIL_ASSIGNED
-  NOTE_ADDED
 }
 
 input PermissionGroupFilterInput @doc(category: "Users") {
