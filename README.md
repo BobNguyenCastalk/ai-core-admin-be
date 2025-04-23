@@ -1,7 +1,6 @@
 # AI Core Admin Backend
 
 Configuration Management for AI Core Services
-GraphQL-based admin backend for managing AI Core service configurations.
 
 ## Project Origin
 
