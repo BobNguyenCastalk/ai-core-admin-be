@@ -4,7 +4,6 @@ from django.contrib.auth import password_validation
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
-from .....account import events as account_events
 from .....account import models
 from .....account.error_codes import AccountErrorCode
 from .....core.db.connection import allow_writer
@@ -93,4 +92,3 @@ class SetPassword(CreateToken):
             user.is_confirmed = True
             fields_to_save.append("is_confirmed")
         user.save(update_fields=fields_to_save)
-        account_events.customer_password_reset_event(user=user)

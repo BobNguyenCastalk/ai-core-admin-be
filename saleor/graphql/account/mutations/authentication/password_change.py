@@ -5,7 +5,6 @@ from django.contrib.auth import password_validation
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
 
-from .....account import events as account_events
 from .....account import models
 from .....account.error_codes import AccountErrorCode
 from .....permission.auth_filters import AuthorizationFilters
@@ -67,5 +66,4 @@ class PasswordChange(BaseMutation):
 
         user.set_password(new_password)
         user.save(update_fields=["password", "updated_at"])
-        account_events.customer_password_changed_event(user=user)
         return PasswordChange(user=user)

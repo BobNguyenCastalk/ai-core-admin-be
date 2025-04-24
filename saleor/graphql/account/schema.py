@@ -10,7 +10,6 @@ from ..core.types import FilterInputObjectType
 from ..core.utils import from_global_id_or_error
 from ..core.validators import validate_one_of_args_is_in_query
 from .bulk_mutations import (
-    CustomerBulkDelete,
     StaffBulkDelete,
     UserBulkSetActive,
 )
@@ -45,8 +44,6 @@ from .mutations.permission_group import (
     PermissionGroupUpdate,
 )
 from .mutations.staff import (
-    CustomerDelete,
-    CustomerUpdate,
     StaffCreate,
     StaffDelete,
     StaffUpdate,
@@ -207,10 +204,6 @@ class AccountMutations(graphene.ObjectType):
     account_delete = AccountDelete.Field()
 
     # Staff mutations
-    customer_update = CustomerUpdate.Field()
-    customer_delete = CustomerDelete.Field()
-    customer_bulk_delete = CustomerBulkDelete.Field()
-
     staff_create = StaffCreate.Field()
     staff_update = StaffUpdate.Field()
     staff_delete = StaffDelete.Field()

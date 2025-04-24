@@ -3,11 +3,9 @@ from urllib.parse import urlencode
 import graphene
 from django.conf import settings
 from django.contrib.auth import password_validation
-from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 
-from .....account import events as account_events
-from .....account import models, notifications, search
+from .....account import models, search
 from .....account.error_codes import AccountErrorCode
 from .....core.tracing import traced_atomic_transaction
 from .....webhook.event_types import WebhookEventAsyncType
@@ -129,4 +127,3 @@ class AccountRegister(ModelMutation):
             user.save()
 
             cls.call_event(manager.customer_created, user)
-        account_events.customer_account_created_event(user=user)

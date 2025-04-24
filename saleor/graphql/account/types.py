@@ -1,33 +1,23 @@
-import uuid
-from functools import partial
-from typing import Optional, cast
+from typing import cast
 
 import graphene
 from django.contrib.auth import get_user_model
 from graphene import relay
-from promise import Promise
 
 from ...account import models
 from ...core.exceptions import PermissionDenied
-from ...graphql.meta.inputs import MetadataInput
 from ...permission.auth_filters import AuthorizationFilters
 from ...permission.enums import (
     AccountPermissions,
-    AppPermission,
 )
-from ..account.utils import check_is_owner_or_has_one_of_perms
-from ..app.dataloaders import AppByIdLoader, get_app_promise
-from ..app.types import App
-from ..channel.dataloaders import ChannelBySlugLoader
 from ..channel.types import Channel
 from ..core import ResolveInfo
-from ..core.connection import CountableConnection, create_connection_slice
+from ..core.connection import CountableConnection
 from ..core.context import get_database_connection_name
 from ..core.descriptions import (
     ADDED_IN_310,
     ADDED_IN_314,
     ADDED_IN_315,
-    ADDED_IN_319,
     DEPRECATED_IN_3X_FIELD,
     PREVIEW_FEATURE,
 )
@@ -43,68 +33,15 @@ from ..core.types import (
     NonNullList,
     Permission,
 )
-from ..core.utils import from_global_id_or_error, str_to_enum, to_global_id_or_none
+from ..core.utils import from_global_id_or_error, str_to_enum
 from ..meta.types import ObjectWithMetadata
-from ..plugins.dataloaders import get_plugin_manager_promise
 from ..utils import format_permissions_for_display, get_user_or_app_from_context
 from .dataloaders import (
     AccessibleChannelsByGroupIdLoader,
     AccessibleChannelsByUserIdLoader,
-    CustomerEventsByUserLoader,
     RestrictedChannelAccessByUserIdLoader,
 )
-from .enums import CustomerEventsEnum
 from .utils import can_user_manage_group, get_groups_which_user_can_manage
-
-
-class CustomerEvent(ModelObjectType[models.CustomerEvent]):
-    id = graphene.GlobalID(required=True, description="The ID of the customer event.")
-    date = DateTime(description="Date when event happened at in ISO 8601 format.")
-    type = CustomerEventsEnum(description="Customer event type.")
-    user = graphene.Field(lambda: User, description="User who performed the action.")
-    app = graphene.Field(App, description="App that performed the action.")
-    message = graphene.String(description="Content of the event.")
-    count = graphene.Int(description="Number of objects concerned by the event.")
-
-    class Meta:
-        description = "History log of the customer."
-        interfaces = [relay.Node]
-        model = models.CustomerEvent
-        doc_category = DOC_CATEGORY_USERS
-
-    @staticmethod
-    def resolve_user(root: models.CustomerEvent, info: ResolveInfo):
-        user = info.context.user
-        user = cast(User, user)
-        if (
-            user == root.user
-            or user.has_perm(AccountPermissions.MANAGE_USERS)
-            or user.has_perm(AccountPermissions.MANAGE_STAFF)
-        ):
-            return root.user
-        raise PermissionDenied(
-            permissions=[
-                AccountPermissions.MANAGE_STAFF,
-                AccountPermissions.MANAGE_USERS,
-                AuthorizationFilters.OWNER,
-            ]
-        )
-
-    @staticmethod
-    def resolve_app(root: models.CustomerEvent, info: ResolveInfo):
-        requestor = get_user_or_app_from_context(info.context)
-        check_is_owner_or_has_one_of_perms(
-            requestor, root.user, AppPermission.MANAGE_APPS
-        )
-        return AppByIdLoader(info.context).load(root.app_id) if root.app_id else None
-
-    @staticmethod
-    def resolve_message(root: models.CustomerEvent, _info: ResolveInfo):
-        return root.parameters.get("message", None)
-
-    @staticmethod
-    def resolve_count(root: models.CustomerEvent, _info: ResolveInfo):
-        return root.parameters.get("count", None)
 
 
 class UserPermission(Permission):
@@ -202,11 +139,6 @@ class User(ModelObjectType[models.User]):
         + ADDED_IN_314
         + PREVIEW_FEATURE,
     )
-    events = PermissionsField(
-        NonNullList(CustomerEvent),
-        description="List of events associated with the user.",
-        permissions=[AccountPermissions.MANAGE_USERS, AccountPermissions.MANAGE_STAFF],
-    )
     language_code = graphene.Field(
         LanguageCodeEnum, description="User language code.", required=True
     )
@@ -267,10 +199,6 @@ class User(ModelObjectType[models.User]):
         return root.note
 
     @staticmethod
-    def resolve_events(root: models.User, info: ResolveInfo):
-        return CustomerEventsByUserLoader(info.context).load(root.id)
-
-    @staticmethod
     def resolve_language_code(root, _info: ResolveInfo):
         return LanguageCodeEnum[str_to_enum(root.language_code)]
 
@@ -299,156 +227,6 @@ FORMAT_FILED_DESCRIPTION = (
     "- `X`: Sorting code\n\n"
     "[Click here for more information.](https://github.com/google/libaddressinput/wiki/AddressValidationMetadata)"
 )
-
-
-class AddressValidationData(BaseObjectType):
-    country_code = graphene.String(
-        required=True, description="The country code of the address validation rule."
-    )
-    country_name = graphene.String(
-        required=True, description="The country name of the address validation rule."
-    )
-    address_format = graphene.String(
-        required=True,
-        description=(
-            "The address format of the address validation rule."
-            + FORMAT_FILED_DESCRIPTION
-        ),
-    )
-    address_latin_format = graphene.String(
-        required=True,
-        description=(
-            "The latin address format of the address validation rule."
-            + FORMAT_FILED_DESCRIPTION
-        ),
-    )
-    allowed_fields = NonNullList(
-        graphene.String,
-        required=True,
-        description="The allowed fields to use in address.",
-    )
-    required_fields = NonNullList(
-        graphene.String,
-        required=True,
-        description="The required fields to create a valid address.",
-    )
-    upper_fields = NonNullList(
-        graphene.String,
-        required=True,
-        description=(
-            "The list of fields that should be in upper case for address "
-            "validation rule."
-        ),
-    )
-    country_area_type = graphene.String(
-        required=True,
-        description=(
-            "The formal name of the county area of the address validation rule."
-        ),
-    )
-    country_area_choices = NonNullList(
-        ChoiceValue,
-        required=True,
-        description=(
-            "The available choices for the country area of the address validation rule."
-        ),
-    )
-    city_type = graphene.String(
-        required=True,
-        description="The formal name of the city of the address validation rule.",
-    )
-    city_choices = NonNullList(
-        ChoiceValue,
-        required=True,
-        description=(
-            "The available choices for the city of the address validation rule."
-        ),
-    )
-    city_area_type = graphene.String(
-        required=True,
-        description="The formal name of the city area of the address validation rule.",
-    )
-    city_area_choices = NonNullList(
-        ChoiceValue,
-        required=True,
-        description=(
-            "The available choices for the city area of the address validation rule."
-        ),
-    )
-    postal_code_type = graphene.String(
-        required=True,
-        description=(
-            "The formal name of the postal code of the address validation rule."
-        ),
-    )
-    postal_code_matchers = NonNullList(
-        graphene.String,
-        required=True,
-        description=("The regular expression for postal code validation."),
-    )
-    postal_code_examples = NonNullList(
-        graphene.String,
-        required=True,
-        description="The example postal code of the address validation rule.",
-    )
-    postal_code_prefix = graphene.String(
-        required=True,
-        description="The postal code prefix of the address validation rule.",
-    )
-
-    class Meta:
-        description = "Represents address validation rules for a country."
-        doc_category = DOC_CATEGORY_USERS
-
-
-class StaffNotificationRecipient(graphene.ObjectType):
-    id = graphene.ID(
-        required=True, description="The ID of the staff notification recipient."
-    )
-    user = graphene.Field(
-        User,
-        description="Returns a user subscribed to email notifications.",
-        required=False,
-    )
-    email = graphene.String(
-        description=(
-            "Returns email address of a user subscribed to email notifications."
-        ),
-        required=False,
-    )
-    active = graphene.Boolean(description="Determines if a notification active.")
-
-    class Meta:
-        description = (
-            "Represents a recipient of email notifications send by Saleor, "
-            "such as notifications about new orders. Notifications can be "
-            "assigned to staff users or arbitrary email addresses."
-        )
-        interfaces = [relay.Node]
-        model = models.StaffNotificationRecipient
-
-    @staticmethod
-    def get_node(info: ResolveInfo, id):
-        try:
-            return models.StaffNotificationRecipient.objects.using(
-                get_database_connection_name(info.context)
-            ).get(pk=id)
-        except models.StaffNotificationRecipient.DoesNotExist:
-            return None
-
-    @staticmethod
-    def resolve_user(root: models.StaffNotificationRecipient, info: ResolveInfo):
-        user = info.context.user
-        user = cast(models.User, user)
-        if user == root.user or user.has_perm(AccountPermissions.MANAGE_STAFF):
-            return root.user
-        raise PermissionDenied(
-            permissions=[AccountPermissions.MANAGE_STAFF, AuthorizationFilters.OWNER]
-        )
-
-    @staticmethod
-    def resolve_email(root: models.StaffNotificationRecipient, _info: ResolveInfo):
-        return root.get_email()
 
 
 @federated_entity("id")

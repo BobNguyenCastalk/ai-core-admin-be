@@ -76,7 +76,6 @@ COST_MAP = {
     },
     "User": {
         "editableGroups": {"complexity": 1},
-        "events": {"complexity": 1},
         "permissionGroups": {"complexity": 1},
         "userPermissions": {"complexity": 1},
     },
