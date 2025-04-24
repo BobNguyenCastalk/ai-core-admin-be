@@ -113,11 +113,11 @@ DATABASE_CONNECTION_REPLICA_NAME = "replica"
 
 DATABASES = {
     DATABASE_CONNECTION_DEFAULT_NAME: dj_database_url.config(
-        default="postgres://saleor:saleor@localhost:5433/saleor",
+        default="postgres://saleor:saleor@localhost:5432/saleor",
         conn_max_age=DB_CONN_MAX_AGE,
     ),
     DATABASE_CONNECTION_REPLICA_NAME: dj_database_url.config(
-        default="postgres://saleor:saleor@localhost:5433/saleor",
+        default="postgres://saleor:saleor@localhost:5432/saleor",
         # TODO: We need to add read only user to saleor platform,
         # and we need to update docs.
         # default="postgres://saleor_read_only:saleor@localhost:5432/saleor",
@@ -250,8 +250,28 @@ JWT_MANAGER_PATH = os.environ.get(
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "saleor.core.middleware.jwt_refresh_token_middleware",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:9000",
+    "http://127.0.0.1:9000",
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'authorization-bearer',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 ENABLE_RESTRICT_WRITER_MIDDLEWARE = get_bool_from_env(
@@ -265,6 +285,7 @@ INSTALLED_APPS = [
     "storages",
     # Django modules
     "django.contrib.contenttypes",
+    "corsheaders",
     "django.contrib.sites",
     "django.contrib.staticfiles",
     "django.contrib.postgres",

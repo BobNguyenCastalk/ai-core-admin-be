@@ -1,6 +1,6 @@
 {
-  "name": "saleor",
-  "version": "3.20.82",
+  "name": "ai-core-admin-be",
+  "version": "0.0.1",
   "engines": {
     "node": ">=16 <17",
     "npm": ">=7"
@@ -9,12 +9,8 @@
     "type": "git",
     "url": "git://github.com/saleor/saleor.git"
   },
-  "author": "Saleor Commerce",
+  "author": "Bob Nguyen",
   "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/saleor/saleor/issues"
-  },
-  "homepage": "http://saleor.io/",
   "devDependencies": {
     "@release-it/bumper": "^4.0.0",
     "release-it": "^15.6.0"
