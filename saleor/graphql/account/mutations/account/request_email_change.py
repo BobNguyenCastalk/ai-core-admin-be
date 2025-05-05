@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from .....account import models, notifications
 from .....account.error_codes import AccountErrorCode
 from .....core.jwt import create_token
-from .....core.utils.url import prepare_url, validate_storefront_url
+from .....core.utils.url import prepare_url
 from .....permission.auth_filters import AuthorizationFilters
 from .....webhook.event_types import WebhookEventAsyncType
 from ....channel.utils import clean_channel
@@ -91,12 +91,6 @@ class RequestEmailChange(BaseMutation):
                         code=AccountErrorCode.UNIQUE.value,
                     )
                 }
-            )
-        try:
-            validate_storefront_url(redirect_url)
-        except ValidationError as error:
-            raise ValidationError(
-                {"redirect_url": error}, code=AccountErrorCode.INVALID.value
             )
         channel_slug = clean_channel(
             channel, error_class=AccountErrorCode, allow_replica=False

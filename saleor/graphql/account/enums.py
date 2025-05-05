@@ -1,27 +1,14 @@
-import graphene
-from django_countries import countries
-
 from ...account import CustomerEvents
-from ...checkout import AddressType
 from ...graphql.core.enums import to_enum
 from ..core.doc_category import DOC_CATEGORY_USERS
 from ..core.types import BaseEnum
 from ..core.utils import str_to_enum
 
-AddressTypeEnum = to_enum(AddressType, type_name="AddressTypeEnum")
+# AddressTypeEnum = to_enum(AddressType, type_name="AddressTypeEnum")
+AddressTypeEnum = to_enum(CustomerEvents, type_name="AddressTypeEnum")
 
 CustomerEventsEnum = to_enum(CustomerEvents)
 CustomerEventsEnum.doc_category = DOC_CATEGORY_USERS
-
-
-CountryCodeEnum = graphene.Enum(
-    "CountryCode",
-    [(str_to_enum(country[0]), country[0]) for country in countries],
-    description=(
-        "Represents country codes defined by the ISO 3166-1 alpha-2 standard."
-        "\n\nThe `EU` value is DEPRECATED and will be removed in Saleor 3.21."
-    ),
-)
 
 
 class StaffMemberStatus(BaseEnum):

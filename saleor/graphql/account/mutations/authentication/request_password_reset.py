@@ -9,7 +9,7 @@ from django.utils import timezone
 from .....account.error_codes import AccountErrorCode
 from .....account.notifications import send_password_reset_notification
 from .....account.utils import retrieve_user_by_email
-from .....core.utils.url import prepare_url, validate_storefront_url
+from .....core.utils.url import prepare_url
 from .....webhook.event_types import WebhookEventAsyncType
 from ....channel.utils import clean_channel, validate_channel
 from ....core import ResolveInfo
@@ -64,13 +64,6 @@ class RequestPasswordReset(BaseMutation):
 
     @classmethod
     def clean_user(cls, email, redirect_url, info: ResolveInfo):
-        try:
-            validate_storefront_url(redirect_url)
-        except ValidationError as error:
-            raise ValidationError(
-                {"redirect_url": error}, code=AccountErrorCode.INVALID.value
-            )
-
         user = retrieve_user_by_email(email)
         if not user:
             raise ValidationError(

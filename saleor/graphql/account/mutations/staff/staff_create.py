@@ -12,7 +12,7 @@ from .....account.notifications import send_set_password_notification
 from .....account.search import USER_SEARCH_FIELDS, prepare_user_search_document_value
 from .....core.exceptions import PermissionDenied
 from .....core.tracing import traced_atomic_transaction
-from .....core.utils.url import prepare_url, validate_storefront_url
+from .....core.utils.url import prepare_url
 from .....permission.enums import AccountPermissions
 from .....webhook.event_types import WebhookEventAsyncType
 from ....account.types import User
@@ -99,12 +99,6 @@ class StaffCreate(ModelMutation):
         cleaned_input = super().clean_input(info, instance, data, **kwargs)
 
         errors = defaultdict(list)
-        if cleaned_input.get("redirect_url"):
-            try:
-                validate_storefront_url(cleaned_input.get("redirect_url"))
-            except ValidationError as error:
-                error.code = AccountErrorCode.INVALID.value
-                errors["redirect_url"].append(error)
 
         user = info.context.user
         user = cast(models.User, user)

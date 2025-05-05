@@ -12,19 +12,12 @@ from .plugins.views import (
     handle_plugin_per_channel_webhook,
     handle_plugin_webhook,
 )
-from .product.views import digital_product
-from .thumbnail.views import handle_thumbnail
 
 urlpatterns = [
     re_path(
         r"^graphql/$",
         csrf_exempt(GraphQLView.as_view(backend=backend, schema=schema)),
         name="api",
-    ),
-    re_path(
-        r"^digital-download/(?P<token>[0-9A-Za-z_\-]+)/$",
-        digital_product,
-        name="digital-product",
     ),
     re_path(
         r"^plugins/channel/(?P<channel_slug>[.0-9A-Za-z_\-]+)/"
@@ -41,14 +34,6 @@ urlpatterns = [
         r"^plugins/(?P<plugin_id>[.0-9A-Za-z_\-]+)/",
         handle_plugin_webhook,
         name="plugins",
-    ),
-    re_path(
-        (
-            r"^thumbnail/(?P<instance_id>[.0-9A-Za-z_=\-]+)/(?P<size>\d+)/"
-            r"(?:(?P<format>[a-zA-Z]+)/)?"
-        ),
-        handle_thumbnail,
-        name="thumbnail",
     ),
     re_path(r"^\.well-known/jwks.json$", jwks, name="jwks"),
 ]

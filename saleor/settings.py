@@ -28,10 +28,8 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
 from . import PatchedSubscriberExecutionContext, __version__
-from .account.i18n_rules_override import i18n_rules_override
 from .core.db.patch import patch_db
 from .core.languages import LANGUAGES as CORE_LANGUAGES
-from .core.schedules import initiated_promotion_webhook_schedule
 from .graphql.graphql_core import (
     patch_execution_context,
     patch_execution_result,
@@ -75,8 +73,6 @@ SITE_ID = 1
 PROJECT_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 
 ROOT_URLCONF = "saleor.urls"
-
-WSGI_APPLICATION = "saleor.wsgi.application"
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -207,7 +203,6 @@ context_processors = [
     "django.template.context_processors.debug",
     "django.template.context_processors.media",
     "django.template.context_processors.static",
-    "saleor.site.context_processors.site",
 ]
 
 loaders = [
@@ -253,8 +248,28 @@ JWT_MANAGER_PATH = os.environ.get(
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "saleor.core.middleware.jwt_refresh_token_middleware",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:9000",
+    "http://127.0.0.1:9000",
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'authorization-bearer',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 ENABLE_RESTRICT_WRITER_MIDDLEWARE = get_bool_from_env(
@@ -268,6 +283,7 @@ INSTALLED_APPS = [
     "storages",
     # Django modules
     "django.contrib.contenttypes",
+    "corsheaders",
     "django.contrib.sites",
     "django.contrib.staticfiles",
     "django.contrib.postgres",
@@ -277,36 +293,15 @@ INSTALLED_APPS = [
     "saleor.auth",
     "saleor.plugins",
     "saleor.account",
-    "saleor.discount",
-    "saleor.giftcard",
-    "saleor.product",
-    "saleor.attribute",
     "saleor.channel",
-    "saleor.checkout",
     "saleor.core",
-    "saleor.csv",
     "saleor.graphql",
-    "saleor.menu",
-    "saleor.order",
-    "saleor.invoice",
-    "saleor.seo",
-    "saleor.shipping",
-    "saleor.site",
-    "saleor.page",
-    "saleor.payment",
-    "saleor.tax",
-    "saleor.warehouse",
     "saleor.webhook",
     "saleor.app",
-    "saleor.thumbnail",
     "saleor.schedulers",
     # External apps
-    "django_measurement",
-    "django_prices",
     "mptt",
-    "django_countries",
     "django_filters",
-    "phonenumber_field",
 ]
 
 ENABLE_DJANGO_EXTENSIONS = get_bool_from_env("ENABLE_DJANGO_EXTENSIONS", False)
@@ -458,7 +453,6 @@ DEFAULT_MAX_EMAIL_DISPLAY_NAME_LENGTH = 78
 
 COUNTRIES_OVERRIDE = {"EU": "European Union"}
 
-MAX_USER_ADDRESSES = int(os.environ.get("MAX_USER_ADDRESSES", 100))
 
 TEST_RUNNER = "saleor.tests.runner.PytestTestRunner"
 
@@ -555,21 +549,6 @@ AUTHENTICATION_BACKENDS = [
     "saleor.core.auth_backend.PluginBackend",
 ]
 
-# Expired checkouts settings - defines after what time checkouts will be deleted
-ANONYMOUS_CHECKOUTS_TIMEDELTA = timedelta(
-    seconds=parse(os.environ.get("ANONYMOUS_CHECKOUTS_TIMEDELTA", "30 days"))
-)
-USER_CHECKOUTS_TIMEDELTA = timedelta(
-    seconds=parse(os.environ.get("USER_CHECKOUTS_TIMEDELTA", "90 days"))
-)
-EMPTY_CHECKOUTS_TIMEDELTA = timedelta(
-    seconds=parse(os.environ.get("EMPTY_CHECKOUTS_TIMEDELTA", "6 hours"))
-)
-
-# Exports settings - defines after what time exported files will be deleted
-EXPORT_FILES_TIMEDELTA = timedelta(
-    seconds=parse(os.environ.get("EXPORT_FILES_TIMEDELTA", "30 days"))
-)
 
 # CELERY SETTINGS
 CELERY_ACCEPT_CONTENT = ["json"]
@@ -585,22 +564,6 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = int(
     os.environ.get("CELERY_WORKER_PREFETCH_MULTIPLIER", 1)
 )
 
-# Expire orders task setting
-BEAT_EXPIRE_ORDERS_AFTER_TIMEDELTA = timedelta(
-    seconds=parse(os.environ.get("BEAT_EXPIRE_ORDERS_AFTER_TIMEDELTA", "5 minutes"))
-)
-
-# Defines after how many seconds should the task triggered by the Celery beat
-# entry 'update-products-search-vectors' expire if it wasn't picked up by a worker.
-BEAT_UPDATE_SEARCH_SEC = parse(
-    os.environ.get("BEAT_UPDATE_SEARCH_FREQUENCY", "20 seconds")
-)
-BEAT_UPDATE_SEARCH_EXPIRE_AFTER_SEC = BEAT_UPDATE_SEARCH_SEC
-
-BEAT_PRICE_RECALCULATION_SCHEDULE = parse(
-    os.environ.get("BEAT_PRICE_RECALCULATION_SCHEDULE", "30 seconds")
-)
-BEAT_PRICE_RECALCULATION_SCHEDULE_EXPIRE_AFTER_SEC = BEAT_PRICE_RECALCULATION_SCHEDULE
 
 # Defines the Celery beat scheduler entries.
 #
@@ -609,80 +572,9 @@ BEAT_PRICE_RECALCULATION_SCHEDULE_EXPIRE_AFTER_SEC = BEAT_PRICE_RECALCULATION_SC
 # the expiration value. This makes sure if the task or scheduling is wrapped
 # by custom code (e.g., a Saleor fork), the expiration is still present.
 CELERY_BEAT_SCHEDULE = {
-    "delete-empty-allocations": {
-        "task": "saleor.warehouse.tasks.delete_empty_allocations_task",
-        "schedule": timedelta(days=1),
-    },
-    "deactivate-preorder-for-variants": {
-        "task": "saleor.product.tasks.deactivate_preorder_for_variants_task",
-        "schedule": timedelta(hours=1),
-    },
-    "delete-expired-reservations": {
-        "task": "saleor.warehouse.tasks.delete_expired_reservations_task",
-        "schedule": timedelta(days=1),
-    },
-    "delete-expired-checkouts": {
-        "task": "saleor.checkout.tasks.delete_expired_checkouts",
-        "schedule": crontab(hour=0, minute=0),
-    },
-    "delete_expired_orders": {
-        "task": "saleor.order.tasks.delete_expired_orders_task",
-        "schedule": crontab(hour=2, minute=0),
-    },
-    "delete-outdated-event-data": {
-        "task": "saleor.core.tasks.delete_event_payloads_task",
-        "schedule": timedelta(days=1),
-    },
-    "deactivate-expired-gift-cards": {
-        "task": "saleor.giftcard.tasks.deactivate_expired_cards_task",
-        "schedule": crontab(hour=0, minute=0),
-    },
-    "update-stocks-quantity-allocated": {
-        "task": "saleor.warehouse.tasks.update_stocks_quantity_allocated_task",
-        "schedule": crontab(hour=0, minute=0),
-    },
-    "delete-old-export-files": {
-        "task": "saleor.csv.tasks.delete_old_export_files",
-        "schedule": crontab(hour=1, minute=0),
-    },
-    "handle-promotion-toggle": {
-        "task": "saleor.discount.tasks.handle_promotion_toggle",
-        "schedule": initiated_promotion_webhook_schedule,
-    },
-    "update-products-search-vectors": {
-        "task": "saleor.product.tasks.update_products_search_vector_task",
-        "schedule": timedelta(seconds=BEAT_UPDATE_SEARCH_SEC),
-        "options": {"expires": BEAT_UPDATE_SEARCH_EXPIRE_AFTER_SEC},
-    },
-    "update-gift-cards-search-vectors": {
-        "task": "saleor.giftcard.tasks.update_gift_cards_search_vector_task",
-        "schedule": timedelta(seconds=BEAT_UPDATE_SEARCH_SEC),
-        "options": {"expires": BEAT_UPDATE_SEARCH_EXPIRE_AFTER_SEC},
-    },
-    "expire-orders": {
-        "task": "saleor.order.tasks.expire_orders_task",
-        "schedule": BEAT_EXPIRE_ORDERS_AFTER_TIMEDELTA,
-    },
     "remove-apps-marked-as-removed": {
         "task": "saleor.app.tasks.remove_apps_task",
         "schedule": crontab(hour=3, minute=0),
-    },
-    "release-funds-for-abandoned-checkouts": {
-        "task": "saleor.payment.tasks.transaction_release_funds_for_checkout_task",
-        "schedule": timedelta(minutes=10),
-    },
-    "recalculate-promotion-rules": {
-        "task": (
-            "saleor.product.tasks"
-            ".update_variant_relations_for_active_promotion_rules_task"
-        ),
-        "schedule": timedelta(seconds=BEAT_PRICE_RECALCULATION_SCHEDULE),
-        "options": {"expires": BEAT_PRICE_RECALCULATION_SCHEDULE_EXPIRE_AFTER_SEC},
-    },
-    "recalculate-discounted-price-for-products": {
-        "task": "saleor.product.tasks.recalculate_discounted_price_for_products_task",
-        "schedule": timedelta(seconds=BEAT_PRICE_RECALCULATION_SCHEDULE),
-        "options": {"expires": BEAT_PRICE_RECALCULATION_SCHEDULE_EXPIRE_AFTER_SEC},
     },
 }
 
@@ -788,22 +680,7 @@ GRAPHQL_QUERY_MAX_COMPLEXITY = int(
 FEDERATED_QUERY_MAX_ENTITIES = int(os.environ.get("FEDERATED_QUERY_MAX_ENTITIES", 100))
 
 BUILTIN_PLUGINS = [
-    "saleor.plugins.avatax.plugin.AvataxPlugin",
-    "saleor.plugins.webhook.plugin.WebhookPlugin",
-    "saleor.payment.gateways.dummy.plugin.DummyGatewayPlugin",
-    "saleor.payment.gateways.dummy_credit_card.plugin.DummyCreditCardGatewayPlugin",
-    "saleor.payment.gateways.stripe.deprecated.plugin.DeprecatedStripeGatewayPlugin",
-    "saleor.payment.gateways.stripe.plugin.StripeGatewayPlugin",
-    "saleor.payment.gateways.braintree.plugin.BraintreeGatewayPlugin",
-    "saleor.payment.gateways.razorpay.plugin.RazorpayGatewayPlugin",
-    "saleor.payment.gateways.adyen.plugin.AdyenGatewayPlugin",
-    "saleor.payment.gateways.authorize_net.plugin.AuthorizeNetGatewayPlugin",
-    "saleor.payment.gateways.np_atobarai.plugin.NPAtobaraiGatewayPlugin",
-    "saleor.plugins.invoicing.plugin.InvoicingPlugin",
-    "saleor.plugins.user_email.plugin.UserEmailPlugin",
-    "saleor.plugins.admin_email.plugin.AdminEmailPlugin",
-    "saleor.plugins.sendgrid.plugin.SendgridEmailPlugin",
-    "saleor.plugins.openid_connect.plugin.OpenIDConnectPlugin",
+
 ]
 
 # Plugin discovery
@@ -828,11 +705,6 @@ HTTP_IP_FILTER_ENABLED: bool = get_bool_from_env("HTTP_IP_FILTER_ENABLED", True)
 HTTP_IP_FILTER_ALLOW_LOOPBACK_IPS: bool = get_bool_from_env(
     "HTTP_IP_FILTER_ALLOW_LOOPBACK_IPS", False
 )
-
-# Since we split checkout complete logic into two separate transactions, in order to
-# mimic stock lock, we apply short reservation for the stocks. The value represents
-# time of the reservation in seconds.
-RESERVE_DURATION = 45
 
 # Initialize a simple and basic Jaeger Tracing integration
 # for open-tracing if enabled.
@@ -878,35 +750,12 @@ JWT_TTL_REQUEST_EMAIL_CHANGE = timedelta(
     seconds=parse(os.environ.get("JWT_TTL_REQUEST_EMAIL_CHANGE", "1 hour")),
 )
 
-CHECKOUT_PRICES_TTL = timedelta(
-    seconds=parse(os.environ.get("CHECKOUT_PRICES_TTL", "1 hour"))
-)
-
-CHECKOUT_TTL_BEFORE_RELEASING_FUNDS = timedelta(
-    seconds=parse(os.environ.get("CHECKOUT_TTL_BEFORE_RELEASING_FUNDS", "6 hours"))
-)
-CHECKOUT_BATCH_FOR_RELEASING_FUNDS = os.environ.get(
-    "CHECKOUT_BATCH_FOR_RELEASING_FUNDS", 30
-)
-TRANSACTION_BATCH_FOR_RELEASING_FUNDS = os.environ.get(
-    "TRANSACTION_BATCH_FOR_RELEASING_FUNDS", 60
-)
 
 
 # The maximum SearchVector expression count allowed per index SQL statement
 # If the count is exceeded, the expression list will be truncated
 INDEX_MAXIMUM_EXPR_COUNT = 4000
 
-# Maximum related objects that can be indexed in an order
-SEARCH_ORDERS_MAX_INDEXED_TRANSACTIONS = 20
-SEARCH_ORDERS_MAX_INDEXED_PAYMENTS = 20
-SEARCH_ORDERS_MAX_INDEXED_DISCOUNTS = 20
-SEARCH_ORDERS_MAX_INDEXED_LINES = 100
-
-# Maximum related objects that can be indexed in a product
-PRODUCT_MAX_INDEXED_ATTRIBUTES = 1000
-PRODUCT_MAX_INDEXED_ATTRIBUTE_VALUES = 100
-PRODUCT_MAX_INDEXED_VARIANTS = 1000
 
 
 # Patch SubscriberExecutionContext class from `graphql-core-legacy` package
@@ -932,24 +781,6 @@ WEBHOOK_PUBSUB_CELERY_QUEUE_NAME = os.environ.get(
     "WEBHOOK_PUBSUB_CELERY_QUEUE_NAME", WEBHOOK_CELERY_QUEUE_NAME
 )
 
-CHECKOUT_WEBHOOK_EVENTS_CELERY_QUEUE_NAME = os.environ.get(
-    "CHECKOUT_WEBHOOK_EVENTS_CELERY_QUEUE_NAME", WEBHOOK_CELERY_QUEUE_NAME
-)
-ORDER_WEBHOOK_EVENTS_CELERY_QUEUE_NAME = os.environ.get(
-    "ORDER_WEBHOOK_EVENTS_CELERY_QUEUE_NAME", WEBHOOK_CELERY_QUEUE_NAME
-)
-
-
-# Queue name for execution of collection product_updated events
-COLLECTION_PRODUCT_UPDATED_QUEUE_NAME = os.environ.get(
-    "COLLECTION_PRODUCT_UPDATED_QUEUE_NAME", None
-)
-
-# Queue name for execution of automatic checkout completion
-AUTOMATIC_CHECKOUT_COMPLETION_QUEUE_NAME = os.environ.get(
-    "AUTOMATIC_CHECKOUT_COMPLETION_QUEUE_NAME", None
-)
-
 # Lock time for request password reset mutation per user (seconds)
 RESET_PASSWORD_LOCK_TIME = parse(
     os.environ.get("RESET_PASSWORD_LOCK_TIME", "15 minutes")
@@ -971,12 +802,6 @@ TOKEN_UPDATE_LAST_LOGIN_THRESHOLD = parse(
     os.environ.get("TOKEN_UPDATE_LAST_LOGIN_THRESHOLD", "5 seconds")
 )
 
-# Max lock time for checkout processing.
-# It prevents locking checkout when unhandled issue appears.
-CHECKOUT_COMPLETION_LOCK_TIME = parse(
-    os.environ.get("CHECKOUT_COMPLETION_LOCK_TIME", "3 minutes")
-)
-
 # Default timeout (sec) for establishing a connection when performing external requests.
 REQUESTS_CONN_EST_TIMEOUT = 2
 
@@ -988,12 +813,6 @@ WEBHOOK_WAITING_FOR_RESPONSE_TIMEOUT = 18
 WEBHOOK_TIMEOUT = (REQUESTS_CONN_EST_TIMEOUT, WEBHOOK_WAITING_FOR_RESPONSE_TIMEOUT)
 WEBHOOK_SYNC_TIMEOUT = (REQUESTS_CONN_EST_TIMEOUT, WEBHOOK_WAITING_FOR_RESPONSE_TIMEOUT)
 
-# The max number of rules with order_predicate defined
-ORDER_RULES_LIMIT = os.environ.get("ORDER_RULES_LIMIT", 100)
-
-# The max number of gits assigned to promotion rule
-GIFTS_LIMIT_PER_RULE = os.environ.get("GIFTS_LIMIT_PER_RULE", 500)
-
 # Whether to enable the comparison of pre-save and post-save webhook payloads in
 # mutations, in order to limit sending webhooks where the payload has not changed as
 # a result of the mutation. Note: this works only for subscriptions webhooks; legacy
@@ -1001,11 +820,6 @@ GIFTS_LIMIT_PER_RULE = os.environ.get("GIFTS_LIMIT_PER_RULE", 500)
 ENABLE_LIMITING_WEBHOOKS_FOR_IDENTICAL_PAYLOADS = get_bool_from_env(
     "ENABLE_LIMITING_WEBHOOKS_FOR_IDENTICAL_PAYLOADS", False
 )
-
-
-# Transaction items limit for PaymentGatewayInitialize / TransactionInitialize.
-# That setting limits the allowed number of transaction items for single entity.
-TRANSACTION_ITEMS_LIMIT = 100
 
 
 # The manager.perform_mutation method is deprecated and will be removed in Saleor 3.21.
@@ -1019,11 +833,6 @@ ENABLE_DEPRECATED_MANAGER_PERFORM_MUTATION = get_bool_from_env(
 # Disable Django warnings regarding too long cache keys being incompatible with
 # memcached to avoid leaking key values.
 warnings.filterwarnings("ignore", category=CacheKeyWarning)
-
-
-# Library `google-i18n-address` use `AddressValidationMetadata` form Google to provide address validation rules.
-# Patch `i18n` module to allows to override the default address rules.
-i18n_rules_override()
 
 
 # Patch Promise to remove all references that could result in reference cycles, allowing memory to be freed

@@ -20,11 +20,6 @@ from ....graphql.webhook.subscription_payload import (
 )
 from ....graphql.webhook.subscription_types import WEBHOOK_TYPES_MAP
 from ....graphql.webhook.utils import get_pregenerated_subscription_payload
-from ....payment.models import TransactionEvent
-from ....payment.utils import (
-    create_transaction_event_from_request_and_webhook_response,
-    recalculate_refundable_for_checkout,
-)
 from ... import observability
 from ...const import WEBHOOK_CACHE_DEFAULT_TIMEOUT
 from ...event_types import WebhookEventSyncType
@@ -38,8 +33,6 @@ from ..utils import (
     create_attempt,
     delivery_update,
     generate_cache_key_for_webhook,
-    get_delivery_for_webhook,
-    handle_webhook_retry,
     save_unsuccessful_delivery_attempt,
     send_webhook_using_http,
 )
@@ -51,39 +44,6 @@ R = TypeVar("R")
 
 
 logger = logging.getLogger(__name__)
-
-
-@app.task(
-    bind=True,
-    retry_backoff=10,
-    retry_kwargs={"max_retries": 5},
-)
-def handle_transaction_request_task(self, delivery_id, request_event_id):
-    request_event = TransactionEvent.objects.filter(id=request_event_id).first()
-    if not request_event:
-        logger.error(
-            f"Cannot find the request event with id: {request_event_id} "
-            f"for transaction-request webhook."
-        )
-        return None
-    delivery, _ = get_delivery_for_webhook(delivery_id)
-    if not delivery:
-        recalculate_refundable_for_checkout(request_event.transaction, request_event)
-        logger.error(
-            f"Cannot find the delivery with id: {delivery_id} "
-            f"for transaction-request webhook."
-        )
-        return None
-    attempt = create_attempt(delivery, self.request.id)
-    response, response_data = _send_webhook_request_sync(delivery, attempt=attempt)
-    if response.response_status_code and response.response_status_code >= 500:
-        handle_webhook_retry(self, delivery.webhook, response, delivery, attempt)
-        response_data = None
-    create_transaction_event_from_request_and_webhook_response(
-        request_event,
-        delivery.webhook.app,
-        response_data,
-    )
 
 
 def _send_webhook_request_sync(

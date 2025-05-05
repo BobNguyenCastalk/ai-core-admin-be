@@ -1,5 +1,4 @@
 import datetime
-import decimal
 import hashlib
 import json
 import logging
@@ -17,7 +16,6 @@ from celery import Task
 from celery.exceptions import MaxRetriesExceededError, Retry
 from celery.utils.log import get_task_logger
 from django.conf import settings
-from django.db import transaction
 from django.urls import reverse
 from google.cloud import pubsub_v1
 from requests import RequestException
@@ -34,34 +32,13 @@ from ...core.models import (
     EventPayload,
 )
 from ...core.tasks import delete_files_from_private_storage_task
-from ...core.taxes import TaxData, TaxLineData
 from ...core.utils import build_absolute_uri
-from ...core.utils.events import call_event
-from ...payment import PaymentError
-from ...payment.interface import (
-    GatewayResponse,
-    PaymentData,
-    PaymentGateway,
-    PaymentMethodInfo,
-    TransactionActionData,
-)
-from ...payment.utils import (
-    create_failed_transaction_event,
-    recalculate_refundable_for_checkout,
-)
-from ...webhook.utils import get_webhooks_for_event
 from .. import observability
-from ..const import APP_ID_PREFIX
-from ..event_types import WebhookEventSyncType
 from ..models import Webhook
 from . import signature_for_payload
 
 logger = logging.getLogger(__name__)
 task_logger = get_task_logger(f"{__name__}.celery")
-
-
-DEFAULT_TAX_CODE = "UNMAPPED"
-DEFAULT_TAX_DESCRIPTION = "Unmapped Product/Product Type"
 
 
 class WebhookSchemes(str, Enum):
@@ -550,239 +527,9 @@ def save_unsuccessful_delivery_attempt(attempt: "EventDeliveryAttempt"):
     if not attempt.id:
         attempt.save()
 
-
-def trigger_transaction_request(
-    transaction_data: "TransactionActionData", event_type: str, requestor
-):
-    from ..payloads import generate_transaction_action_request_payload
-    from .synchronous.transport import (
-        create_delivery_for_subscription_sync_event,
-        handle_transaction_request_task,
-    )
-
-    if not transaction_data.transaction_app_owner:
-        create_failed_transaction_event(
-            transaction_data.event,
-            cause=(
-                "Cannot process the action as the given transaction is not "
-                "attached to any app."
-            ),
-        )
-        recalculate_refundable_for_checkout(
-            transaction_data.transaction, transaction_data.event
-        )
-        return None
-    webhook = get_webhooks_for_event(
-        event_type, apps_ids=[transaction_data.transaction_app_owner.pk]
-    ).first()
-    if not webhook:
-        create_failed_transaction_event(
-            transaction_data.event,
-            cause="Cannot find a webhook that can process the action.",
-        )
-        recalculate_refundable_for_checkout(
-            transaction_data.transaction, transaction_data.event
-        )
-        return None
-
-    if webhook.subscription_query:
-        delivery = None
-        try:
-            delivery = create_delivery_for_subscription_sync_event(
-                event_type=event_type,
-                subscribable_object=transaction_data,
-                webhook=webhook,
-            )
-        except PaymentError as e:
-            logger.warning("Failed to create delivery for subscription webhook: %s", e)
-        if not delivery:
-            create_failed_transaction_event(
-                transaction_data.event,
-                cause="Cannot generate a payload for the action.",
-            )
-            recalculate_refundable_for_checkout(
-                transaction_data.transaction, transaction_data.event
-            )
-            return None
-    else:
-        payload = generate_transaction_action_request_payload(
-            transaction_data, requestor
-        )
-        with allow_writer():
-            # Use transaction to ensure EventPayload and EventDelivery are created together, preventing inconsistent DB state.
-            with transaction.atomic():
-                event_payload = EventPayload.objects.create_with_payload_file(payload)
-                delivery = EventDelivery.objects.create(
-                    status=EventDeliveryStatus.PENDING,
-                    event_type=event_type,
-                    payload=event_payload,
-                    webhook=webhook,
-                )
-    call_event(
-        handle_transaction_request_task.delay,
-        delivery.id,
-        transaction_data.event.id,
-    )
-    return None
-
-
-def parse_tax_data(
-    response_data: Any,
-) -> Optional[TaxData]:
-    try:
-        return _unsafe_parse_tax_data(response_data)
-    except (TypeError, KeyError, decimal.DecimalException):
-        return None
-
-
-def parse_payment_action_response(
-    payment_information: "PaymentData",
-    response_data: Any,
-    transaction_kind: "str",
-) -> "GatewayResponse":
-    error = response_data.get("error")
-    is_success = not error
-
-    payment_method_info = None
-    payment_method_data = response_data.get("payment_method")
-    if payment_method_data:
-        payment_method_info = PaymentMethodInfo(
-            brand=payment_method_data.get("brand"),
-            exp_month=payment_method_data.get("exp_month"),
-            exp_year=payment_method_data.get("exp_year"),
-            last_4=payment_method_data.get("last_4"),
-            name=payment_method_data.get("name"),
-            type=payment_method_data.get("type"),
-        )
-
-    amount = payment_information.amount
-    if "amount" in response_data:
-        try:
-            amount = decimal.Decimal(response_data["amount"])
-        except decimal.DecimalException:
-            pass
-
-    return GatewayResponse(
-        action_required=response_data.get("action_required", False),
-        action_required_data=response_data.get("action_required_data"),
-        amount=amount,
-        currency=payment_information.currency,
-        customer_id=response_data.get("customer_id"),
-        error=error,
-        is_success=is_success,
-        kind=response_data.get("kind", transaction_kind),
-        payment_method_info=payment_method_info,
-        raw_response=response_data,
-        psp_reference=response_data.get("psp_reference"),
-        transaction_id=response_data.get("transaction_id", ""),
-        transaction_already_processed=response_data.get(
-            "transaction_already_processed", False
-        ),
-    )
-
-
-def _unsafe_parse_tax_line_data(
-    tax_line_data_response: Any,
-) -> TaxLineData:
-    """Unsafe TaxLineData parser.
-
-    Raises KeyError or DecimalException on invalid data.
-    """
-    total_gross_amount = decimal.Decimal(tax_line_data_response["total_gross_amount"])
-    total_net_amount = decimal.Decimal(tax_line_data_response["total_net_amount"])
-    tax_rate = decimal.Decimal(tax_line_data_response["tax_rate"])
-
-    return TaxLineData(
-        total_gross_amount=total_gross_amount,
-        total_net_amount=total_net_amount,
-        tax_rate=tax_rate,
-    )
-
-
-def _unsafe_parse_tax_data(
-    tax_data_response: Any,
-) -> TaxData:
-    """Unsafe TaxData parser.
-
-    Raises KeyError or DecimalException on invalid data.
-    """
-    shipping_price_gross_amount = decimal.Decimal(
-        tax_data_response["shipping_price_gross_amount"]
-    )
-    shipping_price_net_amount = decimal.Decimal(
-        tax_data_response["shipping_price_net_amount"]
-    )
-    shipping_tax_rate = decimal.Decimal(tax_data_response["shipping_tax_rate"])
-    lines = [_unsafe_parse_tax_line_data(line) for line in tax_data_response["lines"]]
-
-    return TaxData(
-        shipping_price_gross_amount=shipping_price_gross_amount,
-        shipping_price_net_amount=shipping_price_net_amount,
-        shipping_tax_rate=shipping_tax_rate,
-        lines=lines,
-    )
-
-
-def from_payment_app_id(app_gateway_id: str) -> Optional["PaymentAppData"]:
-    splitted_id = app_gateway_id.split(":", maxsplit=2)
-    if len(splitted_id) == 3 and splitted_id[0] == APP_ID_PREFIX and all(splitted_id):
-        try:
-            app_pk = int(splitted_id[1])
-        except (TypeError, ValueError):
-            return PaymentAppData(
-                app_identifier=splitted_id[1], app_pk=None, name=splitted_id[2]
-            )
-        else:
-            return PaymentAppData(
-                app_pk=app_pk, app_identifier=None, name=splitted_id[2]
-            )
-    return None
-
-
-def get_current_tax_app() -> Optional[App]:
-    """Return currently used tax app or None, if there aren't any."""
-    return (
-        App.objects.order_by("pk")
-        .filter(removed_at__isnull=True)
-        .for_event_type(WebhookEventSyncType.CHECKOUT_CALCULATE_TAXES)
-        .for_event_type(WebhookEventSyncType.ORDER_CALCULATE_TAXES)
-        .last()
-    )
-
-
 def get_meta_code_key(app: App) -> str:
     return f"{app.identifier}.code"
 
 
 def get_meta_description_key(app: App) -> str:
     return f"{app.identifier}.description"
-
-
-def to_payment_app_id(app: "App", external_id: str) -> "str":
-    app_identifier = app.identifier or app.id
-    return f"{APP_ID_PREFIX}:{app_identifier}:{external_id}"
-
-
-def parse_list_payment_gateways_response(
-    response_data: Any, app: "App"
-) -> list["PaymentGateway"]:
-    gateways: list[PaymentGateway] = []
-    if not isinstance(response_data, list):
-        return gateways
-
-    for gateway_data in response_data:
-        gateway_id = gateway_data.get("id")
-        gateway_name = gateway_data.get("name")
-        gateway_currencies = gateway_data.get("currencies")
-        gateway_config = gateway_data.get("config")
-
-        if gateway_id:
-            gateways.append(
-                PaymentGateway(
-                    id=to_payment_app_id(app, gateway_id),
-                    name=gateway_name,
-                    currencies=gateway_currencies,
-                    config=gateway_config,
-                )
-            )
-    return gateways

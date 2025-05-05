@@ -12,20 +12,6 @@ from ..core.types import FilterInputObjectType, NonNullList
 from ..core.utils import from_global_id_or_error
 from .dataloaders import AppByIdLoader, AppExtensionByIdLoader, app_promise_callback
 from .filters import AppExtensionFilter, AppFilter
-from .mutations import (
-    AppActivate,
-    AppCreate,
-    AppDeactivate,
-    AppDelete,
-    AppDeleteFailedInstallation,
-    AppFetchManifest,
-    AppInstall,
-    AppRetryInstall,
-    AppTokenCreate,
-    AppTokenDelete,
-    AppTokenVerify,
-    AppUpdate,
-)
 from .resolvers import (
     resolve_app,
     resolve_app_extensions,
@@ -170,22 +156,3 @@ class AppQueries(graphene.ObjectType):
 
         _, id = from_global_id_or_error(id, "AppExtension")
         return AppExtensionByIdLoader(info.context).load(int(id)).then(app_is_active)
-
-
-class AppMutations(graphene.ObjectType):
-    app_create = AppCreate.Field()
-    app_update = AppUpdate.Field()
-    app_delete = AppDelete.Field()
-
-    app_token_create = AppTokenCreate.Field()
-    app_token_delete = AppTokenDelete.Field()
-    app_token_verify = AppTokenVerify.Field()
-
-    app_install = AppInstall.Field()
-    app_retry_install = AppRetryInstall.Field()
-    app_delete_failed_installation = AppDeleteFailedInstallation.Field()
-
-    app_fetch_manifest = AppFetchManifest.Field()
-
-    app_activate = AppActivate.Field()
-    app_deactivate = AppDeactivate.Field()

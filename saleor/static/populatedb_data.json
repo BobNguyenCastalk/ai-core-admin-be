@@ -38,11 +38,6 @@
     }
   },
   {
-    "model": "giftcard.giftcardtag",
-    "pk": 1,
-    "fields": { "name": "issued-gift-cards" }
-  },
-  {
     "model": "product.category",
     "pk": 25,
     "fields": {

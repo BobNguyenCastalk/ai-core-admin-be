@@ -9,14 +9,6 @@ from ..core.doc_category import DOC_CATEGORY_WEBHOOKS
 from ..core.fields import BaseField, JSONString, PermissionsField
 from ..core.types import NonNullList
 from .enums import WebhookSampleEventTypeEnum
-from .mutations import (
-    EventDeliveryRetry,
-    WebhookCreate,
-    WebhookDelete,
-    WebhookDryRun,
-    WebhookTrigger,
-    WebhookUpdate,
-)
 from .resolvers import resolve_sample_payload, resolve_webhook, resolve_webhook_events
 from .types import Webhook, WebhookEvent
 
@@ -73,9 +65,4 @@ class WebhookQueries(graphene.ObjectType):
 
 
 class WebhookMutations(graphene.ObjectType):
-    webhook_create = WebhookCreate.Field()
-    webhook_delete = WebhookDelete.Field()
-    webhook_update = WebhookUpdate.Field()
-    event_delivery_retry = EventDeliveryRetry.Field()
-    webhook_dry_run = WebhookDryRun.Field()
-    webhook_trigger = WebhookTrigger.Field()
+    pass

@@ -16,10 +16,8 @@ from ..core.fields import FilterConnectionField, JSONString
 from ..core.scalars import DateTime
 from ..core.types import ModelObjectType, NonNullList
 from ..webhook.enums import EventDeliveryStatusEnum, WebhookEventTypeEnum
-from ..webhook.filters import EventDeliveryFilterInput
 from ..webhook.sorters import (
     EventDeliveryAttemptSortingInput,
-    EventDeliverySortingInput,
 )
 from . import enums
 from .dataloaders import PayloadByIdLoader, WebhookEventsByWebhookIdLoader
@@ -54,23 +52,6 @@ class WebhookEventAsync(ModelObjectType[models.WebhookEvent]):
     def resolve_name(root: models.WebhookEvent, _info):
         if root.event_type in WebhookEventAsyncType.EVENT_MAP:
             return WebhookEventAsyncType.EVENT_MAP[root.event_type]["name"]
-        return root.event_type
-
-
-class WebhookEventSync(ModelObjectType[models.WebhookEvent]):
-    name = graphene.String(description="Display name of the event.", required=True)
-    event_type = enums.WebhookEventTypeSyncEnum(
-        description="Internal name of the event type.", required=True
-    )
-
-    class Meta:
-        model = models.WebhookEvent
-        description = "Synchronous webhook event."
-
-    @staticmethod
-    def resolve_name(root: models.WebhookEvent, _info):
-        if root.event_type in WebhookEventSyncType.EVENT_MAP:
-            return WebhookEventSyncType.EVENT_MAP[root.event_type]["name"]
         return root.event_type
 
 
@@ -164,11 +145,6 @@ class Webhook(ModelObjectType[models.Webhook]):
         ),
         required=True,
     )
-    sync_events = NonNullList(
-        WebhookEventSync,
-        description="List of synchronous webhook events.",
-        required=True,
-    )
     async_events = NonNullList(
         WebhookEventAsync,
         description="List of asynchronous webhook events.",
@@ -178,12 +154,6 @@ class Webhook(ModelObjectType[models.Webhook]):
         "saleor.graphql.app.types.App",
         required=True,
         description="The app associated with Webhook.",
-    )
-    event_deliveries = FilterConnectionField(
-        EventDeliveryCountableConnection,
-        sort_by=EventDeliverySortingInput(description="Event delivery sorter."),
-        filter=EventDeliveryFilterInput(description="Event delivery filter options."),
-        description="Event deliveries.",
     )
     target_url = graphene.String(required=True, description="Target URL for webhook.")
     is_active = graphene.Boolean(

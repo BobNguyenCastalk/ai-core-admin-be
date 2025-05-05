@@ -3,15 +3,12 @@ from typing import Optional
 import graphene
 from graphene.types.generic import GenericScalar
 
-from ...checkout.models import Checkout
 from ...core.models import ModelWithMetadata
-from ...discount.models import Promotion
 from ..channel import ChannelContext
 from ..core import ResolveInfo
 from ..core.types import NonNullList
 from .resolvers import (
     check_private_metadata_privilege,
-    resolve_metadata,
     resolve_object_with_metadata_type,
     resolve_private_metadata,
 )
@@ -114,14 +111,6 @@ class ObjectWithMetadata(graphene.Interface):
     )
 
     @staticmethod
-    def resolve_metadata(root: ModelWithMetadata, info: ResolveInfo):
-        if isinstance(root, Checkout):
-            from ..checkout.types import Checkout as CheckoutType
-
-            return CheckoutType.resolve_metadata(root, info)
-        return resolve_metadata(root.metadata)
-
-    @staticmethod
     def resolve_metafield(
         root: ModelWithMetadata, _info: ResolveInfo, *, key: str
     ) -> Optional[str]:
@@ -154,15 +143,6 @@ class ObjectWithMetadata(graphene.Interface):
         if isinstance(instance, ChannelContext):
             # Return instance for types that use ChannelContext
             instance = instance.node
-        if isinstance(instance, Checkout):
-            from ..checkout.types import Checkout as CheckoutType
-
-            return CheckoutType.resolve_type(instance, info)
-        if isinstance(instance, Promotion) and instance.old_sale_id:
-            # For old sales migrated into promotions
-            from ..discount.types.sales import Sale as SaleType
-
-            return SaleType
 
         item_type, _ = resolve_object_with_metadata_type(instance)
         return item_type

@@ -47,18 +47,7 @@ SENSITIVE_GQL_FIELDS: SensitiveFieldsMap = {
     "RefreshToken": {"token"},
     "CreateToken": {"token", "refreshToken", "csrfToken"},
     "User": {"email", "firstName", "lastName"},
-    "Address": {
-        "firstName",
-        "lastName",
-        "companyName",
-        "streetAddress1",
-        "streetAddress2",
-        "phone",
-    },
     "AppTokenCreate": {"authToken"},
     "AppToken": {"authToken"},
     "App": {"accessToken"},
-    "Order": {"userEmail"},
-    "Payment": {"creditCard"},
-    "Checkout": {"email"},
 }

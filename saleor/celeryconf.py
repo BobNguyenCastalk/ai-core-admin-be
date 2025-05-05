@@ -28,11 +28,7 @@ app = Celery("saleor")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 app.autodiscover_tasks(
-    packages=[
-        "saleor.order.migrations.tasks",
-        "saleor.checkout.migrations.tasks",
-        "saleor.discount.migrations.tasks",
-    ],
+    packages=[],
     related_name="saleor3_20",
 )
 app.autodiscover_tasks(lambda: discover_plugins_modules(settings.PLUGINS))  # type: ignore[misc] # circular import # noqa: E501

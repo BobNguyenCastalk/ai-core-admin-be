@@ -10,21 +10,15 @@ from ....core import ResolveInfo
 from ....core.descriptions import ADDED_IN_314, ADDED_IN_319
 from ....core.doc_category import DOC_CATEGORY_USERS
 from ....core.types import AccountError, NonNullList
+from ....core.mutations import ModelMutation
 from ....core.utils import WebhookEventInfo
 from ....meta.inputs import MetadataInput
 from ...mixins import AppImpersonateMixin
-from ...types import AddressInput, User
-from ..base import BaseCustomerCreate
+from ...types import User
 from .base import AccountBaseInput
 
 
 class AccountInput(AccountBaseInput):
-    default_billing_address = AddressInput(
-        description="Billing address of the customer."
-    )
-    default_shipping_address = AddressInput(
-        description="Shipping address of the customer."
-    )
     metadata = NonNullList(
         MetadataInput,
         description="Fields required to update the user metadata." + ADDED_IN_314,
@@ -36,7 +30,7 @@ class AccountInput(AccountBaseInput):
         doc_category = DOC_CATEGORY_USERS
 
 
-class AccountUpdate(AddressMetadataMixin, BaseCustomerCreate, AppImpersonateMixin):
+class AccountUpdate(AddressMetadataMixin, ModelMutation, AppImpersonateMixin):
     class Arguments:
         input = AccountInput(
             description="Fields required to update the account of the logged-in user.",

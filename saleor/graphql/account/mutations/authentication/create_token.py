@@ -9,7 +9,6 @@ from ....core.descriptions import ADDED_IN_38
 from ....core.doc_category import DOC_CATEGORY_AUTH
 from ....core.mutations import BaseMutation
 from ....core.types import AccountError
-from ....site.dataloaders import get_site_promise
 from ...types import User
 from .utils import _get_new_csrf_token, update_user_last_login_if_required
 
@@ -52,21 +51,6 @@ class CreateToken(BaseMutation):
                     "email": ValidationError(
                         "Please, enter valid credentials",
                         code=AccountErrorCode.INVALID_CREDENTIALS.value,
-                    )
-                }
-            )
-
-        site_settings = get_site_promise(info.context).get().settings
-        if (
-            not user.is_confirmed
-            and not site_settings.allow_login_without_confirmation
-            and site_settings.enable_account_confirmation_by_email
-        ):
-            raise ValidationError(
-                {
-                    "email": ValidationError(
-                        "Account needs to be confirmed via email.",
-                        code=AccountErrorCode.ACCOUNT_NOT_CONFIRMED.value,
                     )
                 }
             )

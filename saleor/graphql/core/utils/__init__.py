@@ -1,6 +1,4 @@
 import binascii
-import os
-import secrets
 from dataclasses import dataclass
 from typing import Literal, Optional, Union, overload
 
@@ -11,7 +9,6 @@ from graphene import ObjectType
 from graphql.error import GraphQLError
 
 from ....plugins.const import APP_ID_PREFIX
-from ....thumbnail import FILE_NAME_MAX_LENGTH
 from ....webhook.event_types import WebhookEventAsyncType
 from ..validators import validate_if_int_or_uuid
 
@@ -112,15 +109,6 @@ def to_global_id_or_none(instance):
     return graphene.Node.to_global_id(class_name, instance.pk)
 
 
-def add_hash_to_file_name(file):
-    """Add unique text fragment to the file name to prevent file overriding."""
-    file_name, format = os.path.splitext(file._name)
-    file_name = file_name[:FILE_NAME_MAX_LENGTH]
-    hash = secrets.token_hex(nbytes=4)
-    new_name = f"{file_name}_{hash}{format}"
-    file._name = new_name
-
-
 def raise_validation_error(field=None, message=None, code=None):
     raise ValidationError({field: ValidationError(message, code=code)})
 
@@ -151,12 +139,6 @@ def ext_ref_to_global_id_or_error(
 class WebhookEventInfo:
     type: str
     description: Optional[str] = None
-
-
-CHECKOUT_CALCULATE_TAXES_MESSAGE = (
-    "Optionally triggered when checkout prices are expired."
-)
-
 
 def message_webhook_events(webhook_events: list[WebhookEventInfo]) -> str:
     description = "\n\nTriggers the following webhook events:"

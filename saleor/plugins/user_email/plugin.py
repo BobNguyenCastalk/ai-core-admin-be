@@ -28,15 +28,6 @@ from .notify_events import (
     send_account_delete,
     send_account_password_reset_event,
     send_account_set_customer_password,
-    send_fulfillment_confirmation,
-    send_fulfillment_update,
-    send_gift_card,
-    send_invoice,
-    send_order_canceled,
-    send_order_confirmation,
-    send_order_confirmed,
-    send_order_refund,
-    send_payment_confirmation,
 )
 
 if TYPE_CHECKING:
@@ -56,15 +47,6 @@ def get_user_event_map():
         UserNotifyEvent.ACCOUNT_CHANGE_EMAIL_CONFIRM: send_account_change_email_confirm,
         UserNotifyEvent.ACCOUNT_CHANGE_EMAIL_REQUEST: send_account_change_email_request,
         UserNotifyEvent.ACCOUNT_PASSWORD_RESET: send_account_password_reset_event,
-        UserNotifyEvent.INVOICE_READY: send_invoice,
-        UserNotifyEvent.ORDER_CONFIRMATION: send_order_confirmation,
-        UserNotifyEvent.ORDER_CONFIRMED: send_order_confirmed,
-        UserNotifyEvent.ORDER_FULFILLMENT_CONFIRMATION: send_fulfillment_confirmation,
-        UserNotifyEvent.ORDER_FULFILLMENT_UPDATE: send_fulfillment_update,
-        UserNotifyEvent.ORDER_PAYMENT_CONFIRMATION: send_payment_confirmation,
-        UserNotifyEvent.ORDER_CANCELED: send_order_canceled,
-        UserNotifyEvent.ORDER_REFUND_CONFIRMATION: send_order_refund,
-        UserNotifyEvent.SEND_GIFT_CARD: send_gift_card,
     }
 
 
@@ -117,72 +99,6 @@ class UserEmailPlugin(BasePlugin):
         },
         {
             "name": constants.ACCOUNT_PASSWORD_RESET_TEMPLATE_FIELD,
-            "value": DEFAULT_EMAIL_VALUE,
-        },
-        {
-            "name": constants.INVOICE_READY_SUBJECT_FIELD,
-            "value": constants.INVOICE_READY_DEFAULT_SUBJECT,
-        },
-        {"name": constants.INVOICE_READY_TEMPLATE_FIELD, "value": DEFAULT_EMAIL_VALUE},
-        {
-            "name": constants.ORDER_CONFIRMATION_SUBJECT_FIELD,
-            "value": constants.ORDER_CONFIRMATION_DEFAULT_SUBJECT,
-        },
-        {
-            "name": constants.ORDER_CONFIRMATION_TEMPLATE_FIELD,
-            "value": DEFAULT_EMAIL_VALUE,
-        },
-        {
-            "name": constants.ORDER_CONFIRMED_SUBJECT_FIELD,
-            "value": constants.ORDER_CONFIRMED_DEFAULT_SUBJECT,
-        },
-        {
-            "name": constants.ORDER_CONFIRMED_TEMPLATE_FIELD,
-            "value": DEFAULT_EMAIL_VALUE,
-        },
-        {
-            "name": constants.ORDER_FULFILLMENT_CONFIRMATION_SUBJECT_FIELD,
-            "value": constants.ORDER_FULFILLMENT_CONFIRMATION_DEFAULT_SUBJECT,
-        },
-        {
-            "name": constants.ORDER_FULFILLMENT_CONFIRMATION_TEMPLATE_FIELD,
-            "value": DEFAULT_EMAIL_VALUE,
-        },
-        {
-            "name": constants.ORDER_FULFILLMENT_UPDATE_SUBJECT_FIELD,
-            "value": constants.ORDER_FULFILLMENT_UPDATE_DEFAULT_SUBJECT,
-        },
-        {
-            "name": constants.ORDER_FULFILLMENT_UPDATE_TEMPLATE_FIELD,
-            "value": DEFAULT_EMAIL_VALUE,
-        },
-        {
-            "name": constants.ORDER_PAYMENT_CONFIRMATION_SUBJECT_FIELD,
-            "value": constants.ORDER_PAYMENT_CONFIRMATION_DEFAULT_SUBJECT,
-        },
-        {
-            "name": constants.ORDER_PAYMENT_CONFIRMATION_TEMPLATE_FIELD,
-            "value": DEFAULT_EMAIL_VALUE,
-        },
-        {
-            "name": constants.ORDER_CANCELED_SUBJECT_FIELD,
-            "value": constants.ORDER_CANCELED_DEFAULT_SUBJECT,
-        },
-        {"name": constants.ORDER_CANCELED_TEMPLATE_FIELD, "value": DEFAULT_EMAIL_VALUE},
-        {
-            "name": constants.ORDER_REFUND_CONFIRMATION_SUBJECT_FIELD,
-            "value": constants.ORDER_REFUND_CONFIRMATION_DEFAULT_SUBJECT,
-        },
-        {
-            "name": constants.ORDER_REFUND_CONFIRMATION_TEMPLATE_FIELD,
-            "value": DEFAULT_EMAIL_VALUE,
-        },
-        {
-            "name": constants.SEND_GIFT_CARD_SUBJECT_FIELD,
-            "value": constants.SEND_GIFT_CARD_DEFAULT_SUBJECT,
-        },
-        {
-            "name": constants.SEND_GIFT_CARD_TEMPLATE_FIELD,
             "value": DEFAULT_EMAIL_VALUE,
         },
     ] + DEFAULT_EMAIL_CONFIGURATION
@@ -247,96 +163,6 @@ class UserEmailPlugin(BasePlugin):
             "type": ConfigurationTypeField.MULTILINE,
             "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
             "label": "Account password reset - template",
-        },
-        constants.INVOICE_READY_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
-            "label": "Invoice ready - subject",
-        },
-        constants.INVOICE_READY_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "Invoice ready - template",
-        },
-        constants.ORDER_CONFIRMATION_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
-            "label": "Order confirmation - subject",
-        },
-        constants.ORDER_CONFIRMATION_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "Order confirmation - template",
-        },
-        constants.ORDER_CONFIRMED_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
-            "label": "Order confirmed - subject",
-        },
-        constants.ORDER_CONFIRMED_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "Order confirmed - template",
-        },
-        constants.ORDER_FULFILLMENT_CONFIRMATION_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
-            "label": "Order fulfillment confirmation - subject",
-        },
-        constants.ORDER_FULFILLMENT_CONFIRMATION_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "Order fulfillment confirmation - template",
-        },
-        constants.ORDER_FULFILLMENT_UPDATE_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
-            "label": "Order fulfillment update - subject",
-        },
-        constants.ORDER_FULFILLMENT_UPDATE_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "Order fulfillment update - template",
-        },
-        constants.ORDER_PAYMENT_CONFIRMATION_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
-            "label": "Payment confirmation - subject",
-        },
-        constants.ORDER_PAYMENT_CONFIRMATION_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "Payment confirmation - template",
-        },
-        constants.ORDER_CANCELED_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
-            "label": "Order canceled - subject",
-        },
-        constants.ORDER_CANCELED_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "Order canceled - template",
-        },
-        constants.ORDER_REFUND_CONFIRMATION_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.STRING,
-            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
-            "label": "Order refund - subject",
-        },
-        constants.ORDER_REFUND_CONFIRMATION_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "Order refund - template",
-        },
-        constants.SEND_GIFT_CARD_SUBJECT_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "Send gift card - subject",
-        },
-        constants.SEND_GIFT_CARD_TEMPLATE_FIELD: {
-            "type": ConfigurationTypeField.MULTILINE,
-            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
-            "label": "Send gift card - template",
         },
     }
     CONFIG_STRUCTURE.update(DEFAULT_EMAIL_CONFIG_STRUCTURE)

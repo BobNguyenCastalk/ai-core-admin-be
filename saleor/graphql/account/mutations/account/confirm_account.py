@@ -4,8 +4,6 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 from .....account import models
 from .....account.error_codes import AccountErrorCode
-from .....giftcard.utils import assign_user_gift_cards
-from .....order.utils import match_orders_with_new_user
 from .....webhook.event_types import WebhookEventAsyncType
 from ....core import ResolveInfo
 from ....core.doc_category import DOC_CATEGORY_USERS
@@ -71,9 +69,6 @@ class ConfirmAccount(BaseMutation):
         user.is_active = True
         user.is_confirmed = True
         user.save(update_fields=["is_active", "is_confirmed", "updated_at"])
-
-        match_orders_with_new_user(user)
-        assign_user_gift_cards(user)
 
         cls.post_save_action(info, user)
 

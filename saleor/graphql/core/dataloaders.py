@@ -1,6 +1,5 @@
-from collections import defaultdict
 from collections.abc import Iterable
-from typing import Generic, Optional, TypeVar, Union
+from typing import Generic, TypeVar, Union
 
 import opentracing
 import opentracing.tags
@@ -8,8 +7,6 @@ from promise import Promise
 from promise.dataloader import DataLoader as BaseLoader
 
 from ...core.db.connection import allow_writer_in_context
-from ...thumbnail.models import Thumbnail
-from ...thumbnail.utils import get_thumbnail_format
 from . import SaleorContext
 from .context import get_database_connection_name
 
@@ -58,26 +55,3 @@ class DataLoader(BaseLoader, Generic[K, R]):
 
     def batch_load(self, keys: Iterable[K]) -> Union[Promise[list[R]], list[R]]:
         raise NotImplementedError()
-
-
-class BaseThumbnailBySizeAndFormatLoader(
-    DataLoader[tuple[int, int, Optional[str]], Thumbnail]
-):
-    model_name: str
-
-    def batch_load(self, keys: Iterable[tuple[int, int, Optional[str]]]):
-        model_name = self.model_name.lower()
-        instance_ids = [id for id, _, _ in keys]
-        lookup = {f"{model_name}_id__in": instance_ids}
-        thumbnails = Thumbnail.objects.using(self.database_connection_name).filter(
-            **lookup
-        )
-        thumbnails_by_instance_id_size_and_format_map: defaultdict[
-            tuple[int, int, Optional[str]], Thumbnail
-        ] = defaultdict()
-        for thumbnail in thumbnails:
-            format = get_thumbnail_format(thumbnail.format)
-            thumbnails_by_instance_id_size_and_format_map[
-                (getattr(thumbnail, f"{model_name}_id"), thumbnail.size, format)
-            ] = thumbnail
-        return [thumbnails_by_instance_id_size_and_format_map.get(key) for key in keys]

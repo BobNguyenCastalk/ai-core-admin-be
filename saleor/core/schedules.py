@@ -59,13 +59,6 @@ class promotion_webhook_schedule(CustomSchedule):
             Next time to run is in seconds.
 
         """
-        from ..discount.models import Promotion
-        from ..discount.tasks import (
-            PROMOTION_TOGGLE_BATCH_SIZE,
-            get_ending_promotions,
-            get_starting_promotions,
-        )
-
         now = datetime.now(pytz.UTC)
 
         # remaining time must be calculated as the next call is overridden with 0
@@ -73,11 +66,11 @@ class promotion_webhook_schedule(CustomSchedule):
         rem_delta = self.remaining_estimate(last_run_at)
         remaining = max(rem_delta.total_seconds(), 0)
 
-        staring_promotions = get_starting_promotions()
-        ending_promotions = get_ending_promotions()
+        staring_promotions = []
+        ending_promotions = []
 
         # if task needs to be handled in batches, schedule next run with const value
-        if len(staring_promotions | ending_promotions) > PROMOTION_TOGGLE_BATCH_SIZE:
+        if len(staring_promotions | ending_promotions) > 100:
             self.next_run = timedelta(seconds=self.NEXT_BATCH_RUN_TIME)
             is_due = remaining == 0
             return schedstate(is_due, self.NEXT_BATCH_RUN_TIME)
@@ -88,20 +81,8 @@ class promotion_webhook_schedule(CustomSchedule):
             staring_promotions.exists() or ending_promotions.exists()
         )
 
-        upcoming_start_dates = Promotion.objects.filter(
-            (
-                Q(last_notification_scheduled_at__isnull=True)
-                | Q(last_notification_scheduled_at__lt=F("start_date"))
-            )
-            & Q(start_date__gt=now)
-        ).order_by("start_date")
-        upcoming_end_dates = Promotion.objects.filter(
-            (
-                Q(last_notification_scheduled_at__isnull=True)
-                | Q(last_notification_scheduled_at__lt=F("end_date"))
-            )
-            & Q(end_date__gt=now)
-        ).order_by("end_date")
+        upcoming_start_dates = []
+        upcoming_end_dates = []
 
         nearest_start_date = upcoming_start_dates.first()
         nearest_end_date = upcoming_end_dates.first()
